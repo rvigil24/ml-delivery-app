@@ -1,0 +1,56 @@
+# Entornos y secretos locales
+.env
+.env.*
+!.env.example
+credentials
+credentials.*
+*.pem
+*.key
+.aws/
+
+# Python
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+.coverage.*
+htmlcov/
+
+# Next.js / Node
+node_modules/
+.next/
+out/
+*.tsbuildinfo
+
+# Archivos locales de datos y modelos (no código ETL)
+/data/
+/models/
+/artifacts/
+/ml/data/raw/
+/ml/data/processed/
+/ml/data/splits/
+/ml/experiments/artifacts/
+.ipynb_checkpoints/
+
+# Terraform: estado, variables privadas y planes locales
+.terraform/
+*.tfstate
+*.tfstate.*
+*.tfvars
+*.tfvars.json
+*.tfplan
+crash.log
+crash.*.log
+
+# Salidas y archivos locales
+build/
+dist/
+*.log
+.DS_Store
+.idea/
+.vscode/
