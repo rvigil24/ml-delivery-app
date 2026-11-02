@@ -72,8 +72,9 @@ infra/
 docs/                # Especificación, arquitectura, datos y tareas compartidas
 ```
 
-Los directorios iniciales contienen únicamente `.gitkeep` para conservarlos en
-Git. Las capas internas del backend se describen en `docs/ARCHITECTURE.md` y se
+En T01 los directorios se reservaron con `.gitkeep` para conservarlos en Git.
+T02 incorpora el paquete Python y las primeras pruebas del entorno.
+Las capas internas del backend se describen en `docs/ARCHITECTURE.md` y se
 crearán al abordar sus tareas. FastAPI, MongoDB y S3 se integrarán posteriormente;
 Docker/Compose se incorporarán en T34 y Terraform en T42.
 
@@ -85,8 +86,58 @@ ignoradas `data/`, `ml/data/raw/`, `ml/data/processed/` o `ml/data/splits/`; los
 artefactos, en `models/`, `artifacts/` o `ml/experiments/artifacts/`.
 
 El remoto `origin` está configurado en
-`https://github.com/rvigil24/ml-delivery-app.git`. Al verificar T01, la rama local
-actual es `main`, todavía sin commits ni ramas publicadas en el remoto. El primer
-commit y el push quedan pendientes de una instrucción explícita.
+`https://github.com/rvigil24/ml-delivery-app.git`. La base de T01 está en el commit
+`9b9f696`, publicado por Ruben en `feat/T01-estructura`. Cada tarea continúa en su
+propia rama; los agentes no hacen commits ni push sin una instrucción explícita.
 Por indicación de Ruben, T01 no requiere aprobación de Guillermo. Esta excepción
 aplica únicamente a T01; el backlog no se actualiza automáticamente.
+
+## Entorno Python — T02
+
+Requisitos: Python **3.9+** y [uv](https://docs.astral.sh/uv/getting-started/installation/).
+Para el trabajo local se selecciona Python **3.12** en `.python-version`.
+Si esa versión no está instalada, uv puede descargarla al sincronizar.
+No se requiere pip global ni activar el entorno para usar los comandos siguientes.
+
+Desde la raíz del repositorio:
+
+```bash
+uv sync --locked
+uv run --locked pytest -v
+uv pip check
+uv lock --check
+```
+
+`uv sync --locked` crea `.venv/`, instala el paquete `delivery` en modo editable
+y las dependencias de desarrollo. `pyproject.toml` declara Python y dependencias;
+`uv.lock` fija las versiones y hashes para cada versión de Python/plataforma
+compatible. Ambos archivos deben compartirse. La opción `--locked` impide
+actualizar el archivo de bloqueo automáticamente; ver la
+[documentación de sincronización de uv](https://docs.astral.sh/uv/concepts/projects/sync/).
+Cuando una tarea requiera cambiar dependencias, se actualizarán deliberadamente
+`pyproject.toml` y `uv.lock` juntos.
+
+Dependencias directas actuales: **boto3** y **pytest** (grupo `dev`). Hatchling se
+usa únicamente para construir/instalar el paquete. FastAPI, el driver MongoDB,
+las bibliotecas de datos/ML y las herramientas de frontend se incorporarán cuando
+se implementen sus tareas.
+
+Las pruebas de `backend/tests/test_environment.py` comprueban la instalación del
+paquete y la preparación local del cliente S3. La segunda prueba bloquea la
+búsqueda de credenciales y las conexiones de red; usa firma deshabilitada solo
+para inspeccionar el modelo local del SDK y no ejecuta operaciones sobre S3.
+No se carga `.env` ni se necesita un perfil AWS para estas comprobaciones.
+La integración autenticada con S3 corresponde a tareas posteriores.
+
+Validación realizada en T02:
+
+- `uv lock` y `uv sync --locked`: resolución e instalación completadas.
+- `uv run --locked pytest -v`: **2 passed** en Python **3.12.14**.
+- Instalación con `uv sync --locked --python 3.9` en un entorno temporal mediante
+  `UV_PROJECT_ENVIRONMENT`, seguida de `python -m pytest -v` con su intérprete:
+  **2 passed** en Python **3.9.25**. El entorno temporal se eliminó después.
+- `uv pip check`: dependencias instaladas compatibles.
+- `uv lock --check`: archivo de bloqueo actualizado.
+- `git diff --check`: sin errores de espacios en los cambios existentes.
+
+Estas pruebas verifican el entorno, no conectividad ni permisos reales de AWS.

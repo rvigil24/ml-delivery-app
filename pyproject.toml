@@ -1,0 +1,25 @@
+[build-system]
+requires = ["hatchling>=1.26,<2"]
+build-backend = "hatchling.build"
+
+[project]
+name = "ml-delivery-app"
+version = "0.1.0"
+description = "Asistente de Delivery Económico — proyecto académico"
+readme = "README.md"
+requires-python = ">=3.9"
+dependencies = [
+    "boto3>=1.34,<2",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=8,<10",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["backend/src/delivery"]
+
+[tool.pytest.ini_options]
+testpaths = ["backend/tests"]
+addopts = "--strict-config --strict-markers"
