@@ -79,8 +79,54 @@ servicio o mediante un mecanismo explícito de carga; no la descarga ni la
 reentrena en cada solicitud. La política definitiva de carga se concreta en
 T19/T30/T31.
 
-En el repositorio actual solo existen el paquete importable de T02 y sus pruebas
-de entorno; estas capas se crearán a medida que sus tareas las necesiten.
+T02 incorporó el paquete importable y las pruebas de entorno. T04 incorpora
+únicamente `delivery.domain` y sus pruebas; las demás capas se crearán a medida
+que sus tareas las necesiten.
+
+### Modelos de dominio implementados — T04
+
+Importación pública: `from delivery.domain import Business, Order, Courier, Quote`.
+Los tipos auxiliares también se exportan desde `delivery.domain`. Se usan
+`dataclasses` inmutables y enumeraciones de la biblioteca estándar, compatibles
+con Python 3.9+, sin dependencias de FastAPI/Pydantic, MongoDB, S3 ni ML.
+Las validaciones rechazan entradas inválidas con `ValueError`; no convierten
+silenciosamente strings, booleanos numéricos o importes `float`.
+
+| Tipo | Campos y unidades | Validación / límite |
+|---|---|---|
+| `Location` | `latitude`, `longitude`: grados geográficos | Números finitos dentro de los rangos geográficos [-90, 90] y [-180, 180]. No comprueba zona de servicio ni calcula rutas. |
+| `Business` | `id`, `name`, `location: Location` | Identificador y nombre no vacíos; ubicación tipada. |
+| `Order` | `id`, `business_id`, `origin`, `destination`, `details`, `status` | Referencias y detalles no vacíos; ubicaciones tipadas. Estado inicial `OrderStatus.REQUESTED` (`solicitado`). |
+| `Courier` | `id`, `vehicle`, `approved`, `available` | `VehicleType`: `bicicleta` o `motocicleta`; aprobación/disponibilidad booleanas explícitas e independientes. No asigna pedidos. |
+| `DeliveryDuration` | `minutes`, `source`, `interval_definition`, `model_version` opcional | Minutos finitos no negativos e intervalo no vacío. `DurationSource.PREDICTION` exige versión; `ILLUSTRATIVE` no admite atribuir el dato a un modelo. |
+| `QuoteAmounts` | `currency`, `delivery_fee`, `courier_payment`, `variable_cost`, `attributable_cost`, `margin` | Todos los importes son `Decimal` finitos en la misma moneda; tarifa/pago/costos no negativos, margen puede ser negativo. Moneda explícita con formato de tres letras ASCII mayúsculas, sin catálogo monetario ni conversión. |
+| `Quote` | `id`, `order_id`, `distance_km`, `distance_method`, `duration` y `amounts` opcionales | Distancia finita no negativa en km y método identificado. Ausencia de duración/importes se representa con `None`; es un borrador incompleto, no una cotización comercial emitida. |
+
+`OrderStatus` incorpora el vocabulario de SPEC: `solicitado`, `cotizado`,
+`confirmado`, `asignado`, `recogido`, `entregado`, `cancelado`. T04 valida el tipo
+del estado, no implementa sus transiciones ni permite inferirlas de la posición
+en esa lista. Persistencia, eventos/historial del pedido y reglas de cambios
+corresponden a T20/T32. Asignaciones/entregas y registros de efectivo se concretan
+en T24/T26/T28; no se agregan entidades vacías para anticiparlos.
+
+Los identificadores son strings no vacíos suministrados por quien crea la
+entidad, sin generación automática ni dependencia de `ObjectId`. La existencia
+de referencias, unicidad y coincidencia entre el origen de un pedido y el negocio
+se verificarán en los servicios/repositorios. Cada valor monetario se suministra
+explícitamente, sin tarifa, redondeo, comisión ni fórmula de margen predefinidos.
+Una versión declarada en `DeliveryDuration` registra procedencia; no certifica
+por sí sola que exista un artefacto evaluado. Esa verificación sigue en
+T19/T30/T31. No se fija el esquema de features de `/predict`.
+
+Los datos en `backend/tests/test_domain.py` son fixtures sintéticas para probar
+validaciones: no representan tarifas acordadas, observaciones ni resultados ML.
+
+Verificación de T04: `uv run --locked pytest -q` ejecutó **16 pruebas aprobadas**
+en Python 3.12.14 (14 del dominio y 2 del entorno), sin parametrización. La misma suite pasó en
+Python 3.9.25 tras `uv sync --locked --python 3.9` con
+`UV_PROJECT_ENVIRONMENT` apuntando a un entorno temporal, eliminado al terminar.
+`uv lock --check`, `uv pip check` y `git diff --check` también finalizaron
+correctamente. No se instalaron dependencias nuevas ni se accedió a AWS o BD.
 
 ## Flujo completo del pedido — propuesta T03
 
