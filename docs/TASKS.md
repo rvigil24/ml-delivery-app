@@ -2,6 +2,16 @@
 
 **Backlog de referencia:** 54 tareas (T01–T54). Las asignaciones y estados que figuran aquí provienen de la última copia de trabajo disponible; si el Excel compartido cambia, prevalece el Excel. **No actualizar estados automáticamente.**
 
+**Actualización local autorizada — 2026-11-02:** por solicitud explícita de
+Ruben, T01, T02 y T03 se registran como completadas. Evidencia: estructura y Git
+en `9b9f696`; entorno reproducible y dos pruebas aprobadas en Python 3.9/3.12 en
+`78657e4`; diseño y flujo precisados en `docs/ARCHITECTURE.md`, con comprobación
+de enlaces y formato. El cierre se basa en la aceptación de Ruben en esta
+sesión; no se ha realizado ni se afirma una revisión independiente de Guillermo.
+Los contratos propuestos de T03 siguen pendientes de coordinación antes de
+implementarlos. Esta actualización no modifica el Excel compartido: el equipo
+debe reflejar allí el cierre. Las demás tareas conservan su estado de referencia.
+
 ## Primer bloque de trabajo de cada integrante
 
 - **Ruben:** T01 → T02 → T03 → T04 (primeras cuatro); T13–T29 después de completar dependencias.
@@ -122,11 +132,11 @@ Cada agente trabaja una tarea por iteración, informa resultados y evita hacer c
 
 ## Backlog completo y asignaciones
 
-| ID | Área | Tarea | Responsable | Estado al generar este paquete |
+| ID | Área | Tarea | Responsable | Estado de referencia / actualización autorizada |
 |---|---|---|---|---|
-| T01 | Preparación y arquitectura | Crear repositorio Git y estructura modular del proyecto | Ruben Vigil | En progreso |
-| T02 | Preparación y arquitectura | Configurar entorno Python y dependencias | Ruben Vigil | En progreso |
-| T03 | Preparación y arquitectura | Diseñar arquitectura general y flujo de pedidos | Ruben Vigil | En progreso |
+| T01 | Preparación y arquitectura | Crear repositorio Git y estructura modular del proyecto | Ruben Vigil | Completada |
+| T02 | Preparación y arquitectura | Configurar entorno Python y dependencias | Ruben Vigil | Completada |
+| T03 | Preparación y arquitectura | Diseñar arquitectura general y flujo de pedidos | Ruben Vigil | Completada |
 | T04 | Preparación y arquitectura | Definir modelos de datos: negocios, pedidos, repartidores y entregas | Ruben Vigil | En progreso |
 | T05 | Dataset y procesamiento de datos | Investigar y verificar fuentes de datos reales de entregas | Guillermo Minero | Pendiente |
 | T06 | Dataset y procesamiento de datos | Descargar y documentar el dataset seleccionado | Guillermo Minero | Pendiente |

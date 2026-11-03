@@ -1,6 +1,6 @@
 # ARCHITECTURE — Arquitectura del Asistente de Delivery Económico
 
-**Estado:** arquitectura prevista para el MVP académico, no implementación terminada. T03 revisa y acuerda contratos; T04 implementa únicamente los modelos de dominio. Las decisiones aún abiertas se señalan expresamente.
+**Estado:** diseño precisado en T03, no implementación terminada. Los contratos nuevos de este documento son propuestas para coordinación antes de implementarlos; no se consideran aprobados por el otro integrante. T04 implementa únicamente los modelos de dominio. Las decisiones aún abiertas se señalan expresamente.
 
 **Propósito de este documento:** explicar qué responsabilidad tiene cada componente, cómo se comunican los dos integrantes y cómo almacenaremos los datos en AWS sin introducir infraestructura innecesaria.
 
@@ -52,6 +52,61 @@
 
 No incluir Kubernetes, colas, microservicios ni servicios administrados caros sin necesidad demostrable.
 
+## Límites de componentes y dependencias — T03
+
+Se propone un backend modular dentro de un solo paquete Python, `delivery`.
+La API y el procesamiento offline comparten únicamente contratos y artefactos
+documentados; no hace falta separar el backend en varios servicios desplegables.
+
+| Componente | Responsabilidad | Límite |
+|---|---|---|
+| `delivery.domain` | Entidades, unidades y reglas puras de negocio | No importa FastAPI, MongoDB, boto3 ni bibliotecas de entrenamiento. No fija parámetros comerciales pendientes. |
+| `delivery.services` | Coordinar pedidos, cotizaciones, asignaciones y efectivo simulado | Usa dominio y puertos; no conoce documentos MongoDB ni claves S3 concretas. |
+| `delivery.ports` | Describir operaciones de persistencia, archivos e inferencia | Contratos Python simples basados en tipos del dominio; sin clientes de SDK ni tipos HTTP. |
+| `delivery.adapters` | Implementar puertos con MongoDB, S3 y el modelo validado | Traduce datos externos al contrato interno; no decide tarifas ni entrena durante una solicitud. |
+| `delivery.api` | Validar solicitudes/respuestas, componer dependencias y traducir errores a HTTP | Invoca servicios; no contiene reglas comerciales ni acceso directo desde los handlers a MongoDB/S3. |
+| `ml/data` | Adquisición y transformaciones reproducibles | Trabaja con archivos de procedencia verificada; no consume pedidos simulados como etiquetas reales. |
+| `ml/experiments` | Entrenar, evaluar y exportar pipeline y manifiesto | Produce artefactos versionados para inferencia; no depende de la API ni de MongoDB. |
+| `frontend` | Presentar chat y paneles Next.js | Consume HTTP/JSON; no calcula una tarifa oficial en paralelo al backend ni accede a MongoDB/S3 con credenciales. |
+| `infra` | Contenedores y recursos de despliegue cuando corresponda | Sin lógica de negocio; referencia el bucket existente y no se ejecuta en T03. |
+
+Las dependencias de código apuntan hacia el dominio: los servicios usan puertos,
+los adaptadores los implementan y la composición de la API los conecta. Los
+adaptadores no se invocan entre sí para coordinar el negocio. El motor de
+cotización recibe un resultado del puerto de predicción, sin importar código
+de entrenamiento. La API carga una versión validada del pipeline al iniciar el
+servicio o mediante un mecanismo explícito de carga; no la descarga ni la
+reentrena en cada solicitud. La política definitiva de carga se concreta en
+T19/T30/T31.
+
+En el repositorio actual solo existen el paquete importable de T02 y sus pruebas
+de entorno; estas capas se crearán a medida que sus tareas las necesiten.
+
+## Flujo completo del pedido — propuesta T03
+
+| Paso | Coordinación prevista | Registro o salida | Tareas |
+|---|---|---|---|
+| Solicitud simulada | Chat Next.js envía la solicitud a la API; el servicio valida negocio, ubicaciones y alcance local según configuración acordada. | Pedido e identificador consultable en MongoDB; mensaje de la demo. | T04, T20, T27, T47–T48 |
+| Cotización | Servicio obtiene distancia de referencia, solicita inferencia si hay modelo válido y aplica reglas comerciales aprobadas. | Cotización vinculada al pedido, procedencia de duración y desglose comercial. | T21–T23, T30–T31 |
+| Confirmación | El negocio confirma una cotización asociada al pedido; el servicio valida la transición. | Estado y evento del pedido, con referencia a la cotización utilizada. | T20, T49 |
+| Asignación | Servicio selecciona un repartidor simulado aprobado y disponible; evalúa agrupación solo con reglas acordadas. | Asignación, pedidos incluidos y secuencia de paradas. | T24, T26, T50 |
+| Recogida y entrega | Panel del repartidor solicita transiciones; el servicio verifica estado y asignación antes de persistirlas. | Estados y eventos simulados consultables por cliente, negocio y operador. | T20, T26, T50, T53 |
+| Efectivo simulado | Servicio registra cobro/entrega ficticios según el flujo contable acordado. | Registro de efectivo separado del estado logístico; ninguna operación financiera real. | T28, T51 |
+| Comparación | Operador compara escenarios individuales y agrupados usando las mismas reglas y supuestos identificados. | Desglose de costos/margen y supuestos; sin afirmar ahorro o ROI no medido. | T25, T29, T51, T54 |
+
+Un paso rechazado no adelanta el estado del pedido. La propuesta de secuencia
+sigue siendo `solicitado → cotizado → confirmado → asignado → recogido → entregado`.
+La matriz completa de transiciones, cancelación, recotización y tratamiento de
+reintentos queda por acordar en T04/T20; esta secuencia no autoriza transiciones
+arbitrarias. En entregas agrupadas, el estado de cada pedido no se deduce de que
+otro pedido del grupo haya sido entregado.
+
+Si falta un modelo válido, no se devuelve una duración fabricada. Si faltan
+fórmulas o parámetros comerciales aprobados, no se emite una cotización
+comercial completa. La UI debe comunicar la dependencia pendiente; cualquier
+escenario ilustrativo se identifica como tal y permanece fuera del dataset ML.
+Los eventos y mensajes del simulador no son observaciones reales de entregas.
+
 ## Contratos API y coordinación entre integrantes
 
 - **Obligatorios por guía:** `GET /health`, `POST /predict`, documentación OpenAPI.
@@ -60,7 +115,46 @@ No incluir Kubernetes, colas, microservicios ni servicios administrados caros si
 - Modelos de dominio y DTOs de API se separan: los datos del negocio no se hacen depender de esquemas específicos de una fuente de ML.
 - Evitar que el entrenamiento y la inferencia dependan de MongoDB si no aporta al caso.
 
-### Borrador de organización de código (T01 puede ajustarla)
+### Borrador HTTP para coordinación
+
+Solo `/health`, `/predict` y OpenAPI son requisitos ya documentados. Las demás
+rutas, nombres de campos y respuestas siguientes son propuestas de T03, no
+endpoints implementados. T04 acuerda los tipos y T30 documenta los esquemas en
+OpenAPI antes de conectar el frontend.
+
+| Operación | Ruta propuesta o requerida | Entrada/salida conceptual |
+|---|---|---|
+| Salud del proceso | `GET /health` (requerida) | Estado del proceso. No equivale a certificar disponibilidad del modelo, MongoDB o S3; los chequeos de dependencias se acordarán en T30. |
+| Inferencia | `POST /predict` (requerida) | Entrada pendiente de T07/T13. Si el target candidato se valida, duración en minutos, versión del modelo y definición del intervalo; sin tarifa. |
+| Crear y consultar pedido | `POST /orders`, `GET /orders/{order_id}` | Datos de negocio/origen/destino/detalles; identificador y estado del pedido. Campos finales en T04. |
+| Solicitar cotización | `POST /orders/{order_id}/quotes` | Referencia al pedido; cotización identificada con distancia/unidad, duración/procedencia y desglose monetario con moneda explícita. Parámetros en T21–T23. |
+| Solicitar transición | `POST /orders/{order_id}/transitions` | Estado solicitado y contexto necesario; pedido actualizado o rechazo. Matriz y requisitos pendientes de T04/T20. |
+| Crear asignación | `POST /assignments` | Referencias a pedidos y contexto de selección; asignación a repartidor aprobado y paradas, según T24/T26. |
+| Registrar efectivo ficticio | `POST /orders/{order_id}/cash-events` | Evento contable simulado; registro identificado. Campos y validaciones pendientes de T28. |
+
+Para `/predict` se propone distinguir entrada inválida, ausencia de modelo y
+fallo de inferencia. Como borrador de traducción HTTP: `422` para validación,
+`404` para entidad inexistente, `409` para transición incompatible y `503` para
+modelo o dependencia no disponible; un fallo inesperado se trata como `500`
+sin exponer secretos ni detalles internos. T30 ratifica el formato de error y
+los códigos, incluidos los casos de configuración comercial incompleta.
+No devolver `200` con una estimación ficticia para ocultar un fallo.
+
+### Puertos internos propuestos
+
+| Puerto | Operaciones conceptuales | Datos compartidos / condición pendiente |
+|---|---|---|
+| Repositorios de negocio | Consultar entidades, guardar pedido/cotización/asignación y registrar cambios de estado/efectivo | Tipos de dominio de T04; identificadores internos independientes de `ObjectId`. T20/T32 definen actualizaciones condicionales para evitar transiciones concurrentes incompatibles. |
+| Almacenamiento de archivos | Leer un objeto identificado por clave y versión; publicar solo desde procesos autorizados | Contenido y manifiesto con hash; bucket/región desde configuración. T33 concreta operaciones y permisos, sin crear buckets. |
+| Predictor de duración | Cargar pipeline validado y predecir con entradas compatibles | Esquema de features de T07/T13, resultado/unidad/intervalo y versión de T19. Ausencia/incompatibilidad del modelo es un error explícito. |
+
+No se fijan todavía firmas Python ni DTOs con features desconocidas. El adapter
+de inferencia valida la compatibilidad entre esquema y artefacto; el cálculo
+de tarifas usa sus propias reglas y no extrae conclusiones comerciales de las
+métricas del modelo. Las rutas de archivos y el driver de MongoDB quedan fuera
+de las entidades de dominio.
+
+### Organización prevista del código
 
 ```text
 backend/
@@ -80,6 +174,37 @@ docs/                # este diseño y acuerdos
 ```
 
 No crear código vacío de todas estas capas al inicio; T01 crea una base mínima y T03 ratifica el diseño. Usar imports y paths acordados entre agentes.
+
+### Acuerdos necesarios para trabajo paralelo
+
+| Punto de integración | Trabajo que puede avanzar con el backlog actual | Evidencia necesaria antes de integrar |
+|---|---|---|
+| Dominio y persistencia | Ruben define entidades en T04; Guillermo prepara MongoDB en T32 cuando estén disponibles los contratos. | Campos, unidades, identificadores, estados y validaciones revisados; mapeo MongoDB sin filtrar tipos del driver. |
+| Datos e inferencia | Guillermo investiga/valida y transforma en T05–T12; Ruben entrena en T13–T19 sobre la versión validada. | Definición del target, licencia/procedencia, features disponibles al cotizar, versión/hash de datos y artefacto. |
+| Cotización y API | Ruben implementa lógica en T20–T29; Guillermo integra API/modelo en T30–T31. | Tipos de entrada/salida y errores acordados; modelo evaluado y reglas comerciales aprobadas. |
+| API y demo | T47–T54 conservan sus responsables sin asignar. | OpenAPI de T30 y flujo verificable; no desarrollar un backend paralelo dentro de Next.js. |
+
+Esta tabla no cambia responsables, estados ni prioridades del backlog. Una
+modificación de contratos se registra aquí y se coordina antes de que el otro
+módulo dependa de ella; las propuestas no deben copiarse a código como acuerdos
+definitivos.
+
+## Decisiones abiertas y efecto sobre las tareas
+
+| Decisión pendiente | Dónde se resuelve | Qué impide cerrar |
+|---|---|---|
+| Fuente real, licencia y duración objetivo observada | T05–T07 y [DATA_ML.md](DATA_ML.md) | Entrenamiento válido y esquema definitivo de `/predict`. |
+| Features disponibles al cotizar y representatividad geográfica/vehículo | T07/T13/T19 | Prometer una predicción aplicable al escenario local o diferenciada por vehículo. |
+| Zona de demo, método de distancia y reglas de vehículo/carga | [SPEC.md](SPEC.md), T21/T23 | Validación del alcance local y selección logística justificadas. |
+| Fórmulas de tarifas, pago, combustible, comisiones y costos | [SPEC.md](SPEC.md), T22/T25/T29 | Cotización comercial y análisis financiero completos. No se usan ceros como sustituto de valores pendientes. |
+| Tipos, matriz de estados, cancelación y reintentos | T04/T20 y contratos de este documento | Persistencia y comportamiento HTTP definitivos para cambios de estado. |
+| Agrupación, secuencia de paradas, selección y efectivo ficticio | T24/T26/T28 | Cierre del flujo de asignación/contabilidad simulada. |
+| Driver MongoDB, esquemas OpenAPI, errores y carga del modelo | T19/T30–T33 | Integración operativa API/storage/inferencia; no requiere resolverlos con código en T03. |
+| Topología de despliegue, presupuesto e IAM | T41–T46 | Despliegue AWS. Next.js junto al backend o separado sigue pendiente; S3 ya existe y no se recrea. |
+
+T03 puede precisar límites y propuestas sin resolver estos valores. Las tareas
+afectadas deben comunicar un bloqueo cuando necesiten una decisión; no completar
+tarifas, targets o permisos con supuestos silenciosos.
 
 ## Persistencia y AWS S3
 
