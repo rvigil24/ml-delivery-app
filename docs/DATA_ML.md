@@ -480,6 +480,99 @@ ausentes/cronología inversa, parseo estricto, entregas ambiguas y datos vacíos
 IDs de waybill repetidos. `uv lock --check` y `uv pip check` correctos; sin
 dependencias nuevas, entrenamiento, escritura AWS ni publicación de registros.
 
+## Preparación reproducible con Pandas — T08
+
+La función importable `delivery_ml.preparation.prepare_orders` materializa las
+reglas de cohorte aprobadas en T07. La receta `ml/data/prepare_meituan.py` verifica
+el hash del original y exige una auditoría aprobada para ese mismo archivo.
+Pandas **2.3.3** quedó fijado en `uv.lock`; el paquete `delivery_ml` se incluye
+en la instalación editable para ejecutar pruebas e importar funciones sin
+modificar manualmente `PYTHONPATH`.
+
+```bash
+uv sync --locked
+uv run --locked python ml/data/prepare_meituan.py
+uv run --locked pytest -q
+```
+
+Transformaciones, en orden:
+
+1. Validar columnas, identificadores e indicadores; convertir campos numéricos sin aceptar nulos, infinitos o timestamps fraccionarios. No truncar signos ni decimales.
+2. Detectar pedidos con datos de cotización cambiantes usando todos sus intentos, antes de filtrar completados.
+3. Seleccionar una única entrega positiva por pedido, inmediata, aceptada y con cronología coherente. Separar ambiguos, reservas y ausencias según T07.
+4. Derivar `time_taken_min` desde los eventos y hora/día desde creación en UTC; no usar información posterior como features temporales.
+5. Retener trazabilidad y coordenadas originales con sufijo `*_raw`. Ordenar por identificador para una salida determinista; ese orden no sustituye una partición temporal.
+
+Salida local: `data/processed/meituan/<revision>/t08-v1/orders.csv`, **546,281
+filas, 11 columnas y 50,447,133 bytes**. SHA-256:
+`e0097ce35228ae6d14f316e385cf1e22e43221cccb5e8f8e5eaf2500931885fd`.
+La generación se registró el `2026-11-03T21:27:26.422607+00:00` en el manifiesto.
+
+| Columnas de salida | Papel / unidad |
+|---|---|
+| `order_id`, `source_waybill_id` | Trazabilidad y grupos; excluir de features. |
+| `platform_order_time`, `arrive_time` | Eventos Unix en segundos; el segundo es posterior y se conserva solo para trazabilidad del target. |
+| `request_hour_utc`, `request_weekday_utc` | Contexto pre-entrega; hora 0–23, día lunes=0 a domingo=6. |
+| `time_taken_min` | Target observado en minutos, sin redondeo previo a almacenamiento. |
+| `sender_lat_raw`, `sender_lng_raw`, `recipient_lat_raw`, `recipient_lng_raw` | Valores originales en unidades aún pendientes; no representan features de distancia aprobadas. |
+
+No se imputó, escaló, entrenó ni limitó la duración mediante umbrales arbitrarios.
+El máximo largo permanece disponible para EDA. Antes de guardar se comprobó el
+conteo contra T07. El manifiesto enlaza hash de origen, auditoría, implementación,
+versión de Pandas y CSV de salida. Una segunda ejecución validó la copia sin
+sobrescribirla; un cambio de receta, fuente o auditoría requiere una versión
+de salida nueva.
+
+Comprobaciones: **29 pruebas aprobadas en Python 3.12.14 y 3.9.25**; cuatro nuevas
+verifican consolidación/contexto UTC/original intacto, exclusiones, conservación
+de duraciones largas y rechazo de IDs duplicados o timestamps fraccionarios.
+Adquisición, preparación y reportes continúan ignorados por Git. La siguiente
+tarea del bloque es T09; no se creó un modelo ni una partición de entrenamiento.
+
+## Análisis exploratorio — T09, 2026-11-03
+
+Responsable: Ruben Vigil. Dependencias T07–T08 satisfechas. Receta:
+
+```bash
+uv run --locked python ml/data/explore_meituan.py
+```
+
+El script verifica tamaño/hash del CSV y su manifiesto T08. El módulo
+`delivery_ml.exploration` calcula agregados sin modificar la cohorte. Salida:
+`data/reports/meituan/<revision>/t09/`, ignorada por Git, con `t09_eda.json`,
+`t09_eda.md` y cuatro PNG. El JSON identifica hash de entrada/manifiesto,
+implementación y versiones de Python, Pandas y Matplotlib.
+
+Hallazgos medidos sobre **546,281 pedidos**:
+
+- Cero celdas ausentes, IDs de pedido/waybill duplicados, inconsistencias del target y diferencias en el contexto UTC derivado.
+- Duración media **29.64 min**, mediana **27.90**, P95 **51.43**, P99 **63.28**, máximo **645.42**.
+- **8,082** pedidos superan **60.20 min**, límite Q3+1.5×IQR. Es un diagnóstico estadístico, no error demostrado ni límite comercial; no se eliminó ninguna fila.
+- Máximo volumen por hora de creación: **03:00 UTC, 92,977 pedidos**. Las medianas horarias van de **22.98 min** (23:00 UTC, 5,938 pedidos) a **33.57 min** (03:00 UTC). No se afirma causalidad ni equivalencia con horarios salvadoreños.
+- Nueve fechas de creación UTC, **2022-10-16 a 2022-10-24**, con bordes potencialmente parciales. Lunes y domingo aparecen en dos fechas; los demás días en una. Los conteos semanales brutos tienen exposición desigual y no prueban diferencias de demanda.
+- Spearman entre duración y cada coordenada original entre **−0.1040 y −0.0503**. Son relaciones descriptivas de rangos, sin confirmar unidades, distancia física o utilidad predictiva. Se excluyen IDs/eventos posteriores; hora/día se analizan como grupos por su naturaleza cíclica.
+
+Las figuras muestran toda la duración (conteos en escala logarítmica), un
+detalle hasta P99 que identifica **5,453** pedidos fuera solo de esa vista,
+conteos y mediana/P10–P90 por contexto, cobertura diaria y matriz de Spearman.
+P10–P90 describe dispersión observada, no un intervalo de confianza.
+
+Sesgos: cohorte seleccionada de entregas inmediatas completadas y no ambiguas;
+no representa reservas, entregas fallidas ni toda la demanda. Origen chino,
+período corto y vehículo no validado impiden afirmar generalización local o por
+bicicleta/moto. Este EDA no selecciona features, ajusta modelos ni determina
+umbrales de producción. T13 debe preservar una evaluación independiente.
+
+Comprobaciones: **31 pruebas aprobadas en Python 3.12.14 y 3.9.25**, generación
+real de las cuatro figuras en ambas versiones y hash del CSV intacto antes/después.
+Dos pruebas nuevas cubren agregación, conservación de cola/entrada, contexto,
+calidad y rechazo de target no finito. Notebook actualizado para mostrar las
+figuras y conclusiones reales. T10–T12 no se implementaron.
+
+Métodos: [límites de Tukey — NIST](https://www.itl.nist.gov/div898/handbook/eda/section3/boxplot.htm),
+[correlaciones — Pandas](https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.corr.html),
+[histogramas — Matplotlib](https://matplotlib.org/stable/api/_as_gen/matplotlib.axes.Axes.hist.html).
+
 ## Datos necesarios para cada parte del producto
 
 | Necesidad | Fuente adecuada | Método previsto |
@@ -598,6 +691,15 @@ No afirmar que el modelo diferencia bicicleta/motocicleta si no está respaldado
 5. Comparación de tiempos y pruebas verificables de transformaciones.
 
 Evitar notebooks gigantes que mezclen adquisición, lógica comercial, entrenamiento y presentación. Preferir módulos importables y notebooks solo para exploración cuando aporten valor.
+
+Por solicitud de Ruben, `notebooks/01_datos_y_procesamiento.ipynb` sirve para
+estudiar y exponer T05–T09: ejecuta las recetas existentes, muestra agregados y
+comprueba hashes. Las secciones T10–T12 quedan pendientes de sus respectivas
+implementaciones. El entrenamiento T13–T19 tendrá un cuaderno separado cuando
+corresponda. Ver ejecución local/Colab y empaquetado de fuentes en README.
+El cuaderno versionado no guarda salidas; la ejecución local con resultados queda
+en `data/reports/presentation/`, ignorada por Git. No incluye filas de pedidos
+en sus salidas ni realiza operaciones AWS.
 
 ## Criterios de aceptación académica y precauciones
 
