@@ -1,6 +1,6 @@
 # DATA_ML — Datos reales, procesamiento y modelos predictivos
 
-**Responsabilidad actual:** Ruben Vigil asume T05–T19 por instrucción explícita del 2026-11-03. **Estado:** investigación T05 realizada; dataset y variable objetivo definitiva pendientes de selección y validación. Las entregas anteriores de T05–T12 quedan descartadas como base de esta investigación.
+**Responsabilidad actual:** Ruben Vigil asume T05–T19 por instrucción explícita del 2026-11-03. **Estado:** Meituan seleccionado y adquirido; auditoría T07 aprueba con condiciones la preparación académica de una cohorte de pedidos inmediatos. El resultado y las restricciones vigentes están en la sección T07. Las entregas anteriores descartadas de T05–T12 no se utilizan como evidencia. Las secciones previas conservan la historia de investigación y selección.
 
 **Objetivo académico:** demostrar un flujo reproducible desde registros de entregas hasta predicciones evaluadas, diferenciando evidencia experimental de reglas comerciales e información simulada.
 
@@ -118,7 +118,7 @@ coordenadas/vehículos y `datetime.strptime`/`fromisoformat` para los rangos
 temporales. No se ejecutó el pipeline descartado. La receta anterior reproduce
 el acceso, volumen y hash, no constituye la adquisición aprobada de T06.
 
-### Recomendación y bloqueo para avanzar a T06
+### Resultado inicial de la investigación (ampliado más abajo)
 
 **T05 entrega un informe comparativo con acceso efectivo; ningún dataset queda
 seleccionado.** Zomato no se aprueba por parecido con la aplicación; DoorDash
@@ -133,6 +133,352 @@ acordando explícitamente la adaptación del problema. La última opción requie
 actualizar SPEC/arquitectura antes de depender de una duración desde aceptación.
 Mientras tanto, la selección está **pendiente**, no rechazada por falta de acceso.
 No se necesita tocar AWS ni entrenar para resolver esta decisión.
+
+## Ampliación de T05 — fuentes con datos previos a la asignación
+
+**Consulta:** 2026-11-03. Ruben autorizó ampliar la búsqueda conservando la
+predicción desde solicitud del pedido. Se inspeccionaron dos candidatos nuevos
+mediante sus publicaciones oficiales y archivos accesibles; el objetivo del
+proyecto no cambia. Esta sección actualiza la recomendación inicial anterior.
+
+| Candidato | Procedencia y acceso comprobados | Objetivo documentado / entradas candidatas | Condiciones y limitaciones |
+|---|---|---|---|
+| **Meituan / INFORMS TSL Research Challenge** | Repositorio de la organización Meituan, enlazado por INFORMS. ZIP oficial descargado y leído en memoria. Se contaron 654,343 filas y 568,546 `order_id` distintos. | `(arrive_time - platform_order_time) / 60`: creación del pedido→entrega, desde timestamps Unix en segundos según el diccionario oficial. Origen, destino, instante de solicitud y atributos del pedido pueden conocerse antes de asignar repartidor. | Uso académico/no comercial con reconocimiento y prohibición explícita de redistribuir sin permiso. Datos de China, con coordenadas desplazadas e intentos de asignación repetidos; no demuestra desempeño local ni por vehículo. |
+| **`modeldata::deliveries` / tidymodels** | Mantenido por Max Kuhn y autores de modeldata. CSV de R-universe consultado: 10,012 filas y 31 columnas; también se accedió al `.rda` original. | `time_to_delivery`, minutos solicitud→recepción según la ficha. `hour`, `day`, `distance` (millas aproximadas) y 27 conteos de artículos del pedido. Son variables conceptualmente disponibles al solicitar comida. | El paquete declara MIT; no se encontró una restricción particular en la ficha del dataset. Un solo restaurante, sin país/periodo publicados en esa ficha, sin coordenadas, vehículo ni timestamps originales para auditar el intervalo. La procedencia del estudio se apoya en el editor, no en registros operativos primarios. |
+
+### Evidencia y condiciones de Meituan
+
+- [Publicación oficial de INFORMS](https://connect.informs.org/tsl/tslresources/datachallenge): identifica datos operativos reales de Meituan, permite investigación académica y exige no compartirlos por otros canales. La [licencia publicada por Meituan](https://github.com/meituan/Meituan-INFORMS-TSL-Research-Challenge/blob/1f9b4288cee5a78d1e5da007fc306bbaa662fc6d/License.txt) declara CC BY-NC 4.0 y añade condiciones explícitas de no distribución y reconocimiento. La adquisición actual es local y académica. No se publican registros en Git ni frontend. No se deduce de estos términos una prohibición absoluta de AWS: el diseño contempla almacenamiento privado sujeto a revisión de las condiciones del editor antes de la primera subida. No asumir uso comercial permitido por el carácter económico de la demo.
+- [Diccionario oficial, tablas 1–2](https://github.com/meituan/Meituan-INFORMS-TSL-Research-Challenge/blob/1f9b4288cee5a78d1e5da007fc306bbaa662fc6d/TSL-Meituan%20challenge_background%20and%20data_20240321.pdf): define creación, asignación, recogida y entrega. [Aclaraciones oficiales de octubre de 2024](https://github.com/meituan/Meituan-INFORMS-TSL-Research-Challenge/blob/1f9b4288cee5a78d1e5da007fc306bbaa662fc6d/tsl_meituan_2024_data_report_20241015.pdf): coordenadas desplazadas, timestamps cero en intentos rechazados y otros problemas conocidos. Ambos PDF se descargaron temporalmente y se leyeron con `pdftotext`; los temporales se eliminaron.
+- Revisión inspeccionada: `1f9b4288cee5a78d1e5da007fc306bbaa662fc6d`. [ZIP verificado](https://raw.githubusercontent.com/meituan/Meituan-INFORMS-TSL-Research-Challenge/1f9b4288cee5a78d1e5da007fc306bbaa662fc6d/all_waybill_info_meituan_0322.csv.zip): **38,763,754 bytes**, SHA-256 `38b51431a12dd7e73deb4fc750b1275067fbc29cfce2c4b4492339738c988ce2`. CSV interno `all_waybill_info_meituan_0322.csv`: **121,698,401 bytes**, SHA-256 `1d31aac21e17c11aec6ab0033d4040c03aea5bab1dfd60aa11e74d766bbd2c04`.
+- El CSV tiene **24 columnas**, incluida una primera columna sin nombre que debe tratarse como índice de exportación, no como predictor. Las fechas `dt` observadas abarcan **20221017–20221024**. Se contaron **568,545 filas con `arrive_time > 0`**; esto no equivale a 568,545 pedidos válidos ni a un dataset ya depurado.
+- **Exclusiones antes de cotizar:** `courier_id`, coordenadas `grab_*`, `dispatch_time`, `grab_time`, `fetch_time`, aceptación y demás resultados de asignación. `arrive_time` es exclusivo del target. No usar la promesa `estimate_arrived_time` como sustituto de la duración observada. El instante al que se generó `estimate_meal_prepare_time` debe aclararse antes de usar esa estimación como feature.
+- **Pendiente de T07:** resolver una observación por pedido sin duplicar intentos; tratar ceros, reservas previas y diferencias temporales inválidas; verificar unidades de coordenadas y zona horaria. Los límites comerciales, filtros de distancia y comparación entre vehículos no se deducen del dataset. Por ahora, no se declara el target aprobado ni se computan métricas ML.
+
+### Evidencia y límites de `modeldata::deliveries`
+
+- [Ficha del mantenedor](https://modeldata.tidymodels.org/reference/deliveries.html) y [documentación versionada](https://github.com/tidymodels/modeldata/blob/00f1e0a7d1a08d38da02c09133f7f90b2efae318/R/deliveries.R): describen un estudio de entregas de un restaurante y las unidades. El [caso de estudio de los autores](https://aml4td.org/chapters/whole-game.html) explica que la duración completa es conocida. Esto es evidencia editorial de observaciones, no verificación independiente del proceso original de medición.
+- [DESCRIPTION](https://github.com/tidymodels/modeldata/blob/00f1e0a7d1a08d38da02c09133f7f90b2efae318/DESCRIPTION), [LICENSE](https://github.com/tidymodels/modeldata/blob/00f1e0a7d1a08d38da02c09133f7f90b2efae318/LICENSE) y [texto MIT](https://github.com/tidymodels/modeldata/blob/00f1e0a7d1a08d38da02c09133f7f90b2efae318/LICENSE.md) se consultaron como condiciones publicadas del paquete. Una eventual redistribución debe conservar los avisos correspondientes; no se atribuye una licencia inventada a un espejo de terceros.
+- [CSV consultado](https://tidymodels.r-universe.dev/modeldata/data/deliveries/csv): **777,729 bytes**, SHA-256 `8c51f20650e825a293b69d499f3203a5fddda6be39f92dbb7622226d54217812`; se contaron 10,012 filas, 31 columnas, siete etiquetas de día y cero celdas vacías del target. No se concluye todavía que todos los valores sean válidos.
+- La [API de compilación del editor](https://tidymodels.r-universe.dev/api/packages/modeldata) identificó la versión `1.6.0.9000` y el commit `00f1e0a7d1a08d38da02c09133f7f90b2efae318`. El [`.rda` de ese commit](https://raw.githubusercontent.com/tidymodels/modeldata/00f1e0a7d1a08d38da02c09133f7f90b2efae318/data/deliveries.rda) se descargó: 101,444 bytes, SHA-256 `08b431cdcff9e8a9a2804e29c8374e76ca87da0544064dd93ad6acf4c952c827`. No se convirtió ni se comprobó igualdad fila a fila con el CSV. La URL CSV es mutable; T06 debe fijar la versión y verificar el hash o convertir el original versionado.
+- La distancia aproximada en millas no debe confundirse con una ruta vial ni con Haversine del simulador. No hay correspondencia publicada entre `item_01`–`item_27` y comidas locales; no inventar esa equivalencia. T07/T13 pueden evaluar hora, día y distancia sin asumir que el catálogo anónimo es transferible.
+
+### Repetición del acceso a los nuevos candidatos
+
+Se verificaron HTTP, hashes y estructura con Python estándar. Esta receta
+repite el acceso para T05, conserva los datos en memoria y selecciona únicamente
+el CSV principal del ZIP, excluyendo posibles archivos auxiliares de macOS:
+
+```bash
+python3 - <<'PY'
+import csv
+import hashlib
+import io
+import zipfile
+from urllib.request import Request, urlopen
+
+base = "https://raw.githubusercontent.com/meituan/Meituan-INFORMS-TSL-Research-Challenge/"
+revision = "1f9b4288cee5a78d1e5da007fc306bbaa662fc6d"
+member = "all_waybill_info_meituan_0322.csv"
+sources = [
+    ("Meituan ZIP", f"{base}{revision}/{member}.zip"),
+    ("modeldata CSV", "https://tidymodels.r-universe.dev/modeldata/data/deliveries/csv"),
+]
+for name, url in sources:
+    with urlopen(Request(url, headers={"User-Agent": "ml-delivery-T05-research"}), timeout=45) as response:
+        payload = response.read()
+    print(name, "bytes:", len(payload), "SHA-256:", hashlib.sha256(payload).hexdigest())
+    if name == "Meituan ZIP":
+        with zipfile.ZipFile(io.BytesIO(payload)) as archive:
+            payload = archive.read(member)
+        print("CSV interno SHA-256:", hashlib.sha256(payload).hexdigest())
+    reader = csv.reader(io.StringIO(payload.decode("utf-8-sig")))
+    header = next(reader)
+    print("Filas:", sum(1 for _ in reader), "Columnas:", len(header))
+PY
+```
+
+**Recomendación actual:** priorizar **Meituan** para la adquisición local de T06,
+porque tiene procedencia operativa publicada por la plataforma y timestamps
+definidos para solicitud→entrega. Las restricciones de distribución son
+explícitas; no se publicarían registros. El uso privado de S3 se revisará antes de subir artefactos. `modeldata::deliveries`
+es una alternativa más pequeña si se acepta depender de la descripción del
+estudio del mantenedor y sus límites de cobertura. Ninguna opción necesita
+atribuir capacidad predictiva por vehículo ni cambiar el instante de cotización.
+
+La ampliación resuelve la búsqueda de candidatos técnicamente compatibles.
+**Decisión posterior de Ruben, 2026-11-03:** utilizar Meituan con las restricciones
+locales y académicas descritas. La validación del target/calidad queda pendiente
+de T07; esta selección no equivale a aprobación para entrenar.
+
+**Comprobaciones realizadas:** receta anterior ejecutada correctamente: Meituan,
+654,343 filas/24 columnas; modeldata, 10,012 filas/31 columnas; hashes coincidentes
+con los registrados. `git diff --check` sin errores. Solo cambió este documento;
+sin dependencias nuevas ni experimentos ML. No se ejecutó pytest porque el
+cambio es documental y la verificación pertinente fue el acceso a las fuentes.
+
+## Selección y adquisición de Meituan — T06
+
+**Decisión de Ruben, 2026-11-03:** utilizar Meituan para el experimento académico.
+El origen es el [repositorio oficial de Meituan](https://github.com/meituan/Meituan-INFORMS-TSL-Research-Challenge),
+referido por [INFORMS TSL](https://connect.informs.org/tsl/tslresources/datachallenge).
+Se conserva el objetivo candidato solicitud→entrega; seleccionar la fuente no
+aprueba todavía su calidad ni autoriza entrenamiento. Los resultados futuros
+serán experimentales y no se presentarán como validación para El Salvador.
+
+### Receta, versión y archivos locales
+
+Desde la raíz de esta copia de trabajo:
+
+```bash
+uv run --locked python ml/data/acquire_meituan.py
+uv run --locked pytest -q
+```
+
+La receta fija el commit de la fuente
+`1f9b4288cee5a78d1e5da007fc306bbaa662fc6d`. Descarga ZIP y licencia desde URLs
+que incluyen esa revisión, valida tamaño y SHA-256, extrae únicamente el CSV
+conocido y registra un manifiesto. Usa Python estándar, sin dependencias nuevas.
+Los datos se publican en la carpeta final solo después de completar la descarga
+y verificación. Si una copia ya existe, comprueba integridad y manifiesto sin
+volver a descargar ni sobrescribir archivos. Una copia alterada produce error.
+
+Ubicación predeterminada, ignorada por Git:
+`data/raw/meituan/1f9b4288cee5a78d1e5da007fc306bbaa662fc6d/`.
+`--output <directorio>` permite elegir otra ubicación local; esa carpeta también
+debe mantenerse fuera del control de versiones y de canales compartidos.
+
+| Archivo verificado | Bytes originales | SHA-256 |
+|---|---:|---|
+| `all_waybill_info_meituan_0322.csv.zip` | 38,763,754 | `38b51431a12dd7e73deb4fc750b1275067fbc29cfce2c4b4492339738c988ce2` |
+| `all_waybill_info_meituan_0322.csv` | 121,698,401 | `1d31aac21e17c11aec6ab0033d4040c03aea5bab1dfd60aa11e74d766bbd2c04` |
+| `License.txt` | 1,961 | `469f53d91ee9d0dbdf7b60146bfdbcee57732db4f2b6bb13c41bfdf28c30daab` |
+
+Se registró la descarga en `2026-11-03T20:50:19.293896+00:00` (UTC). El CSV
+contiene **654,343 filas y 24 columnas**, incluida la primera sin nombre.
+`manifest.json` conserva fecha real de descarga, URLs, revisión, inventario,
+hashes, condiciones de uso y la indicación de que no se aplicaron transformaciones.
+Una fila corresponde a un registro de despacho/waybill; no se afirma que cada
+fila sea un pedido único ni una entrega válida.
+
+### Licencia y alcance permitido
+
+Se conserva la [licencia de la revisión elegida](https://github.com/meituan/Meituan-INFORMS-TSL-Research-Challenge/blob/1f9b4288cee5a78d1e5da007fc306bbaa662fc6d/License.txt):
+el editor declara CC BY-NC 4.0 y condiciones adicionales de uso académico/no
+comercial, no distribución sin permiso y reconocimiento de Meituan. Los registros
+están actualmente en almacenamiento local ignorado y no se publican en Git ni
+frontend. El reconocimiento solicitado se conserva en `License.txt`. El uso
+privado de S3 y el alcance permitido para modelos derivados se revisarán antes
+de su publicación; no se consideran prohibidos ni autorizados de forma automática.
+
+### Papel de AWS y corrección de la restricción anterior
+
+El diseño mantiene `datasets/` para versiones autorizadas de originales,
+procesados y particiones; `models/` para pipeline/modelo validado, métricas y
+manifiesto; y `docs/` para evidencia académica. El destino previsto es el bucket
+existente `ml-kodigo-resources`, con acceso restringido para el proyecto.
+No se ha comprobado todavía el acceso o configuración efectiva del bucket.
+
+La afirmación anterior «Meituan no puede subirse a S3» fue demasiado amplia.
+El [texto CC BY-NC 4.0, secciones 1 y 2](https://creativecommons.org/licenses/by-nc/4.0/legalcode.en)
+permite reproducción y adaptación no comercial y distingue compartir con el
+público. Meituan añade una restricción de distribución a terceros. Ninguno de
+esos textos menciona expresamente AWS. Esto justifica separar copia privada
+académica de publicación, pero no acredita una autorización específica del
+editor para el caso concreto de alojamiento externo o distribución de modelos.
+
+**Condición pendiente para T33/T19:** comprobar compatibilidad de ese uso con
+los términos, definir qué artefactos pueden alojarse de forma privada y conservar
+licencia/atribución. Si no se puede justificar, resolver permiso o fuente antes
+de publicar esos artefactos. La auditoría T07 aprueba calidad para preparación
+académica; no certifica derechos de publicación ni da permiso de despliegue.
+Se corrige la documentación sin subir archivos, cambiar el bucket o iniciar
+servicios AWS. El desarrollo de la preparación local puede continuar.
+
+### Diccionario del CSV original
+
+El archivo es CSV: la receta conserva sus textos originales y no realiza
+conversión, imputación, filtrado ni renombrado. Los tipos/unidades siguientes
+describen la semántica del editor; T07 verificará que los valores la respeten.
+Fuentes: [tablas 1–2 del diccionario](https://github.com/meituan/Meituan-INFORMS-TSL-Research-Challenge/blob/1f9b4288cee5a78d1e5da007fc306bbaa662fc6d/TSL-Meituan%20challenge_background%20and%20data_20240321.pdf)
+y [aclaraciones de octubre de 2024](https://github.com/meituan/Meituan-INFORMS-TSL-Research-Challenge/blob/1f9b4288cee5a78d1e5da007fc306bbaa662fc6d/tsl_meituan_2024_data_report_20241015.pdf).
+
+| Columna(s) | Significado / unidad | Disponibilidad para cotizar |
+|---|---|---|
+| Primera columna sin nombre | Índice aparente de exportación; sin semántica de negocio documentada | Excluir como predictor. |
+| `dt` | Fecha de creación del pedido, formato `YYYYMMDD` | Candidata, verificar coherencia con el timestamp. |
+| `order_id` | Identificador anonimizado de pedido | Agrupación y trazabilidad; no predictor numérico. |
+| `waybill_id` | Identificador anonimizado del registro de despacho; un pedido puede tener varios | Trazabilidad de intentos; no predictor. |
+| `courier_id` | Repartidor al que se asignó el registro | Posterior a la solicitud; excluir antes de asignar. |
+| `da_id` | Área operativa anonimizada; áreas pueden solaparse | Solo si su correspondencia está disponible al solicitar; no equivale a una zona de El Salvador. |
+| `is_courier_grabbed` | Indicador de aceptación del repartidor | Resultado posterior; excluir como entrada. |
+| `is_weekend` | Indicador de fin de semana de la fecha del pedido | Candidato, verificar calendario. |
+| `estimate_arrived_time` | Timestamp Unix en segundos de la entrega prometida | Estimación del sistema original, no duración observada; no se supone disponible en nuestra API. |
+| `is_prebook` | Indicador de pedido reservado previamente | Candidato a contexto; T07 debe decidir tratamiento de reservas. |
+| `poi_id` | Identificador anonimizado del negocio | No tiene correspondencia con negocios locales; evitar asumir transferencia de IDs. |
+| `sender_lng`, `sender_lat` | Coordenadas desplazadas del origen, almacenadas como enteros | Origen conocido conceptualmente; escala/unidades a comprobar antes de calcular distancia. |
+| `recipient_lng`, `recipient_lat` | Coordenadas desplazadas del destino, almacenadas como enteros | Destino conocido conceptualmente; no son ubicaciones reales publicadas sin anonimización. |
+| `grab_lng`, `grab_lat` | Posición desplazada del repartidor al asignar; puede ser cero | Posterior a cotización; excluir como entrada. |
+| `dispatch_time` | Timestamp Unix en segundos de asignación del waybill | Posterior a solicitud; excluir como entrada. |
+| `grab_time` | Timestamp Unix en segundos de aceptación | Posterior; no usar para predecir desde solicitud. |
+| `fetch_time` | Timestamp Unix en segundos de recogida | Posterior; excluir como entrada. |
+| `arrive_time` | Timestamp Unix en segundos de entrega; cero puede indicar evento ausente | Solo para construir el target observado, nunca como predictor. |
+| `estimate_meal_prepare_time` | Timestamp Unix en segundos de la hora estimada de comida lista | Instante de generación no confirmado para nuestra cotización; no aprobar como feature todavía. |
+| `order_push_time` | Timestamp Unix en segundos de entrada al sistema de asignación | Posterior a creación; no sustituye automáticamente el instante de solicitud. |
+| `platform_order_time` | Timestamp Unix en segundos de creación del pedido | Base del intervalo objetivo y posible contexto temporal. |
+
+El objetivo candidato sigue siendo `(arrive_time - platform_order_time) / 60`
+en minutos, pendiente de T07. No se crean etiquetas ni se calculan métricas en
+T06. Quedan por auditar: ceros, intervalos inválidos, intentos repetidos,
+reservas, zona horaria, escala geográfica y variables disponibles al solicitar.
+
+### Comprobaciones de T06
+
+La adquisición real completó hashes, tamaños y estructura. Una segunda ejecución
+con la red bloqueada verificó la copia existente y conservó el manifiesto.
+Las tres pruebas nuevas son offline: rechazan bytes alterados, extraen solo el
+miembro esperado y comprueban que una descarga fallida no publica una copia
+parcial. `pytest` descubre ahora `backend/tests` y `ml/tests`.
+
+Resultado final: **19 pruebas aprobadas en Python 3.12.14 y 3.9.25** (16 previas
+y 3 de adquisición). `uv lock --check`, `uv pip check` y `git diff --check`
+correctos. ZIP, CSV, licencia y manifiesto están ignorados por Git. La
+adquisición no requirió credenciales, conexiones AWS ni entrenamiento.
+
+## Auditoría de calidad y objetivo — T07, 2026-11-03
+
+**Decisión:** `APROBADO_CON_CONDICIONES` para preparar en T08 una cohorte de
+pedidos inmediatos completados. La etiqueta representa minutos desde creación
+del pedido hasta entrega observada: `(arrive_time - platform_order_time) / 60`.
+Su significado procede del diccionario oficial de Meituan; se comprobaron los
+valores del archivo adquirido. No se derivan tiempos mediante distancia o
+velocidades supuestas, no se entrena un modelo y no se certifica desempeño local.
+
+### Reproducción
+
+```bash
+uv run --locked python ml/data/audit_meituan.py
+uv run --locked pytest -q
+```
+
+El script comprueba primero el SHA-256 del CSV de T06 y escribe únicamente
+agregados en `data/reports/meituan/<revision>/t07_audit.json`, ignorado por Git.
+No modifica el original ni genera un dataset limpio. Un campo obligatorio
+ausente, un decimal donde se espera un timestamp entero o un indicador distinto
+de 0/1 produce error, en lugar de reparar silenciosamente una etiqueta. Una
+decisión `BLOQUEADO` se informa con código de salida 2; el JSON conserva motivos.
+
+### Hallazgos medidos sobre el original
+
+| Comprobación | Resultado |
+|---|---:|
+| Filas / waybills distintos | 654,343 / 654,343 |
+| Pedidos distintos | 568,546 |
+| Pedidos con varios intentos | 57,770 |
+| `waybill_id` repetidos | 0 |
+| Celdas vacías o marcadores textuales de ausencia | 0 en las 24 columnas |
+| Filas con `arrive_time = 0` | 85,798 |
+| Filas con `grab_time = 0` / `fetch_time = 0` | 85,797 / 85,797 |
+| Filas con `dispatch_time = 0` | 1 |
+| Filas con `platform_order_time = 0` | 0 |
+| Filas con entrega positiva | 568,545 |
+| Pedidos sin entrega positiva / con varias entregas positivas | 1 / 0 |
+| Intervalos no positivos entre creación positiva y entrega positiva | 0 |
+| Pedidos con cambios en datos de cotización entre intentos | 88 |
+
+No confundir ausencia de celdas vacías con ausencia de datos faltantes: el editor
+utiliza **cero como evento ausente**. Los rangos de origen/destino observados son
+enteros, no coordenadas ya aprobadas para `Location`: latitud de origen
+45,755,268–46,067,416 y longitud 174,481,806–174,988,918; latitud de destino
+45,729,124–46,072,996 y longitud 174,387,310–174,994,756. Ninguna de esas cuatro
+columnas tiene ceros. No se aplicó Haversine a esos valores ni se inventó una escala.
+
+Cambian el timestamp de creación en **24 pedidos** y las coordenadas de destino
+en **66**; hay solapamiento entre ambos grupos y el total ambiguo es **88**, no
+la suma de los conteos por columna. También cambian `dt` en 37 pedidos y `da_id`
+en 1,963; esos contextos no se usan como sustitutos del instante de solicitud.
+
+### Cohorte propuesta y descarte documentado
+
+Se cuenta un pedido elegible solo si conserva creación, origen, destino y
+condición de reserva entre todos sus intentos; tiene una única entrega positiva;
+es inmediato (`is_prebook = 0`); y el intento completado está aceptado con eventos
+positivos en orden creación→entrada a asignación→asignación→aceptación→recogida→entrega.
+La entrega debe ser estrictamente posterior a creación. No se elige simplemente
+la última fila ni se conserva un intento rechazado como otra entrega.
+
+| Resultado por pedido, con motivos excluyentes en ese orden | Cantidad |
+|---|---:|
+| Excluir por cambios en datos de cotización | 88 |
+| Excluir por no tener entrega positiva | 1 |
+| Excluir por varias entregas positivas | 0 |
+| Separar reservas del alcance de pedidos inmediatos | 22,176 |
+| Excluir por cronología inválida dentro del resto | 0 |
+| **Pedidos elegibles para preparar** | **546,281** |
+
+El total suma los **568,546 pedidos** originales. Son **108,062 filas menos**
+que las del archivo crudo porque se consolidan intentos y se delimitan pedidos;
+no son 108,062 duraciones falsas o valores atípicos eliminados. Los criterios
+están implementados para contar y auditar, pero la cohorte **no está materializada**.
+T08 deberá producirla con transformaciones Pandas y verificar estos conteos.
+
+La separación de reservas es semántica, no un umbral de duración: el editor
+distingue pedidos inmediatos de entregas programadas. Las reservas completadas
+del original tienen mediana de 79.9 minutos y máximo de 10,336.4833 minutos;
+mezclarlas como si todas fueran solicitudes inmediatas confundiría espera
+programada con desempeño de una entrega. Los motivos de descarte anteriores
+usan precedencia: cinco reservas ya están incluidas en el grupo ambiguo, por
+eso el conteo separado no es el de todas las reservas completadas (22,181).
+
+Para los 546,281 pedidos elegibles, la duración observada es: mínimo **1.9667**,
+mediana **27.9**, media **29.6445**, percentil 95 **51.4333**, percentil 99
+**63.2833** y máximo **645.4167 minutos**. Los percentiles usan rango más próximo.
+Son estadísticos descriptivos, no métricas de predicción. Las duraciones largas
+se conservan: T09 estudiará su distribución; no se impone un máximo arbitrario
+ni se convierte este rango en una promesa de tiempo del negocio.
+
+### Disponibilidad de variables y prevención de leakage
+
+| Campo / grupo | Decisión antes de cotizar |
+|---|---|
+| `platform_order_time` | Disponible al crear el pedido. Permite derivar hora/día en UTC con convención explícita. Es el contexto temporal confirmado para una primera preparación; el esquema final se decide en T13. |
+| `is_prebook` | Información de la solicitud usada para delimitar la cohorte inmediata; será constante 0 dentro de ella, no un predictor informativo. |
+| `sender_*`, `recipient_*` | Origen/destino son conocidos conceptualmente, pero la representación desplazada y escala requieren confirmación antes de convertir a grados o calcular km. No aprobar todavía una feature física de distancia ni congelar el contrato geográfico de `/predict`. |
+| `dt`, `is_weekend` | No asumir que equivalen a la fecha de creación UTC; preferir calendario derivado del timestamp de solicitud. |
+| `courier_id`, `grab_*`, `is_courier_grabbed`, `dispatch_time`, `grab_time`, `fetch_time` | Posteriores a cotización; excluidos como features. Usarlos para auditar completitud no significa suministrarlos al predecir. |
+| `arrive_time` | Exclusivo de construcción de etiqueta y auditoría; nunca entrada de inferencia. |
+| `estimate_arrived_time`, `estimate_meal_prepare_time` | Salidas de sistemas originales cuyo instante/disponibilidad en nuestro flujo no están acreditados; excluidas por ahora. No sustituyen eventos observados. |
+| `order_push_time` | Evento posterior a creación; se audita cronología pero no se presupone como entrada de cotización. |
+| Índice sin nombre, `order_id`, `waybill_id`, `poi_id`, `da_id` | Trazabilidad/agrupación, no features aprobadas. Los IDs anonimizados no tienen correspondencia con negocios o zonas locales; `da_id` además cambia entre intentos. |
+
+De las 568,545 filas con entrega positiva, `dt` coincide con la fecha de creación
+en UTC en **543,390**, y con UTC+8 en **566,787**. La segunda comparación es
+diagnóstica: no acredita por sí sola zona horaria o significado de `dt`. Las
+diferencias de timestamps Unix no requieren suponer una zona para medir segundos.
+Para fechas/hora se usará una convención explícita, sin trasladar silenciosamente
+patrones horarios a El Salvador. La cohorte propuesta tiene fechas de creación
+UTC del **2022-10-16 al 2022-10-24**; esa cobertura corta limita la evaluación.
+
+### Condiciones para continuar
+
+La aprobación permite preparar y explorar la cohorte inmediata descrita,
+inicialmente con contexto temporal conocido. **Las features de distancia quedan
+pendientes de confirmar unidades y anonimización**; no bloquean el objetivo
+temporal ni autorizan construir una conversión geográfica sin evidencia.
+Solo se avanzará al entrenamiento después de cumplir las dependencias T08–T13.
+
+La etiqueta queda condicionada a pedidos completados; no estima probabilidad de
+cancelación ni cubre pedidos sin entrega observada. No se afirma generalización
+a otros países, temporadas o modalidades de vehículo. Las futuras particiones
+deben evitar que un pedido o sus intentos aparezcan en conjuntos distintos y
+evaluar separación temporal; no se adopta una partición de forma anticipada.
+
+**Comprobaciones:** auditoría ejecutada sobre el CSV con hash de T06;
+**25 pruebas aprobadas en Python 3.12.14 y 3.9.25**, incluidas seis nuevas de
+auditoría. Cubren intentos rechazados, destino cambiante, reservas/eventos
+ausentes/cronología inversa, parseo estricto, entregas ambiguas y datos vacíos o
+IDs de waybill repetidos. `uv lock --check` y `uv pip check` correctos; sin
+dependencias nuevas, entrenamiento, escritura AWS ni publicación de registros.
 
 ## Datos necesarios para cada parte del producto
 

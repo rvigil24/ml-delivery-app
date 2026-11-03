@@ -21,5 +21,5 @@ dev = [
 packages = ["backend/src/delivery"]
 
 [tool.pytest.ini_options]
-testpaths = ["backend/tests"]
+testpaths = ["backend/tests", "ml/tests"]
 addopts = "--strict-config --strict-markers"

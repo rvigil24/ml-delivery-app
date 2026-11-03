@@ -29,8 +29,75 @@ corresponden al reparto previo y deben interpretarse con esta actualización.
 - **T41–T54:** asignadas a Ruben Vigil; despliegue y gastos siguen requiriendo autorización explícita.
 
 Cada agente trabaja una tarea por iteración, informa resultados y evita hacer
-commits/push por cuenta propia. Las nuevas ramas parten de `main` actualizado;
-cada tarea mantiene el alcance y la arquitectura documentados.
+commits/push por cuenta propia. Las nuevas ramas parten de `origin/main`
+actualizado y agrupan un bloque pequeño, conforme al flujo siguiente.
+
+## Flujo de entrega por bloques — acordado el 2026-11-03
+
+Ruben trabaja ahora solo y solicita reducir las operaciones manuales de GitHub.
+Se conserva la trazabilidad por tarea y se agrupa la integración:
+
+1. Definir un bloque de **2–3 tareas relacionadas**, con IDs explícitos, y crear su rama desde `origin/main` actualizado.
+2. Trabajar una tarea a la vez. Registrar evidencia y pendientes aquí; mantener la guía externa. «Continuemos» avanza a la siguiente tarea documentada del bloque, respetando dependencias.
+3. Cuando Ruben indique **«cerrá el bloque»**, el agente verifica cada ID, las dependencias y los criterios de aceptación. Si falta trabajo o hay un bloqueo, lo resuelve dentro del alcance o informa el impedimento antes de publicar un cierre.
+4. Esa orden autoriza actualizar el backlog local con evidencia, crear commit(s) identificados con las tareas, hacer push y crear o actualizar **un PR** con el resumen del bloque, comprobaciones y limitaciones.
+5. Fusionar el PR cuando los controles y permisos del remoto lo permitan. Verificar que los commits estén incluidos en `origin/main`, sincronizar `main` local y registrar PR/commit de integración en la guía externa. GitHub conserva el estado efectivo del PR. Si falla una operación, informar qué quedó hecho y qué sigue pendiente.
+
+El estado oficial de las tareas del bloque se actualiza como parte de ese cierre;
+la preparación local no se confunde con integración confirmada. Antes de iniciar
+otro bloque se revisa que sus dependencias estén satisfechas y que ningún ID del
+bloque anterior haya quedado sin resultado. No se borran ramas automáticamente,
+no se fuerza el historial y no se modifica el Excel sin una instrucción específica.
+La fusión no autoriza despliegues ni gastos AWS.
+
+### Bloque T05–T07 — fuentes, adquisición y validación
+
+Rama: `data/T05-T07-datos`. Base: `origin/main` en `1a7a925`.
+Los cambios activos están reunidos en la carpeta principal del repositorio.
+T05, T06 y T07 están completadas en implementación y comprobaciones. Su
+integración se realiza en el único PR de esta rama; el resultado efectivo del
+merge se consulta en GitHub y se registra en la guía externa.
+
+| ID | Preparación local | Evidencia disponible / pendiente |
+|---|---|---|
+| T05 | Investigación y selección preparadas | `docs/DATA_ML.md`: fuentes accedidas, hashes y elección explícita de Meituan por Ruben. |
+| T06 | Adquisición preparada | `ml/data/acquire_meituan.py`, inventario/licencia/manifiesto local; 19 pruebas aprobadas en Python 3.12 y 3.9 en la preparación T06. |
+| T07 | Auditoría preparada; aprobada con condiciones | `ml/data/audit_meituan.py` e informe agregado: 546,281 pedidos inmediatos elegibles; reglas y riesgos en DATA_ML. La distancia queda pendiente de confirmar unidades. Suite del bloque: 25 pruebas aprobadas en Python 3.12 y 3.9. |
+
+Checklist de cierre del bloque:
+
+- [x] Investigación T05 y decisión de fuente registradas.
+- [x] Receta e inventario de T06 disponibles.
+- [x] T07 satisface su criterio de aceptación: target observado, cohorte y features temporales documentados; condiciones geográficas y de alcance explícitas.
+- [x] Comprobaciones finales del bloque ejecutadas: auditoría real con hash verificado, 25 pruebas en Python 3.12/3.9, compatibilidad de dependencias y formato.
+- [x] Backlog local y guía actualizados con el resultado de cada ID.
+- [ ] Commit(s), push y único PR del bloque publicados.
+
+La confirmación final del merge y sincronización se registra en GitHub y la
+guía externa; no requiere crear otro PR solo para anotar el hash posterior.
+
+Los bloques siguientes se definirán al terminar este, por ejemplo T08–T09 y
+T10–T12. No se amplía el bloque actual ni se inician tareas posteriores mientras
+esté pendiente la validación requerida para ellas.
+
+**Cierre solicitado:** verificación, commit, push y PR único con merge a `main`.
+La integración solo se comunica como completada tras comprobar el remoto.
+
+### Bloque activo siguiente: T08–T09 — preparación y EDA
+
+Se activa después de verificar la integración de T05–T07. Rama prevista:
+`data/T08-T09-preparacion-eda`, creada desde `origin/main` actualizado.
+
+- T08: **siguiente tarea**, materializar con Pandas la cohorte aprobada y documentar transformaciones.
+- T09: pendiente de T08, análisis exploratorio y visualizaciones reproducibles.
+- Un PR al cerrar el bloque; ninguna de estas tareas está completada todavía.
+
+La preparación de datos T08 no incluye automáticamente features geográficas no validadas.
+La confirmación de unidades geográficas queda como pendiente explícito para el
+próximo bloque antes de calcular distancia física; no debe perderse al integrar.
+El uso privado de S3 y los derechos sobre publicación de artefactos Meituan quedan
+pendientes de revisión en T33/T19 antes de cualquier subida. La auditoría de calidad
+no resuelve esa condición ni excluye AWS del diseño; ver la corrección en DATA_ML.
 
 ## Instrucciones concretas y criterios de aceptación: T01–T12
 
@@ -162,9 +229,9 @@ cada tarea mantiene el alcance y la arquitectura documentados.
 | T02 | Preparación y arquitectura | Configurar entorno Python y dependencias | Ruben Vigil | Completada |
 | T03 | Preparación y arquitectura | Diseñar arquitectura general y flujo de pedidos | Ruben Vigil | Completada |
 | T04 | Preparación y arquitectura | Definir modelos de datos: negocios, pedidos, repartidores y entregas | Ruben Vigil | Completada |
-| T05 | Dataset y procesamiento de datos | Investigar y verificar fuentes de datos reales de entregas | Ruben Vigil | Pendiente |
-| T06 | Dataset y procesamiento de datos | Descargar y documentar el dataset seleccionado | Ruben Vigil | Pendiente |
-| T07 | Dataset y procesamiento de datos | Validar la variable objetivo y calidad de los datos | Ruben Vigil | Pendiente |
+| T05 | Dataset y procesamiento de datos | Investigar y verificar fuentes de datos reales de entregas | Ruben Vigil | Completada |
+| T06 | Dataset y procesamiento de datos | Descargar y documentar el dataset seleccionado | Ruben Vigil | Completada |
+| T07 | Dataset y procesamiento de datos | Validar la variable objetivo y calidad de los datos | Ruben Vigil | Completada |
 | T08 | Dataset y procesamiento de datos | Limpiar y transformar los datos con Pandas | Ruben Vigil | Pendiente |
 | T09 | Dataset y procesamiento de datos | Realizar análisis exploratorio (EDA) y visualizaciones | Ruben Vigil | Pendiente |
 | T10 | Dataset y procesamiento de datos | Implementar transformaciones equivalentes con Dask | Ruben Vigil | Pendiente |
@@ -218,7 +285,7 @@ cada tarea mantiene el alcance y la arquitectura documentados.
 1. Ruben entrega la estructura (T01), dependencias (T02), arquitectura revisada (T03) y dominio (T04).
 2. Ruben investiga T05 y valida T06–T07 antes de construir ETL T08–T12.
 3. Ruben documenta la interfaz compartida de predicción **después de validar la fuente real**, evitando suponer features.
-4. Se hacen ramas pequeñas y revisiones cruzadas; no se cierran tareas sin pruebas/evidencias.
+4. Se usan bloques pequeños con una rama y un PR por bloque; no se cierran tareas sin pruebas/evidencias. Aplicar el flujo y la checklist anteriores.
 5. Reflejar en el Excel la asignación de T01–T54 a Ruben Vigil y el cierre de T01–T04; no iniciar tareas posteriores sin sus dependencias.
 
 ## Definition of Done (mínimo)
