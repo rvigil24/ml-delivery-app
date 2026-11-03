@@ -23,9 +23,9 @@ corresponden al reparto previo y deben interpretarse con esta actualización.
 
 ## Orden de trabajo de Ruben Vigil
 
-- **T01–T07:** completadas e integradas en `main`.
-- **T08–T09:** implementadas y verificadas; cierre e integración autorizados por Ruben.
-- **Próximo bloque propuesto:** T10 → T11 → T12, respetando las dependencias; aún sin iniciar.
+- **T01–T09:** completadas e integradas en `main`; T08–T09 mediante PR #5, commit `f93f833`.
+- **T10–T12:** completadas en implementación y comprobaciones; cierre e integración autorizados por Ruben.
+- **Siguiente tarea:** T13, preparar variables y conjuntos de entrenamiento/prueba; aún sin iniciar.
 - **T13–T40:** continuar según dependencias y criterios de aceptación.
 - **T41–T54:** asignadas a Ruben Vigil; despliegue y gastos siguen requiriendo autorización explícita.
 
@@ -103,6 +103,37 @@ Checklist de cierre:
 El cierre incluye commit, push y PR único con merge y sincronización de `main`.
 La confirmación posterior se registra en GitHub y la guía externa, evitando otro
 PR solo para anotar el hash generado por la integración.
+
+**Cierre verificado:** T08–T09 integradas mediante [PR #5](https://github.com/rvigil24/ml-delivery-app/pull/5), commit `f93f833`; `main` local y remoto sincronizados antes de iniciar el bloque siguiente.
+
+### Bloque T10–T12 — motores de procesamiento
+
+Rama `data/T10-T12-motores`, creada desde `origin/main` actualizado en `f93f833`.
+Responsable de los tres IDs: Ruben Vigil. La orden de continuar activa este
+bloque; se implementa una tarea por iteración y se integra con un solo PR al cierre.
+
+- T10: completada; Dask y comparación completa con Pandas: 546,281 filas, 11 columnas y SHA-256 idéntico desde siete particiones. 33 pruebas y comparación real aprobadas en Python 3.12/3.9 al implementar T10.
+- T11: completada; Spark SQL local con 546,281 filas/11 columnas equivalentes exactamente a Pandas y hash normalizado idéntico. Lectura en ocho particiones, `local[2]`, Java 17 y UTC. 35 pruebas y comparación completa aprobadas en Python 3.12/3.9.
+- T12: completada; benchmark con tres rondas rotativas y procesos nuevos en Python 3.12: nueve resultados equivalentes. Medianas de pipeline: Pandas 3.708 s, Dask 6.250 s y Spark 25.138 s en el equipo registrado. JSON, CSV de muestras, Markdown y gráfico reproducibles. Comprobación funcional separada en Python 3.9 con una muestra real por motor; no se mezclan los tiempos.
+
+El notebook incorpora T10–T12 y sus evidencias locales: quince celdas ejecutadas
+sin errores. Por orden explícita de Ruben, los tres IDs se registran como
+completados con esta evidencia, sin modificar el Excel ni atribuir revisión
+independiente. La publicación usa un único PR; su integración efectiva y el
+commit se verifican en GitHub y se registran en la guía externa tras el merge.
+
+Comprobaciones de cierre:
+
+- [x] Dependencias y criterios T10/T11/T12 contrastados con código, dataset real y reportes.
+- [x] Equivalencia completa Dask/Spark–Pandas en Python 3.9/3.12; fuente y referencia intactas.
+- [x] Nueve muestras T12, estadísticas, entorno y hashes verificados; prueba funcional 3.9 separada.
+- [x] Suite de 35 pruebas aprobada; notebook válido y sin resultados guardados en Git.
+- [x] Backlog local y guía actualizados por orden explícita; instrucciones para agentes temporales sin dependencia de ejecución.
+
+El cierre incluye commit, push, PR único, merge y sincronización de `main`.
+El resultado posterior queda en GitHub y la guía externa, evitando un PR adicional
+solo para anotar el hash de integración. No se usa un clúster, AWS ni entrenamiento;
+las coordenadas siguen en unidades originales sin derivar distancias físicas.
 
 La preparación de datos T08 no incluye automáticamente features geográficas no validadas.
 La confirmación de unidades geográficas queda como pendiente explícito para el
@@ -246,9 +277,9 @@ no resuelve esa condición ni excluye AWS del diseño; ver la corrección en DAT
 | T07 | Dataset y procesamiento de datos | Validar la variable objetivo y calidad de los datos | Ruben Vigil | Completada |
 | T08 | Dataset y procesamiento de datos | Limpiar y transformar los datos con Pandas | Ruben Vigil | Completada |
 | T09 | Dataset y procesamiento de datos | Realizar análisis exploratorio (EDA) y visualizaciones | Ruben Vigil | Completada |
-| T10 | Dataset y procesamiento de datos | Implementar transformaciones equivalentes con Dask | Ruben Vigil | Pendiente |
-| T11 | Dataset y procesamiento de datos | Implementar transformaciones equivalentes con PySpark local | Ruben Vigil | Pendiente |
-| T12 | Dataset y procesamiento de datos | Comparar tiempos y resultados de Pandas, Dask y PySpark | Ruben Vigil | Pendiente |
+| T10 | Dataset y procesamiento de datos | Implementar transformaciones equivalentes con Dask | Ruben Vigil | Completada |
+| T11 | Dataset y procesamiento de datos | Implementar transformaciones equivalentes con PySpark local | Ruben Vigil | Completada |
+| T12 | Dataset y procesamiento de datos | Comparar tiempos y resultados de Pandas, Dask y PySpark | Ruben Vigil | Completada |
 | T13 | Machine Learning y Deep Learning | Preparar variables predictoras y conjuntos de entrenamiento/prueba | Ruben Vigil | Pendiente |
 | T14 | Machine Learning y Deep Learning | Implementar un modelo baseline | Ruben Vigil | Pendiente |
 | T15 | Machine Learning y Deep Learning | Entrenar tres algoritmos ML de distintas familias | Ruben Vigil | Pendiente |

@@ -13,7 +13,7 @@ OUTPUT = ROOT / "data" / "reports" / "presentation" / "delivery_source.zip"
 
 
 def main() -> None:
-    paths = [ROOT / name for name in ("pyproject.toml", "uv.lock", ".python-version", "README.md", "AGENTS.md")]
+    paths = [ROOT / name for name in ("pyproject.toml", "uv.lock", ".python-version", "README.md")]
     for name in ("backend/src", "backend/tests", "ml/src", "ml/data", "ml/tests"):
         paths.extend((ROOT / name).rglob("*.py"))
     paths.extend((ROOT / "docs").glob("*.md"))

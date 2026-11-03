@@ -573,6 +573,181 @@ Métodos: [límites de Tukey — NIST](https://www.itl.nist.gov/div898/handbook/
 [correlaciones — Pandas](https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.corr.html),
 [histogramas — Matplotlib](https://matplotlib.org/stable/api/_as_gen/matplotlib.axes.Axes.hist.html).
 
+## Transformaciones equivalentes con Dask — T10
+
+Responsable: Ruben Vigil; dependencia T08 integrada. Ejecutar:
+
+```bash
+uv run --locked python ml/data/compare_dask_meituan.py
+```
+
+Se añade `delivery_ml.preparation_dask`, sin cambiar la receta Pandas ni sus
+hashes. Dask lee el original en bloques de 16 MiB (**siete particiones reales**),
+selecciona columnas, normaliza/valida IDs y comprueba la unicidad global de
+`waybill_id`. Después hace shuffle por `order_id`, reuniendo todos los intentos
+de cada pedido, y aplica `prepare_orders` dentro de cada partición. Así conserva
+exactamente las reglas de tipado, conflictos, reservas, completados y cronología,
+así como la duración/contexto UTC y las coordenadas originales.
+
+Aplicar la limpieza a fragmentos sin shuffle sería incorrecto: intentos
+conflictivos o completados múltiples pueden cruzar particiones. La unicidad
+de waybills también se comprueba globalmente, no solo dentro de cada pedido.
+La reducción de validación ya ejecuta tareas; `compute()` materializa después
+la cohorte. Se usa el scheduler local de hilos con dos trabajadores, sin
+`distributed` ni clúster. La salida final se reúne en memoria para compararla;
+esta receta no prueba capacidad ilimitada ni optimización de rendimiento.
+
+Resultado real en Python **3.12.14 / Dask 2024.12.1** y **3.9.25 / Dask 2024.8.0**:
+**546,281 filas y 11 columnas**, comparación exacta de todos sus valores y CSV
+serializado con SHA-256 `e0097ce35228ae6d14f316e385cf1e22e43221cccb5e8f8e5eaf2500931885fd`,
+idéntico a T08. Se ignoran solo diferencias de dtype de almacenamiento (ancho de
+enteros/backend de strings), no diferencias numéricas; el CSV de referencia se
+lee con `float_precision="round_trip"`. Se conserva intacto el original y la
+referencia Pandas. El CSV Dask usado para verificar su hash es temporal, sin
+persistir otra copia del dataset.
+
+El informe agregado `data/reports/meituan/<revision>/t10_dask.json`, ignorado por
+Git, identifica fuente/referencia/auditoría, hashes de implementación, versiones,
+particiones y operaciones. Solo afirma equivalencia después de pasar ambas
+comprobaciones: valores completos y bytes de CSV. **No mide tiempos ni acredita
+mejoras de velocidad**; T12 debe medir trabajo equivalente incluyendo ejecución
+real, lectura y validaciones, con el entorno documentado.
+
+Dependencia `dask[dataframe]>=2024.8,<2025`: familia compatible con la base
+Python 3.9+; `uv.lock` fija versiones por intérprete. No se instala Spark en T10.
+33 pruebas aprobadas en ambos intérpretes: solo dos pruebas nuevas, con intentos
+cruzados entre particiones, conservación de cola y rechazos de IDs duplicados,
+ausentes o timestamps fraccionarios. En Python 3.12 se observa un aviso de
+deprecación interno de Dask/NumPy sobre unidades timedelta, sin afectar pruebas
+ni equivalencia; no se ocultó con filtros globales.
+
+El notebook muestra el código y el resultado T10; T11–T12 siguen pendientes.
+Referencias oficiales: [shuffle y agrupaciones](https://docs.dask.org/en/stable/dataframe-groupby.html),
+[lectura particionada](https://docs.dask.org/en/stable/generated/dask.dataframe.read_csv.html),
+[operaciones por partición](https://docs.dask.org/en/stable/generated/dask.dataframe.DataFrame.map_partitions.html).
+
+## Transformaciones equivalentes con PySpark local — T11
+
+Responsable: Ruben Vigil; dependencia T08 integrada. Requiere Java 17 y:
+
+```bash
+uv run --locked python ml/data/compare_spark_meituan.py
+```
+
+`delivery_ml.preparation_spark` usa operaciones nativas Spark SQL: selección,
+conversión/validación de IDs y enteros finitos, unicidad global de waybills,
+`groupBy`/`countDistinct` para estabilidad de cotización, ventana para contar
+completados, join `left_semi` y filtros de reservas/aceptación/cronología.
+Duración, hora y día se calculan en Spark; la sesión UTC hace lunes=0 y domingo=6,
+equivalente a Pandas. Coordenadas preservadas sin inferir unidades.
+
+Configuración local: `local[2]`, cuatro particiones de shuffle, bloques de lectura
+de hasta 16 MiB y **ocho particiones reales** del CSV. No hay UDF que delegue la
+limpieza a Pandas, clúster remoto, acceso AWS ni entrenamiento. Las validaciones
+ejecutan acciones; `collect()` materializa después la cohorte terminada y Pandas
+compara todos los valores con la referencia leída en modo round-trip.
+
+Resultado verificado con **PySpark 3.5.9, Java 17.0.20.1, Python 3.12.14 y 3.9.25**:
+**546,281 filas y 11 columnas**, valores exactos y SHA-256 del CSV normalizado
+`e0097ce35228ae6d14f316e385cf1e22e43221cccb5e8f8e5eaf2500931885fd`.
+El hash corresponde a serialización común con Pandas tras `collect`, no al
+escritor CSV nativo de Spark. El CSV de verificación es temporal; fuente y
+referencia se verifican antes/después y quedan intactas.
+
+Informe agregado: `data/reports/meituan/<revision>/t11_spark.json`, ignorado por
+Git, con hashes de fuente/referencia/auditoría/implementación, versiones,
+particiones y operaciones. **35 pruebas aprobadas** en ambos intérpretes; dos
+pruebas nuevas contrastan reglas con Pandas y detectan duplicados globales,
+IDs ausentes, timestamps fraccionarios/no finitos/fuera de int64 e indicadores
+inválidos. Los casos controlados incluyen representación científica de un entero
+y no se incorporan al experimento real.
+
+Se usa `collect()` porque `toPandas()` de Spark 3.5 requiere `distutils`, ausente
+en Python 3.12; así no se añade una dependencia solo para convertir. Arrow está
+deshabilitado en Spark; el PyArrow instalado para Dask no se usa para esta
+transferencia. La salida se reúne en memoria y no demuestra escalabilidad
+ilimitada. T12 debe medir trabajo equivalente real, sin inferir rapidez de la
+equivalencia ni confundir construir un grafo con ejecutar sus acciones.
+
+El notebook incorpora T11; T12 sigue pendiente. La reproducción no depende de
+las instrucciones temporales para agentes; metodología y contratos de datos
+permanecen aquí, en README y en el notebook. El empaquetador ya no exige ni
+incluye `AGENTS.md`.
+
+Referencias oficiales: [instalación, Python y Java](https://spark.apache.org/docs/3.5.7/api/python/getting_started/install.html),
+[agrupaciones](https://spark.apache.org/docs/3.5.7/api/python/reference/pyspark.sql/api/pyspark.sql.DataFrame.groupBy.html).
+
+## Comparación de rendimiento local — T12
+
+Responsable: Ruben Vigil. Dependencias T08, T10 y T11 implementadas y verificadas.
+`ml/data/benchmark_meituan.py` mide tres rondas, rotando Pandas/Dask/Spark,
+Dask/Spark/Pandas y Spark/Pandas/Dask. Cada muestra usa un proceso Python nuevo
+y una sesión Spark nueva cuando corresponde. Entrada idéntica: **654,343 filas,
+121,698,401 bytes**, con el hash original aprobado; salida esperada:
+**546,281 pedidos y 11 columnas**.
+
+```bash
+uv run --locked python ml/data/benchmark_meituan.py
+```
+
+Medición principal: `2026-11-03T22:30:54.824212+00:00`, Linux x86_64,
+AMD Ryzen 5 5600H, 12 CPU lógicas/permitidas por afinidad y 7,607,324,672 bytes
+de RAM visible. Python 3.12.14, Pandas 2.3.3, Dask 2024.12.1, PySpark 3.5.9,
+NumPy 2.5.4, PyArrow 26.0.1 y Java 17.0.20.1. Dask/Spark usan dos hilos,
+bloques de 16 MiB y siete/ocho particiones reales; Spark tiene cuatro particiones
+de shuffle. Pandas usa su ejecución habitual en un proceso. No se fija afinidad
+ni se afirma el mismo paralelismo interno para las tres bibliotecas.
+
+| Motor | Arranque mediano (s) | Pipeline mediano (s) | Pipeline mínimo–máximo (s) | Mediana arranque + pipeline (s) |
+|---|---:|---:|---:|---:|
+| Pandas | 0.372 | 3.708 | 3.598–4.821 | 4.098 |
+| Dask | 0.562 | 6.250 | 6.098–6.489 | 6.936 |
+| Spark | 2.547 | 25.138 | 24.575–31.508 | 27.685 |
+
+Se usa `perf_counter`. Arranque comprende imports del motor y creación de sesión
+Spark. Pipeline incluye lectura, validaciones globales/por partición, agrupación,
+filtrado, contexto/duración, `compute`/`collect` efectivos, conversión de la salida
+y ordenación común. No se cronometra únicamente el grafo. La comparación exacta
+y serialización CSV común para verificar hash quedan fuera de ese tiempo, y
+el cierre de Spark también; `process_wall_seconds` registra aparte el subproceso
+completo. La mediana de la suma se calcula por muestra, no sumando medianas.
+
+Las **nueve muestras** pasan igualdad de todos los valores y el hash normalizado
+T08 `e0097ce35228ae6d14f316e385cf1e22e43221cccb5e8f8e5eaf2500931885fd`.
+El original y la referencia se verifican antes/después. La salida se reúne en
+memoria en los tres casos; el CSV de verificación es temporal. Solo se acepta
+una muestra cuando su equivalencia pasa.
+
+Salidas locales ignoradas por Git, en `data/reports/meituan/<revision>/t12/`:
+`t12_benchmark.json` (muestras, protocolo, entorno, hashes), `t12_muestras.csv`,
+`t12_benchmark.md` y `t12_tiempos.png`. El gráfico muestra medianas y rango
+observado, **no intervalos de confianza**. `--reuse` reutiliza el informe solo
+con datos, recetas, lockfile, versiones, hardware y repeticiones coincidentes;
+se conserva la fecha original y se informa que no se midió de nuevo.
+
+Conclusión limitada: Pandas tuvo la menor mediana para este volumen y estas
+implementaciones locales. No se usó cache/persist explícito de Spark/Dask, pero
+no se vació la caché de archivos del sistema ni se descartó calentamiento.
+Arranque/JIT, caché y carga del equipo pueden influir; el rango de Spark muestra
+variación. Las operaciones son semánticamente equivalentes, con algoritmos,+número de pasadas y particiones propios. No es una prueba universal de motores,
+escalabilidad distribuida o precisión ML. Tres muestras no prueban superioridad
+estadística general. En Colab se deben medir/reportar sus propios resultados.
+
+El notebook incorpora el protocolo, tabla, gráfico y contexto del informe. Las
+35 pruebas existentes siguen verificando las reglas de transformación; T12 se
+verifica con las nueve ejecuciones reales y la consistencia del informe, sin
+añadir pruebas que fabriquen tiempos para presentarlos como experimento.
+
+Compatibilidad del nuevo script comprobada también en Python 3.9.25 mediante
+una ejecución funcional completa de una muestra real por motor, con salidas
+equivalentes e informes válidos en un directorio temporal. Esa comprobación no
+se mezcla con las nueve mediciones principales de Python 3.12 ni se usa para
+extraer conclusiones de velocidad entre intérpretes.
+
+Métodos: [reloj de alta resolución — Python](https://docs.python.org/3/library/time.html#time.perf_counter),
+[buenas prácticas — Dask](https://docs.dask.org/en/stable/best-practices.html),
+[transformaciones y acciones — Spark](https://spark.apache.org/docs/3.5.7/rdd-programming-guide.html#rdd-operations).
+
 ## Datos necesarios para cada parte del producto
 
 | Necesidad | Fuente adecuada | Método previsto |
@@ -693,9 +868,9 @@ No afirmar que el modelo diferencia bicicleta/motocicleta si no está respaldado
 Evitar notebooks gigantes que mezclen adquisición, lógica comercial, entrenamiento y presentación. Preferir módulos importables y notebooks solo para exploración cuando aporten valor.
 
 Por solicitud de Ruben, `notebooks/01_datos_y_procesamiento.ipynb` sirve para
-estudiar y exponer T05–T09: ejecuta las recetas existentes, muestra agregados y
-comprueba hashes. Las secciones T10–T12 quedan pendientes de sus respectivas
-implementaciones. El entrenamiento T13–T19 tendrá un cuaderno separado cuando
+estudiar y exponer T05–T12: ejecuta las recetas existentes, muestra agregados y
+comprueba hashes. Incluye equivalencias y mediciones reales con su contexto.
+El entrenamiento T13–T19 tendrá un cuaderno separado cuando
 corresponda. Ver ejecución local/Colab y empaquetado de fuentes en README.
 El cuaderno versionado no guarda salidas; la ejecución local con resultados queda
 en `data/reports/presentation/`, ignorada por Git. No incluye filas de pedidos
