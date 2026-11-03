@@ -119,9 +119,9 @@ actualizar el archivo de bloqueo automáticamente; ver la
 Cuando una tarea requiera cambiar dependencias, se actualizarán deliberadamente
 `pyproject.toml` y `uv.lock` juntos.
 
-Dependencias directas actuales: **boto3** y **pytest** (grupo `dev`). Hatchling se
+Dependencias directas actuales: **boto3**, **Pandas**, **Matplotlib** y **pytest** (grupo `dev`). Hatchling se
 usa únicamente para construir/instalar el paquete. FastAPI, el driver MongoDB,
-las bibliotecas de datos/ML y las herramientas de frontend se incorporarán cuando
+las demás bibliotecas de datos/ML y las herramientas de frontend se incorporarán cuando
 se implementen sus tareas.
 
 Las pruebas de `backend/tests/test_environment.py` comprueban la instalación del
@@ -175,7 +175,62 @@ uv run --locked python ml/data/audit_meituan.py
 
 El comando comprueba el hash del original y genera un informe agregado en
 `data/reports/meituan/<revision>/t07_audit.json`, ignorado por Git. La auditoría
-aprobó con condiciones preparar 546,281 pedidos inmediatos; la cohorte aún no se
-ha generado. Ver criterios, exclusiones, estadísticas y riesgos de leakage en
+aprobó con condiciones preparar 546,281 pedidos inmediatos; T08 materializa
+la cohorte según esos criterios. Ver criterios, exclusiones, estadísticas y riesgos de leakage en
 [`docs/DATA_ML.md`](docs/DATA_ML.md). Las unidades geográficas siguen pendientes
 antes de construir features de distancia; no hay entrenamiento realizado.
+
+## Preparación con Pandas — T08
+
+```bash
+uv sync --locked
+uv run --locked python ml/data/prepare_meituan.py
+uv run --locked pytest -q
+```
+
+La receta requiere el original adquirido y la auditoría T07. Genera
+`data/processed/meituan/<revision>/t08-v1/orders.csv` y `manifest.json`, ignorados
+por Git. Materializa 546,281 pedidos y 11 columnas, con duración en minutos y
+hora/día de solicitud UTC. Las coordenadas se conservan como `*_raw`, sin
+convertirlas a grados o kilómetros. Ver transformaciones y evidencia en
+[`docs/DATA_ML.md`](docs/DATA_ML.md).
+
+## Análisis exploratorio — T09
+
+```bash
+uv run --locked python ml/data/explore_meituan.py
+```
+
+Comprueba el CSV T08 y genera `t09_eda.json`, `t09_eda.md` y cuatro PNG en
+`data/reports/meituan/<revision>/t09/`, ignorado por Git. Incluye calidad,
+distribución completa y detalle hasta P99, contexto horario/semanal UTC,
+cobertura por fecha y correlaciones descriptivas. El CSV conserva todas sus filas.
+La mediana observada es 27.90 minutos y el P95 51.43; las limitaciones de la
+muestra y la exposición temporal desigual están documentadas en el informe.
+
+## Notebook para estudiar y exponer
+
+[`notebooks/01_datos_y_procesamiento.ipynb`](notebooks/01_datos_y_procesamiento.ipynb)
+explica y ejecuta T05–T09 usando los scripts existentes. T10–T12 aparecen como
+pendientes; se completarán al implementar esas tareas.
+
+```bash
+uv sync --locked --extra notebooks
+uv run --locked --extra notebooks python ml/data/package_notebook_source.py
+```
+
+Localmente, abrir el notebook en VS Code con `.venv/bin/python`. Para Colab,
+subir el `.ipynb` y, cuando lo solicite la primera celda, seleccionar
+`data/reports/presentation/delivery_source.zip`. Regenerar el ZIP al cambiar el
+código: incluye fuentes, pruebas y documentación con hashes, sin datasets,
+credenciales ni `.env`. No requiere publicar la rama para probarla.
+
+Las dependencias opcionales `notebooks` permiten ejecutar y validar el cuaderno;
+no se necesitan para usar los scripts de datos. La copia con resultados de la
+validación local se guarda fuera de Git en
+`data/reports/presentation/01_datos_y_procesamiento_ejecutado.ipynb`.
+
+Verificación local: diez celdas de código sin errores y 31 pruebas aprobadas.
+Una ejecución aislada desde el ZIP regeneró 546,281 pedidos con el mismo hash
+de T08 antes de incorporar T09. El EDA y las 31 pruebas se verificaron en Python
+3.12 y 3.9. La ejecución directamente en el servicio de Colab queda por comprobar.

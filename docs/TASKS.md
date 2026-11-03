@@ -23,8 +23,9 @@ corresponden al reparto previo y deben interpretarse con esta actualización.
 
 ## Orden de trabajo de Ruben Vigil
 
-- **T01–T04:** completadas e integradas en `main`.
-- **Siguiente bloque:** T05 → T06 → T07 → T08 → T09 → T10 → T11 → T12, respetando las dependencias.
+- **T01–T07:** completadas e integradas en `main`.
+- **T08–T09:** implementadas y verificadas; cierre e integración autorizados por Ruben.
+- **Próximo bloque propuesto:** T10 → T11 → T12, respetando las dependencias; aún sin iniciar.
 - **T13–T40:** continuar según dependencias y criterios de aceptación.
 - **T41–T54:** asignadas a Ruben Vigil; despliegue y gastos siguen requiriendo autorización explícita.
 
@@ -71,7 +72,7 @@ Checklist de cierre del bloque:
 - [x] T07 satisface su criterio de aceptación: target observado, cohorte y features temporales documentados; condiciones geográficas y de alcance explícitas.
 - [x] Comprobaciones finales del bloque ejecutadas: auditoría real con hash verificado, 25 pruebas en Python 3.12/3.9, compatibilidad de dependencias y formato.
 - [x] Backlog local y guía actualizados con el resultado de cada ID.
-- [ ] Commit(s), push y único PR del bloque publicados.
+- [x] Publicado e integrado mediante [PR #4](https://github.com/rvigil24/ml-delivery-app/pull/4), commit de integración `27e070e`; verificado en remoto y sincronizado localmente.
 
 La confirmación final del merge y sincronización se registra en GitHub y la
 guía externa; no requiere crear otro PR solo para anotar el hash posterior.
@@ -80,17 +81,28 @@ Los bloques siguientes se definirán al terminar este, por ejemplo T08–T09 y
 T10–T12. No se amplía el bloque actual ni se inician tareas posteriores mientras
 esté pendiente la validación requerida para ellas.
 
-**Cierre solicitado:** verificación, commit, push y PR único con merge a `main`.
-La integración solo se comunica como completada tras comprobar el remoto.
+**Cierre verificado:** T05–T07 integradas en `main` el 2026-11-03 mediante PR #4.
 
-### Bloque activo siguiente: T08–T09 — preparación y EDA
+### Bloque T08–T09 — preparación y EDA
 
-Se activa después de verificar la integración de T05–T07. Rama prevista:
-`data/T08-T09-preparacion-eda`, creada desde `origin/main` actualizado.
+Rama `data/T08-T09-preparacion-eda`, creada desde `origin/main` en `27e070e`
+después de verificar la integración de T05–T07.
 
-- T08: **siguiente tarea**, materializar con Pandas la cohorte aprobada y documentar transformaciones.
-- T09: pendiente de T08, análisis exploratorio y visualizaciones reproducibles.
-- Un PR al cerrar el bloque; ninguna de estas tareas está completada todavía.
+- T08: completada; preparación ejecutada, 546,281 filas/11 columnas, manifiesto reproducible y pruebas de transformación. 29 pruebas aprobadas en Python 3.12/3.9 al implementar T08.
+- T09: completada; EDA en `ml/data/explore_meituan.py` y `delivery_ml/exploration.py`, informe JSON/Markdown y cuatro figuras sobre los 546,281 pedidos. Calidad, cola larga, asociaciones y sesgos documentados; CSV intacto. Suite final de 31 pruebas y EDA aprobados en Python 3.12/3.9.
+- Apoyo para la exposición autorizado por Ruben: `notebooks/01_datos_y_procesamiento.ipynb` ejecuta T05–T09; diez celdas y 31 pruebas aprobadas localmente. El ZIP de fuentes permitió regenerar la misma cohorte/hash antes de T09 y se actualizó para incluir el EDA. T10–T12 siguen pendientes; falta comprobar directamente el servicio Colab.
+- Cierre autorizado por Ruben: T08/T09 se registran como completadas con esta evidencia, sin modificar el Excel ni atribuir revisión independiente. Publicación mediante un único PR; la integración efectiva y su commit se verifican en GitHub y se registran en la guía externa después del merge.
+
+Checklist de cierre:
+
+- [x] Dependencias T07–T08 y criterios de aceptación de ambos IDs contrastados con código y datos reales.
+- [x] Preparación repetida con integridad verificada y EDA reproducible; sin datos ni salidas de pedidos en Git.
+- [x] 31 pruebas aprobadas; compatibilidad Python 3.9/3.12 y diez celdas del notebook comprobadas.
+- [x] Backlog local actualizado por orden explícita; guía externa con decisiones y comprobaciones.
+
+El cierre incluye commit, push y PR único con merge y sincronización de `main`.
+La confirmación posterior se registra en GitHub y la guía externa, evitando otro
+PR solo para anotar el hash generado por la integración.
 
 La preparación de datos T08 no incluye automáticamente features geográficas no validadas.
 La confirmación de unidades geográficas queda como pendiente explícito para el
@@ -232,8 +244,8 @@ no resuelve esa condición ni excluye AWS del diseño; ver la corrección en DAT
 | T05 | Dataset y procesamiento de datos | Investigar y verificar fuentes de datos reales de entregas | Ruben Vigil | Completada |
 | T06 | Dataset y procesamiento de datos | Descargar y documentar el dataset seleccionado | Ruben Vigil | Completada |
 | T07 | Dataset y procesamiento de datos | Validar la variable objetivo y calidad de los datos | Ruben Vigil | Completada |
-| T08 | Dataset y procesamiento de datos | Limpiar y transformar los datos con Pandas | Ruben Vigil | Pendiente |
-| T09 | Dataset y procesamiento de datos | Realizar análisis exploratorio (EDA) y visualizaciones | Ruben Vigil | Pendiente |
+| T08 | Dataset y procesamiento de datos | Limpiar y transformar los datos con Pandas | Ruben Vigil | Completada |
+| T09 | Dataset y procesamiento de datos | Realizar análisis exploratorio (EDA) y visualizaciones | Ruben Vigil | Completada |
 | T10 | Dataset y procesamiento de datos | Implementar transformaciones equivalentes con Dask | Ruben Vigil | Pendiente |
 | T11 | Dataset y procesamiento de datos | Implementar transformaciones equivalentes con PySpark local | Ruben Vigil | Pendiente |
 | T12 | Dataset y procesamiento de datos | Comparar tiempos y resultados de Pandas, Dask y PySpark | Ruben Vigil | Pendiente |
