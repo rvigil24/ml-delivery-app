@@ -119,7 +119,7 @@ actualizar el archivo de bloqueo automáticamente; ver la
 Cuando una tarea requiera cambiar dependencias, se actualizarán deliberadamente
 `pyproject.toml` y `uv.lock` juntos.
 
-Dependencias directas actuales: **boto3**, **Pandas**, **Matplotlib** y **pytest** (grupo `dev`). Hatchling se
+Dependencias directas actuales: **boto3**, **Pandas**, **Matplotlib**, **Dask DataFrame**, **PySpark** y **pytest** (grupo `dev`). Hatchling se
 usa únicamente para construir/instalar el paquete. FastAPI, el driver MongoDB,
 las demás bibliotecas de datos/ML y las herramientas de frontend se incorporarán cuando
 se implementen sus tareas.
@@ -208,11 +208,67 @@ cobertura por fecha y correlaciones descriptivas. El CSV conserva todas sus fila
 La mediana observada es 27.90 minutos y el P95 51.43; las limitaciones de la
 muestra y la exposición temporal desigual están documentadas en el informe.
 
+## Equivalencia con Dask — T10
+
+```bash
+uv sync --locked
+uv run --locked python ml/data/compare_dask_meituan.py
+```
+
+Dask lee el mismo original en siete particiones, valida IDs globales y reúne
+los intentos de cada pedido mediante shuffle antes de aplicar las reglas T08.
+La comparación verifica todos los valores de las 546,281 filas/11 columnas y
+el mismo SHA-256 del CSV Pandas. El informe queda en
+`data/reports/meituan/<revision>/t10_dask.json`, fuera de Git. Se ejecuta localmente
+con dos hilos; la salida final se reúne en memoria para comprobarla. T10 no mide
+velocidad ni demuestra escalabilidad ilimitada; los tiempos corresponden a T12.
+
+## Equivalencia con PySpark local — T11
+
+Requiere **Java 17** disponible mediante `JAVA_HOME`/`PATH` y el entorno Python del proyecto:
+
+```bash
+java -version
+uv sync --locked
+uv run --locked python ml/data/compare_spark_meituan.py
+```
+
+Spark SQL ejecuta validaciones, agrupaciones, ventanas, join y transformaciones
+UTC en `local[2]`, sin clúster remoto. Sobre el original lee ocho particiones y
+obtiene los mismos 546,281 pedidos/11 columnas de Pandas. `collect()` materializa
+la salida para comparar valores exactos y generar un CSV normalizado temporal
+con el mismo hash T08; no se compara el formato CSV nativo de Spark.
+Informe: `data/reports/meituan/<revision>/t11_spark.json`, ignorado por Git.
+Se conserva la referencia intacta; rendimiento y tiempos corresponden a T12.
+
+## Comparación de tiempos — T12
+
+```bash
+uv run --locked python ml/data/benchmark_meituan.py
+```
+
+Ejecuta tres rondas en procesos nuevos, rota el orden y verifica valores/hash
+de cada resultado. Genera `t12_benchmark.json`, `t12_muestras.csv`,
+`t12_benchmark.md` y `t12_tiempos.png` en
+`data/reports/meituan/<revision>/t12/`, ignorado por Git.
+
+Medianas observadas del pipeline: **Pandas 3.708 s**, **Dask 6.250 s** y
+**Spark 25.138 s**. Incluyen lectura, validaciones, transformación y salida
+materializada/ordenada. El arranque se mide aparte; no se confunde construir
+un grafo con ejecutarlo. Nueve resultados coinciden con los 546,281 pedidos T08.
+Entorno: Ryzen 5 5600H, Linux, 12 CPU lógicas, Python 3.12.14; hardware,
+versiones, muestras y límites completos en el informe. Estas cifras describen
+este dataset/equipo/configuración; no prueban superioridad general.
+
+`--reuse` permite mostrar una medición previa solo si coinciden código, datos,
+versiones y hardware; conserva y muestra su fecha. El comando sin esa opción
+mide nuevamente. En Colab las cifras se calcularán con su propio entorno.
+
 ## Notebook para estudiar y exponer
 
 [`notebooks/01_datos_y_procesamiento.ipynb`](notebooks/01_datos_y_procesamiento.ipynb)
-explica y ejecuta T05–T09 usando los scripts existentes. T10–T12 aparecen como
-pendientes; se completarán al implementar esas tareas.
+explica y ejecuta T05–T12 usando los scripts existentes. Para la sección Spark y sus
+pruebas se necesita Java 17 también en el entorno de ejecución del notebook.
 
 ```bash
 uv sync --locked --extra notebooks
@@ -222,15 +278,17 @@ uv run --locked --extra notebooks python ml/data/package_notebook_source.py
 Localmente, abrir el notebook en VS Code con `.venv/bin/python`. Para Colab,
 subir el `.ipynb` y, cuando lo solicite la primera celda, seleccionar
 `data/reports/presentation/delivery_source.zip`. Regenerar el ZIP al cambiar el
-código: incluye fuentes, pruebas y documentación con hashes, sin datasets,
-credenciales ni `.env`. No requiere publicar la rama para probarla.
+código: incluye fuentes, pruebas y documentación técnica con hashes, sin datasets,
+credenciales ni `.env`. El paquete y la ejecución funcionan sin `AGENTS.md`;
+las instrucciones temporales para agentes podrán retirarse después. Las decisiones
+y la reproducción se conservan en este README, `docs/DATA_ML.md` y el notebook.
 
 Las dependencias opcionales `notebooks` permiten ejecutar y validar el cuaderno;
 no se necesitan para usar los scripts de datos. La copia con resultados de la
 validación local se guarda fuera de Git en
 `data/reports/presentation/01_datos_y_procesamiento_ejecutado.ipynb`.
 
-Verificación local: diez celdas de código sin errores y 31 pruebas aprobadas.
+Verificación local: quince celdas de código sin errores y 35 pruebas aprobadas.
 Una ejecución aislada desde el ZIP regeneró 546,281 pedidos con el mismo hash
-de T08 antes de incorporar T09. El EDA y las 31 pruebas se verificaron en Python
-3.12 y 3.9. La ejecución directamente en el servicio de Colab queda por comprobar.
+de T08 antes de incorporar T09. El EDA y las equivalencias Dask/Spark–Pandas se verificaron
+en Python 3.12 y 3.9. La ejecución directamente en el servicio de Colab queda por comprobar.

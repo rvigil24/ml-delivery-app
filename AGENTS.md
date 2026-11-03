@@ -20,6 +20,7 @@ Este archivo aplica a **ambos integrantes** y a cualquier agente (Codex/Claude C
 - Al terminar: lista archivos tocados, cambios reales, comandos ejecutados (y resultados), pruebas pendientes, decisiones y riesgos.
 - El otro integrante revisa el trabajo antes de cerrar la tarea.
 - Por solicitud de Ruben, al terminar cada tarea actualizar la guía personal de estudio `../GUIA_ESTUDIO_DELIVERY.md`, ubicada junto a la carpeta principal del repositorio y fuera de Git. Explicar qué se hizo, por qué, comprobaciones reales, conceptos para la exposición y pendientes; no incluir registros del dataset ni secretos. En worktrees usar la misma guía externa, sin crear copias divergentes.
+- Las instrucciones y notas de asistencia a agentes son temporales y Ruben prevé retirarlas después. No introducir dependencias de ejecución hacia esos archivos; conservar decisiones, metodología y reproducción en README, documentación técnica y notebooks para que el proyecto siga siendo comprensible al retirarlas.
 
 ## Alcance y rigurosidad
 
