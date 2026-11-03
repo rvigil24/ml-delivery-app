@@ -34,7 +34,7 @@ Este paquete conserva los nombres y asignaciones reflejados en la última copia 
 1. Descomprimir en una carpeta `whatsapp-delivery/`.
 2. Integrante que crea el repositorio: `git init` (o crear directamente el repositorio remoto y clonarlo); revisar `.gitignore`.
 3. Ambos deben trabajar sobre **el mismo repositorio remoto** y consultar `AGENTS.md` y `docs/TASKS.md`.
-4. Crear ramas separadas por tarea: ejemplo `feat/T01-estructura` y `data/T05-fuentes`.
+4. Crear ramas por bloque pequeño desde `origin/main` actualizado, por ejemplo `data/T05-T07-datos`; trabajar una tarea a la vez y usar un PR para integrar el bloque. Ver el flujo vigente y la checklist en `docs/TASKS.md`.
 5. Revisar cambios y pruebas antes de integrarlos a la rama compartida. No ejecutar despliegues AWS para probar tareas iniciales.
 
 ### Primer prompt del integrante Ruben (T01)
@@ -87,8 +87,10 @@ artefactos, en `models/`, `artifacts/` o `ml/experiments/artifacts/`.
 
 El remoto `origin` está configurado en
 `https://github.com/rvigil24/ml-delivery-app.git`. La base de T01 está en el commit
-`9b9f696`, publicado por Ruben en `feat/T01-estructura`. Cada tarea continúa en su
-propia rama; los agentes no hacen commits ni push sin una instrucción explícita.
+`9b9f696`, publicado por Ruben en `feat/T01-estructura`. El flujo actual agrupa
+2–3 tareas relacionadas en una rama y un PR. La orden «cerrá el bloque» autoriza
+el cierre completo descrito en `docs/TASKS.md`; los agentes no publican ni integran
+cambios sin esa orden o una instrucción explícita equivalente.
 Por indicación de Ruben, T01 no requiere aprobación de Guillermo. Esta excepción
 aplica únicamente a T01; el backlog no se actualiza automáticamente.
 
@@ -141,3 +143,39 @@ Validación realizada en T02:
 - `git diff --check`: sin errores de espacios en los cambios existentes.
 
 Estas pruebas verifican el entorno, no conectividad ni permisos reales de AWS.
+
+## Adquisición local de datos — T06
+
+Ruben seleccionó Meituan para el experimento académico. Desde la raíz:
+
+```bash
+uv run --locked python ml/data/acquire_meituan.py
+uv run --locked pytest -q
+```
+
+La receta descarga una revisión fija del ZIP y su licencia, comprueba SHA-256 y
+conserva el original y un manifiesto en `data/raw/meituan/<revision>/`, ignorado
+por Git. Si la copia ya existe, la verifica sin descargar ni sobrescribir.
+Requiere conexión a Internet únicamente para la primera adquisición y no utiliza
+credenciales. Ver origen, condiciones de uso, inventario y diccionario en
+[`docs/DATA_ML.md`](docs/DATA_ML.md).
+
+La adquisición actual es local y académica; no se redistribuyen registros.
+El diseño mantiene S3 privado para los artefactos autorizados. La compatibilidad
+del uso de Meituan y de modelos derivados con ese alojamiento se verificará antes
+de la primera subida; no existe una prohibición automática de AWS por esta receta.
+La validación del target/calidad corresponde a T07; aún no hay un modelo ni
+desempeño validado para El Salvador.
+
+## Auditoría de datos — T07
+
+```bash
+uv run --locked python ml/data/audit_meituan.py
+```
+
+El comando comprueba el hash del original y genera un informe agregado en
+`data/reports/meituan/<revision>/t07_audit.json`, ignorado por Git. La auditoría
+aprobó con condiciones preparar 546,281 pedidos inmediatos; la cohorte aún no se
+ha generado. Ver criterios, exclusiones, estadísticas y riesgos de leakage en
+[`docs/DATA_ML.md`](docs/DATA_ML.md). Las unidades geográficas siguen pendientes
+antes de construir features de distancia; no hay entrenamiento realizado.
