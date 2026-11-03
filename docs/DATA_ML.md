@@ -1,6 +1,6 @@
 # DATA_ML — Datos reales, procesamiento y modelos predictivos
 
-**Responsabilidad inicial:** T05–T12 asignadas a Guillermo Minero; T13–T19 asignadas a Ruben Vigil. Ambos revisan el trabajo del otro. **Estado:** el dataset y la variable objetivo definitiva aún no están seleccionados ni validados.
+**Responsabilidad actual:** Ruben Vigil asume T05–T19 por instrucción explícita del 2026-11-03. **Estado:** investigación T05 realizada; dataset y variable objetivo definitiva pendientes de selección y validación. Las entregas anteriores de T05–T12 quedan descartadas como base de esta investigación.
 
 **Objetivo académico:** demostrar un flujo reproducible desde registros de entregas hasta predicciones evaluadas, diferenciando evidencia experimental de reglas comerciales e información simulada.
 
@@ -17,13 +17,122 @@ Estas fuentes ayudan a iniciar T05, pero **no equivalen a datos aprobados**. La 
 | **Zomato Delivery Operations Analytics** | https://www.kaggle.com/datasets/saurabhbadole/zomato-delivery-operations-analytics-dataset | Se reportan aproximadamente 45,584 filas y 20 columnas, coordenadas de origen/destino, tipo de vehículo y `Time_taken (min)`. | Procedencia real de los tiempos, licencia de redistribución, significado exacto del intervalo temporal, valores GPS anómalos y variables que solo se conocen después del pedido. |
 | **DoorDash Delivery Duration** | https://github.com/dklim-git/DoorDash-Project (copia publicada); descripción del problema: https://github.com/Sean329/DoorDash-Delivery-Duration/blob/main/%23%23%23%23%20Data%20description%20%23%23%23%23 | Registros históricos de 2015; `created_at` y `actual_delivery_time` permiten calcular la duración total desde la solicitud hasta la entrega. | La descripción indica que los datos fueron **alterados con ruido para ocultar información comercial**. No contienen necesariamente la ubicación ni el tipo de vehículo del MVP; verificar derechos sobre el conjunto original, no solo sobre el repositorio que lo comparte. |
 
-La cifra de filas y las columnas anteriores son **referencias preliminares de terceros**, no conteos comprobados por este equipo. Tampoco se ha demostrado que Zomato contenga observaciones sin alterar. Si no se obtiene evidencia razonable de mediciones, no presentar sus etiquetas como tiempos reales verificados.
+La tabla anterior conserva las referencias iniciales. Los conteos y accesos comprobados independientemente en T05 se registran a continuación. No se ha demostrado que Zomato contenga observaciones sin alterar. Si no se obtiene evidencia razonable de mediciones, no presentar sus etiquetas como tiempos reales verificados.
 
 **Criterio de selección:** preferir un dataset con etiqueta documentada y observada, derechos de uso claros y atributos útiles **antes de emitir una cotización**. La semejanza con una aplicación comercial no compensa una variable objetivo inválida.
 
 **Diferencia crítica entre targets:** Zomato usa una etiqueta denominada `Time_taken (min)` cuyo inicio y final deben verificarse en la fuente; DoorDash documenta la duración desde creación del pedido hasta entrega final. No asumir que ambas representan el mismo intervalo ni combinarlas como una sola etiqueta sin justificarlo.
 
 **Representatividad:** incluso si los datos provienen de operaciones reales en India o EE. UU., su modelo no queda validado para El Salvador ni para bicicleta/motocicleta local. El producto deberá comunicar esta limitación y usar reglas de negocio explícitas cuando los datos no sostengan una distinción.
+
+## Investigación independiente de fuentes — T05, 2026-11-03
+
+**Alcance:** verificar candidatos y recomendar próximos pasos. No se incorporan
+los informes, pipelines ni resultados de las ramas anteriores T05–T12. Se
+consultaron fuentes directamente y se descargaron los dos CSV en memoria con
+Python estándar (`urllib.request`, `csv`, `hashlib` y `datetime`), sin persistir
+datos, instalar dependencias, limpiar, entrenar ni escribir en S3.
+
+### Comparación y decisión provisional
+
+| Candidato / editor consultado | Acceso observado | Licencia y procedencia | Objetivo y adecuación | Decisión T05 |
+|---|---|---|---|---|
+| Zomato, copia publicada por `tushar99deep` | CSV completo accesible; 45,584 registros y 20 columnas contados. | Permiso de uso/redistribución del dataset **no confirmado**. La API de licencia del repositorio devolvió 404; eso no acredita permiso ni demuestra ausencia de derechos. La página Kaggle enlazada no aportó texto verificable en esta consulta. | Existe `Time_taken (min)`, pero la copia no acredita cómo se midió ni sus extremos temporales. Coordenadas y vehículo no bastan para validar etiquetas. | No seleccionado. Falta evidencia primaria de medición, licencia y cobertura. |
+| DoorDash, copia publicada por `dklim-git` | CSV completo accesible; 197,428 registros y 16 columnas contados. | Permiso del dataset **no confirmado**; API de licencia de la copia: 404. La descripción del desafío declara perturbación por ruido. | Describe solicitud→entrega mediante `created_at` y `actual_delivery_time`; no contiene coordenadas ni modalidad del repartidor. No se presenta como duración observada inalterada. | No seleccionado para cumplir el requisito actual de etiquetas reales verificadas sin resolver el efecto de la perturbación. |
+| LaDe-D, publicado por `Cainiao-AI` | Ficha y API públicas; muestra de 100 registros con 17 columnas accedida en `delivery_jl`. No se descargó ni contó el conjunto completo. | La ficha declara `apache-2.0`; el artículo de los autores declara CC BY-NC 4.0 para los datos. Hay una discrepancia que debe aclararse para la versión utilizada. | Eventos `accept_time` y `delivery_time` documentados por los autores; paquetería de última milla en China. Aceptación→entrega ocurre después de la cotización del MVP. | Alternativa prioritaria para investigar procedencia, condicionada a resolver licencia y acordar el instante de predicción; no seleccionada ni validada. |
+
+Fuentes de las afirmaciones documentales:
+
+- [Repositorio de la copia Zomato](https://github.com/tushar99deep/Zomato_Order_Delivery-Time_Prediction_End-to-End-ML-Application) y [ficha Kaggle inicialmente propuesta](https://www.kaggle.com/datasets/saurabhbadole/zomato-delivery-operations-analytics-dataset). No se ha acreditado que la copia y esa ficha correspondan a una misma versión original autorizada.
+- [Repositorio de la copia DoorDash](https://github.com/dklim-git/DoorDash-Project) y [descripción del desafío reproducida por Sean329](https://github.com/Sean329/DoorDash-Delivery-Duration/blob/main/%23%23%23%23%20Data%20description%20%23%23%23%23). Esta última sigue siendo una copia de la descripción, no una publicación corporativa primaria con licencia confirmada.
+- [Ficha LaDe-D](https://huggingface.co/datasets/Cainiao-AI/LaDe-D/blob/e1f85a3339848b9eb606ce543fcaaba3f4be1893/README.md), [artículo de los autores, sección 3 y apéndice C.6](https://arxiv.org/html/2306.10675v2) y [código de los autores](https://github.com/wenhaomin/LaDe). Se distingue la licencia de los datos de la licencia del artículo o del código.
+
+### Evidencia de acceso y versiones
+
+Los hashes siguientes corresponden a los bytes originales descargados, antes
+de parsear el CSV. Los tamaños son bytes del archivo, no memoria de un DataFrame.
+Contar filas y verificar hashes no demuestra por sí solo la procedencia real.
+
+| Copia inspeccionada | Revisión del repositorio | Bytes | SHA-256 |
+|---|---|---:|---|
+| Zomato | `016f391a017f7222d1f6ff3990ea0739a7e6fd78` | 6,371,825 | `e33e182ebb9c1d7e0f54c83c0cef6ddc5aa98d203e8888d33ab68cca3a079cba` |
+| DoorDash | `3f20e78a4a3abf5e4cf2eb0c5d9b6f82f9f554ca` | 19,585,886 | `b87ae94bd8bf99accc8fd1873dde1ef5f5e1ce76074f22abdb734c54a1bc8d94` |
+
+URLs de los archivos verificados, fijadas a esas revisiones:
+
+- [Zomato finalTrain.csv](https://raw.githubusercontent.com/tushar99deep/Zomato_Order_Delivery-Time_Prediction_End-to-End-ML-Application/016f391a017f7222d1f6ff3990ea0739a7e6fd78/notebook/data/finalTrain.csv).
+- [DoorDash historical_data.csv](https://raw.githubusercontent.com/dklim-git/DoorDash-Project/3f20e78a4a3abf5e4cf2eb0c5d9b6f82f9f554ca/historical_data.csv).
+
+Observaciones propias sobre archivos sin transformar:
+
+- **Zomato:** `Order_Date`, interpretado con `%d-%m-%Y`, abarca 2022-02-11 a 2022-04-06. Esto constata valores de la copia, no una cobertura operacional acreditada. Hay 3,640 registros con al menos una de las cuatro coordenadas igual a cero. Al quitar solo espacios al texto de vehículo se cuentan 26,429 `motorcycle`, 15,273 `scooter`, 3,814 `electric_scooter` y 68 `bicycle`. No se equiparan esas categorías con el dominio ni se valida una comparación de tiempos por vehículo. Su país y proceso de recogida siguen sin acreditarse mediante una fuente original.
+- **DoorDash:** `created_at`, interpretado como timestamp ISO, abarca 2014-10-19 05:24:15 a 2015-02-18 06:00:44. No hay celdas vacías en `actual_delivery_time`; esto no comprueba validez de todos los intervalos. La descripción habla de comienzos de 2015 y regiones de EE. UU.; la fecha mínima de 2014 requiere aclaración. Los IDs de mercado no permiten atribuir una ciudad concreta sin diccionario.
+- **LaDe-D:** revisión consultada `e1f85a3339848b9eb606ce543fcaaba3f4be1893`; muestra obtenida mediante la [API first-rows](https://datasets-server.huggingface.co/first-rows?dataset=Cainiao-AI%2FLaDe-D&config=default&split=delivery_jl), marcada como truncada. Los timestamps inspeccionados usan mes/día y hora sin año. La API de muestra usa referencias mutables: no se afirma que sea un snapshot completo ni se asigna un hash de dataset. La ficha declara 31,415 registros para `delivery_jl`, cifra **del editor, no un conteo propio**. El código de los autores documenta mayo–octubre de 2022 para el conjunto; T07 deberá verificar coherencia temporal y unidades de coordenadas antes de calcular distancias o duraciones.
+
+### Variables útiles y riesgos antes de cotizar
+
+| Candidato | Campos observados relevantes | Disponibilidad / exclusiones |
+|---|---|---|
+| Zomato | Cuatro coordenadas, `Order_Date`, `Time_Orderd`, `Type_of_order`, `Time_taken (min)`; contexto como clima y tráfico. | Origen/destino y solicitud son candidatos a entradas; clima/tráfico necesitan un origen disponible en el MVP y evidencia de cuándo fueron medidos. `Time_Order_picked` ocurre después; edad/rating/vehículo del repartidor y `multiple_deliveries` no se suponen conocidos antes de asignarlo. |
+| DoorDash | Dos timestamps, características del pedido/negocio y contadores operativos. | `actual_delivery_time` solo sirve para construir el target, nunca como entrada. La descripción sitúa los contadores en la creación del pedido, pero la demo necesitaría poder suministrarlos. Las estimaciones de otros modelos no son mediciones ni están necesariamente disponibles en nuestro sistema. |
+| LaDe-D | Destino (`lng`, `lat`), zona, ciudad, aceptación y finalización; coordenadas GPS de eventos. | Los campos de finalización no pueden ser features. La aceptación y su posición del repartidor son posteriores al instante de cotización actual. No se usará `ds` como fecha de solicitud si representa el día de finalización. |
+
+Los esquemas inspeccionados se obtuvieron del encabezado de los CSV y de la
+respuesta `features` de la muestra LaDe-D; los tipos de CSV son texto crudo,
+no un contrato tipado aprobado. T06 deberá completar el diccionario del
+candidato elegido y T07 validar unidades, calidad y disponibilidad de features.
+No se extrae una conclusión estadística ni un modelo de estos conteos.
+
+### Repetición mínima de la verificación de acceso
+
+Desde la raíz, con Python estándar, sin instalar dependencias ni guardar CSV:
+
+```bash
+python3 - <<'PY'
+import csv
+import hashlib
+import io
+from urllib.request import Request, urlopen
+
+sources = [
+    ("Zomato", "tushar99deep/Zomato_Order_Delivery-Time_Prediction_End-to-End-ML-Application",
+     "016f391a017f7222d1f6ff3990ea0739a7e6fd78", "notebook/data/finalTrain.csv"),
+    ("DoorDash", "dklim-git/DoorDash-Project",
+     "3f20e78a4a3abf5e4cf2eb0c5d9b6f82f9f554ca", "historical_data.csv"),
+]
+for name, repo, revision, path in sources:
+    url = f"https://raw.githubusercontent.com/{repo}/{revision}/{path}"
+    request = Request(url, headers={"User-Agent": "ml-delivery-T05-research"})
+    with urlopen(request, timeout=45) as response:
+        content = response.read()
+    reader = csv.reader(io.StringIO(content.decode("utf-8-sig")))
+    header = next(reader)
+    count = sum(1 for _ in reader)
+    print(name, count, len(header), len(content), hashlib.sha256(content).hexdigest())
+    print("Columnas:", header)
+PY
+```
+
+En esta investigación se ejecutó además un contador con `csv.DictReader` para
+coordenadas/vehículos y `datetime.strptime`/`fromisoformat` para los rangos
+temporales. No se ejecutó el pipeline descartado. La receta anterior reproduce
+el acceso, volumen y hash, no constituye la adquisición aprobada de T06.
+
+### Recomendación y bloqueo para avanzar a T06
+
+**T05 entrega un informe comparativo con acceso efectivo; ningún dataset queda
+seleccionado.** Zomato no se aprueba por parecido con la aplicación; DoorDash
+no se presenta como registros sin alterar. LaDe-D merece priorizarse por la
+documentación de eventos, pero no autoriza cambiar el objetivo de cotización
+por uno posterior a la asignación.
+
+Para iniciar T06, Ruben debe decidir entre: conseguir evidencia primaria y
+permisos del candidato alimentario; ampliar la búsqueda manteniendo el instante
+de cotización; o evaluar LaDe-D resolviendo la discrepancia de licencia y
+acordando explícitamente la adaptación del problema. La última opción requiere
+actualizar SPEC/arquitectura antes de depender de una duración desde aceptación.
+Mientras tanto, la selección está **pendiente**, no rechazada por falta de acceso.
+No se necesita tocar AWS ni entrenar para resolver esta decisión.
 
 ## Datos necesarios para cada parte del producto
 
@@ -134,7 +243,7 @@ Cuando se valide el dataset, compartir con quien implemente T30/T31:
 
 No afirmar que el modelo diferencia bicicleta/motocicleta si no está respaldado por features y etiquetas pertinentes. Las reglas de vehículo y combustible pertenecen al módulo de negocio.
 
-## Entregables de Guillermo antes de T13
+## Entregables de Ruben antes de T13
 
 1. Informe de auditoría de fuente(s) y decisión del dataset.
 2. Dataset y diccionario de datos versionados/reproducibles.
@@ -157,4 +266,4 @@ La aplicación académica puede simular un recorrido completo con pedidos fictic
 - Archivo histórico DoorDash disponible en un repositorio educativo: https://github.com/dklim-git/DoorDash-Project
 - Definición original publicada del problema DoorDash y advertencia de ruido: https://github.com/Sean329/DoorDash-Delivery-Duration/blob/main/%23%23%23%23%20Data%20description%20%23%23%23%23
 
-Antes de usar un candidato, Guillermo debe confirmar directamente los derechos de acceso, uso y almacenamiento, además de verificar que el archivo descargado corresponde a la descripción pública.
+Antes de usar un candidato, Ruben debe confirmar directamente los derechos de acceso, uso y almacenamiento, además de verificar que el archivo descargado corresponde a la descripción pública.
