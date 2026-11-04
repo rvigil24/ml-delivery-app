@@ -38,6 +38,13 @@ class InMemoryDispatchRepository(InMemoryOrderRepository):
             except KeyError:
                 raise AssignmentNotFound(assignment_id) from None
 
+    def list_assignments(self, courier_id: str, limit: int):
+        if isinstance(limit, bool) or not isinstance(limit, int) or not 1 <= limit <= 100:
+            raise ValueError("limit fuera de rango")
+        with self._lock:
+            return tuple(self._assignments[key] for key in sorted(self._assignments)
+                         if self._assignments[key].courier.id == courier_id)[:limit]
+
     def commit_assignment(self, assignment: SimulatedAssignment, expected: Tuple[OrderRecord, ...]) -> SimulatedAssignment:
         with self._lock:
             if assignment.id in self._assignments or not assignment.active:

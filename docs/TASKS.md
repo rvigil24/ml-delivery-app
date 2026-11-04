@@ -1050,7 +1050,7 @@ fuentes actualizados. Sin modificar Excel, borrar ramas o iniciar despliegue.
 | T47 | Frontend y simulación visual | Crear aplicación Next.js con navegación entre las vistas de la demo | Ruben Vigil | Completada |
 | T48 | Frontend y simulación visual | Implementar chat estilo WhatsApp para que el cliente simule un pedido | Ruben Vigil | Completada |
 | T49 | Frontend y simulación visual | Implementar panel del negocio para ver pedidos y cambiar su estado | Ruben Vigil | Completada |
-| T50 | Frontend y simulación visual | Implementar panel del repartidor para consultar rutas y confirmar entregas | Ruben Vigil | Pendiente |
+| T50 | Frontend y simulación visual | Implementar panel del repartidor para consultar rutas y confirmar entregas | Ruben Vigil | Completada |
 | T51 | Frontend y simulación visual | Implementar panel de operaciones con tarifas, costos, efectivo y márgenes | Ruben Vigil | Pendiente |
 | T52 | Frontend y simulación visual | Conectar las vistas de Next.js con los endpoints reales de FastAPI | Ruben Vigil | Pendiente |
 | T53 | Frontend y simulación visual | Sincronizar actualizaciones de estados entre las vistas sin WhatsApp real | Ruben Vigil | Pendiente |
@@ -1383,7 +1383,7 @@ El PR único incorpora todas las correcciones solicitadas por Ruben; cierre
 autorizado persistente condicionado a CI aprobada. Sin despliegue AWS.
 
 
-## Bloque activo — T49: panel de negocio
+## Bloque cerrado — T49: panel de negocio
 
 Responsable: Ruben Vigil. Rama feat/T49-panel-negocio desde origin/main actualizado.
 Dependencias: T47 (layout), T20/T32 (pedidos persistidos/transiciones). Alcance:
@@ -1403,3 +1403,26 @@ Atlas; fixtures aisladas para409, cancelación condicional, doble clic, vacío
 y recuperación. Sin errores JS ni desborde. Revisión Impeccable ship, seis
 capturas válidas y sin correcciones materiales. Cierre autorizado persistente
 condicionado a CI aprobada; sin despliegue AWS.
+
+
+## Bloque activo — T50: panel del repartidor
+
+Responsable: Ruben Vigil. Rama feat/T50-panel-repartidor desde origin/main actualizado.
+Dependencias:T26/T32 (asignación/progreso/liberación persistidos), T47 y contratos
+HTTP. Criterio: consultar asignaciones y paradas del repartidor; confirmar recogida
+y entrega de la siguiente parada, sin saltos, y finalizar sólo tras todas las
+entregas. Capturar carga/vacío/error y no afirmar cambios rechazados por la API.
+
+Se añaden GET assignments y POST progress/complete por repartidor, DTO plano con
+estados actuales, servicio y consultas filtradas antes del límite. Next.js consume
+la API; no añade asignaciones, GPS, pagos, políticas, estados o tarifas. Sin
+asignaciones reales se muestra vacío, sin fallback a fixtures de presentación.
+
+Comprobaciones iniciales:7 pruebas backend focalizadas y5 Node, build aprobado.
+Dos pruebas nuevas API usan fixtures T26 para pertenencia, rechazo de cierre
+prematuro, secuencia completa de dos pedidos y liberación con doble envío409.
+Navegador1440/390px: vacío real sin escrituras Atlas; fixtures aisladas para
+conflicto409 sin éxito falso, recogida/entrega, doble clic, cierre/disponibilidad
+y recuperación. Sin errores JS ni desborde. Revisión Impeccable ship, seis
+capturas válidas sin correcciones materiales. Cierre autorizado persistente
+condicionado a CI aprobada; no se despliega AWS.

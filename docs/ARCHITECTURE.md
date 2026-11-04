@@ -9,16 +9,17 @@ para datos operativos y dos modelos v2 cargados desde un bundle propio de S3.
 Docker Compose reproduce la demo local; Atlas es la alternativa de base en la
 nube ya verificada. La infraestructura ECS/Fargate está creada y el contenedor
 cloud sirve la API con los dos modelos S3 y persistencia Atlas ya verificados.
-Next.js cuenta con un layout local de cuatro vistas (T47), sin conexión HTTP
-al backend todavía. Cliente incorpora el chat guiado local T48 para pedir comida;
-los paneles e integración HTTP siguen en T49–T54.
+Next.js ofrece cuatro vistas locales. Cliente consulta negocios por cercanía y
+menús; Negocio consulta y actualiza pedidos; Repartidor consulta sus asignaciones
+y registra recogidas/entregas. Operaciones aún es una vista de muestra. El
+registro final desde Cliente y la sincronización completa siguen pendientes.
 Los detalles de versiones previas explican compatibilidad,
 no cambian el contrato v2 descrito en esta sección.
 
 ```mermaid
 flowchart LR
     Client[Swagger o cliente Python] --> API[FastAPI]
-    UI[Next.js: layout local] -. HTTP pendiente T52 .-> API
+    UI[Next.js local: chat y paneles] -->|HTTP parcial implementado| API
     API --> Estimate[Servicio de estimación]
     Estimate --> ETA[Modelo de duración]
     Estimate --> Risk[Modelo de retraso]
@@ -1177,3 +1178,30 @@ un conflicto/error solicita y muestra el estado actual, sin afirmar éxito.
 Las cuatro perspectivas siguen siendo demo sin autenticación ni autorización
 real por negocio; el selector no es un control de acceso. T48 aún no registra sus
 borradores de cliente; esa escritura continúa en T52.
+
+
+## T50 — panel del repartidor conectado
+
+Se añaden consultas de asignaciones existentes, con estados actuales de todos
+los pedidos de la ruta, y acciones acotadas al repartidor propietario:
+
+| Endpoint | Resultado |
+|---|---|
+| GET /couriers/{id}/assignments?limit=100 | Asignaciones activas/cerradas del repartidor, inicio, paradas, distancia de referencia y pedidos actuales. Repartidor inexistente:404. |
+| POST /couriers/{id}/assignments/{assignment}/progress | order_id, expected, target; sólo asignado→recogido o recogido→entregado. |
+| POST /couriers/{id}/assignments/{assignment}/complete | Finaliza la asignación y libera al repartidor, sólo con todos los pedidos entregados. |
+
+`CourierRouteService` comprueba pertenencia y reutiliza `OrderService` y las
+transacciones/CAS de T26. La siguiente parada se valida en la persistencia;
+se rechazan saltos, repeticiones y avances de otra ruta. Finalizar es una acción
+explícita, no una escritura adicional oculta tras entregar el último pedido.
+El repositorio libera asignación y disponibilidad atómicamente. No se modifican
+políticas, estados, cobros, validadores ni índices; no se crea una ruta de ejemplo.
+
+Next.js `/api/courier` expone sólo esas operaciones; URLs y credenciales quedan
+en el servidor. `CourierPanel` elige repartidor/ruta, muestra las paradas en orden,
+la próxima acción y los estados actuales. Sin optimismo, sin reintentos ciegos;
+conflictos/error vuelven a consultar y no anuncian éxito. Botones bloqueados al
+guardar. La distancia es Haversine de referencia, no navegación ni GPS en vivo.
+Si la base no contiene asignaciones, muestra un estado vacío real.
+El selector es una perspectiva de demo, no autenticación por repartidor.

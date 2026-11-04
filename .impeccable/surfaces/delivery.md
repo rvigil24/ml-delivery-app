@@ -50,3 +50,17 @@ No se reemplazan tokens o identidad, ni se presenta el selector como autenticaci
 Cierre T49: revisión independiente ship con seis capturas full-page válidas
 en escritorio/móvil, sin correcciones materiales. La lectura Atlas se comprobó
 sin modificar registros; las escrituras probadas pertenecen a fixtures aisladas.
+
+
+## Extensión T50 — panel del repartidor
+
+Se hereda T47. Selectores de repartidor y ruta, perfil actual y lista numerada de
+paradas (los números expresan el orden operativo). Inicio/ubicaciones y distancia
+de referencia, sin mapa o GPS ficticio. La próxima parada se destaca con el mismo
+verde; sólo se ofrece su avance y, al entregar todo, el cierre explícito de ruta.
+Estados reales de carga/error/vacío; sin cambios optimistas. En móvil se apilan
+los controles y cada parada conserva lectura sin desborde. No cambia la identidad.
+
+Cierre T50: revisión independiente ship; seis capturas full-page válidas de
+vacío real y rutas activas/cerradas con fixtures aisladas en ambos tamaños.
+Sin correcciones materiales; la lectura de API/servicio confirmó el dictamen.
