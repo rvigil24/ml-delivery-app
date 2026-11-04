@@ -112,6 +112,35 @@ td strong { font-weight: 600; }
 .chat-compose input::placeholder { color: #617168; opacity: 1; }
 .send-button { display: grid; place-items: center; width: 44px; height: 44px; border: none; border-radius: 50%; background: #dbe6de; color: #5c7161; flex: 0 0 auto; }
 .compose-help { max-width: none; background: #f7faf7; padding: 0 18px 14px; color: var(--muted); font-size: 11px; }
+.guided-messages { padding: 24px 26px; }
+.guided-messages > .chat-notice { margin: 0 auto 24px; }
+.conversation { display: flex; flex-direction: column; align-items: flex-start; gap: 16px; }
+.message p, .request-summary dd { overflow-wrap: anywhere; white-space: pre-wrap; }
+.chat-action-area { padding: 24px 26px; background: #f7faf7; border-top: 1px solid var(--line); }
+.step-heading { margin-bottom: 18px; font-size: 15px; }
+.step-heading:focus { outline: none; }
+.business-options { display: flex; flex-direction: column; gap: 10px; }
+.business-choice { min-height: 48px; display: flex; align-items: center; gap: 12px; border: 1px solid #c4d6ca; border-radius: 8px; padding: 12px 14px; color: var(--ink); background: var(--surface); text-align: left; }
+.business-choice:hover { background: var(--tint); }
+.business-choice > svg:first-child { color: var(--primary); }
+.business-choice > svg:last-child { margin-left: auto; width: 16px; }
+.form-field { display: flex; flex-direction: column; gap: 7px; }
+.form-field label { font-size: 13px; font-weight: 600; }
+.form-field input, .form-field textarea { width: 100%; min-width: 0; border: 1px solid #a5bcae; border-radius: 8px; background: white; color: var(--ink); padding: 12px; caret-color: var(--primary); font: inherit; }
+.form-field textarea { resize: vertical; min-height: 100px; }
+.form-field textarea::placeholder { color: var(--muted); opacity: 1; }
+.form-field [aria-invalid="true"] { border-color: #a23a2e; }
+.coordinate-fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+.form-help { color: var(--muted); font-size: 12px; margin-bottom: 16px; }
+.form-actions { margin-top: 22px; display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.form-actions .button-primary { border: 0; }
+.text-button { display: inline-block; border: 0; background: transparent; color: var(--primary); font-size: 13px; font-weight: 600; min-height: 44px; padding: 8px 0; text-decoration: underline; text-underline-offset: 4px; }
+.form-error { color: #942e24; background: #fff1ec; padding: 10px 12px; font-size: 13px; margin-top: 14px; border-radius: 6px; }
+.request-summary { margin: 0 0 20px; }
+.request-summary > div { display: grid; grid-template-columns: 132px minmax(0, 1fr); gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--line); font-size: 13px; }
+.request-summary dt { color: var(--muted); }
+.request-summary dd { margin: 0; }
+.local-reference { font-variant-numeric: tabular-nums; font-size: 12px; }
 .chat-context { padding-top: 8px; }
 .chat-context > p { margin-top: 12px; font-size: 13px; color: var(--muted); }
 .simple-steps { margin: 22px 0 0; padding-left: 22px; font-size: 13px; }
@@ -180,6 +209,9 @@ td strong { font-weight: 600; }
   .chat-compose { padding-inline: 12px; gap: 8px; }
   .chat-compose input { font-size: 13px; }
   .compose-help { padding-inline: 12px; }
+  .guided-messages, .chat-action-area { padding: 20px 16px; }
+  .coordinate-fields { grid-template-columns: 1fr; }
+  .request-summary > div { grid-template-columns: 1fr; gap: 4px; }
   .business-directory { padding-inline: 18px; }
   .business-directory li { flex-wrap: wrap; gap: 12px; }
   .business-directory li > div { flex: 1; min-width: 0; }

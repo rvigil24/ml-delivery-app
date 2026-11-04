@@ -39,9 +39,12 @@ npm run dev -- --port 3001
 
 Abrir [la interfaz local](http://127.0.0.1:3001). La entrada redirige a
 Operaciones; el menú permite pasar a Cliente, Negocio y Repartidor. Cliente
-representa una **simulación de WhatsApp**, con conversación de muestra y sin
-mensajes reales ni LLM. T47 cubre navegación y layout adaptable; los formularios,
-acciones e integración con FastAPI se incorporan en T48–T54. Los datos visibles
+representa una **simulación de WhatsApp** para pedir comida, sin mensajes reales
+ni LLM. El chat permite elegir un negocio, indicar platos/productos y cantidades,
+introducir el destino, corregir los datos y confirmar una solicitud local simulada.
+Podés usar el destino de ejemplo para la exposición. La solicitud se borra al
+recargar; no se envía al negocio, no se guarda en Atlas ni calcula importes o
+predicciones. La integración HTTP corresponde a T52. Los datos visibles
 proceden de `examples/exposicion.json`, no de una consulta en vivo a Atlas.
 No requiere `.env`, claves AWS ni conexión al backend para esta vista previa.
 
@@ -49,6 +52,7 @@ Comprobación de tipos y compilación de producción:
 
 ```bash
 npm run typecheck
+npm test
 npm run build
 npm run start -- --port 3001
 ```

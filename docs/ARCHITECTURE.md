@@ -10,7 +10,8 @@ Docker Compose reproduce la demo local; Atlas es la alternativa de base en la
 nube ya verificada. La infraestructura ECS/Fargate está creada y el contenedor
 cloud sirve la API con los dos modelos S3 y persistencia Atlas ya verificados.
 Next.js cuenta con un layout local de cuatro vistas (T47), sin conexión HTTP
-al backend todavía; las acciones e integración siguen en T48–T54.
+al backend todavía. Cliente incorpora el chat guiado local T48 para pedir comida;
+los paneles e integración HTTP siguen en T49–T54.
 Los detalles de versiones previas explican compatibilidad,
 no cambian el contrato v2 descrito en esta sección.
 
@@ -1115,3 +1116,26 @@ No se añaden endpoints, despliegues, puertos AWS o recursos a Terraform. Las
 cuatro vistas son perspectivas de una demo, no un sistema de autenticación.
 PRODUCT.md, DESIGN.md y el contexto de Impeccable documentan el diseño; no son
 dependencias de ejecución. Reproducción y comprobaciones en README.
+
+
+## T48 — solicitud guiada de comida
+
+El cliente elige negocio, escribe qué platos/productos quiere pedir con sus
+cantidades e indicaciones, introduce latitud/longitud de entrega, revisa y
+confirma una simulación. El asistente menciona el negocio elegido y pregunta
+qué quiere pedir allí. No interpreta el texto ni extrae productos mediante LLM.
+Los platos se describen libremente; no se inventa un menú, disponibilidad o precio.
+
+`GuidedChat` mantiene los pasos y campos en memoria del componente; volver
+conserva datos, nueva solicitud limpia el flujo y recargar lo reinicia. La
+confirmación crea una referencia `demo-chat-...` local, protegida contra doble
+confirmación, sin declarar estado logístico, cotización o registro en MongoDB.
+Se muestra expresamente que no se envió al negocio. T52 conectará FastAPI;
+T53 implementará la sincronización entre vistas. No hay localStorage, llamadas
+HTTP, mensajes WhatsApp, secretos o cambios en AWS en esta tarea.
+
+`request-draft.ts` valida negocio existente, detalle no vacío y coordenadas
+decimales finitas en rangos geográficos; vacío no se transforma en cero. El
+origen procede del negocio y se copia al borrador. Esto no verifica cobertura,
+no calcula rutas, tarifas, duración ni riesgo. El botón de destino de ejemplo
+reutiliza el fixture de exposición. Revisión y formularios usan el diseño T47.

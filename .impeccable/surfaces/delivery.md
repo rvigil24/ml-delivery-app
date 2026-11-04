@@ -21,3 +21,17 @@ FINISH: unreviewed and undocumented is unfinished; this build ends with the fini
 Revisión independiente: ship para T47; ocho capturas de escritorio/móvil válidas,
 sin correcciones materiales. Tokens extraídos en DESIGN.md y .impeccable/design.json.
 Sin imágenes de producto ni comp generada; no hay atribuciones de raster pendientes.
+
+
+## Extensión T48 — pedir comida
+
+La vista Cliente conserva el mundo visual T47 y añade el flujo guiado aprobado:
+negocio → platos/productos con cantidades e indicaciones → lugar de entrega →
+revisión → confirmación local simulada. La conversación pregunta qué quiere
+pedir del negocio elegido. Formularios en el área de acciones, errores junto a
+los campos, foco al cambiar de paso y corrección conservando datos. Sin LLM,
+catálogo/precios inventados ni conexión HTTP. No se reemplaza la identidad.
+
+Cierre T48: revisión independiente ship, seis capturas válidas de inicio, revisión
+y confirmación en escritorio/móvil; sin correcciones materiales. Se conservan
+los tokens y documentos del sistema visual heredado.

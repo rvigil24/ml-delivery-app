@@ -1048,7 +1048,7 @@ fuentes actualizados. Sin modificar Excel, borrar ramas o iniciar despliegue.
 | T45 | Despliegue y CI/CD | Configurar secretos, permisos mínimos y acceso seguro a la infraestructura | Ruben Vigil | Completada |
 | T46 | Despliegue y CI/CD | Validar despliegue, logs, persistencia y consumo de recursos | Ruben Vigil | Completada |
 | T47 | Frontend y simulación visual | Crear aplicación Next.js con navegación entre las vistas de la demo | Ruben Vigil | Completada |
-| T48 | Frontend y simulación visual | Implementar chat estilo WhatsApp para que el cliente simule un pedido | Ruben Vigil | Pendiente |
+| T48 | Frontend y simulación visual | Implementar chat estilo WhatsApp para que el cliente simule un pedido | Ruben Vigil | Completada |
 | T49 | Frontend y simulación visual | Implementar panel del negocio para ver pedidos y cambiar su estado | Ruben Vigil | Pendiente |
 | T50 | Frontend y simulación visual | Implementar panel del repartidor para consultar rutas y confirmar entregas | Ruben Vigil | Pendiente |
 | T51 | Frontend y simulación visual | Implementar panel de operaciones con tarifas, costos, efectivo y márgenes | Ruben Vigil | Pendiente |
@@ -1334,7 +1334,7 @@ alcance de T47. Verificación: contrato OpenAPI, ruta retirada 404 y pruebas
 focalizadas de API, arranque S3 y cotizaciones.
 
 
-## Bloque activo — T47: layout Next.js
+## Bloque cerrado — T47: layout Next.js
 
 Responsable: Ruben Vigil. Rama feat/T47-layout-nextjs desde origin/main actualizado.
 Alcance confirmado: Operaciones al entrar, menú para Cliente/Negocio/Repartidor,
@@ -1353,3 +1353,21 @@ navegables a 1440 y 390 px sin desborde del documento ni errores JavaScript;
 correcciones materiales para T47. Tokens documentados con Impeccable; publicación
 bajo autorización persistente de Ruben, condicionada a CI aprobada.
 T48–T54 permanecen pendientes; no se despliega la interfaz en AWS.
+
+
+## Bloque activo — T48: chat guiado para pedir comida
+
+Responsable: Ruben Vigil. Rama feat/T48-chat-guiado desde origin/main actualizado.
+Dependencias: T47 (layout) y contrato de pedido T20/T27; integración HTTP reservada
+a T52. Criterio: simular una solicitud guiada desde Cliente, con negocio, platos
+libres/cantidades/indicaciones, destino, revisión y confirmación local claramente
+identificada; validación, corrección sin perder datos y reinicio.
+
+Se mantiene la referencia WhatsApp y la identidad T47. No hay LLM, menú inventado,
+precios, cobertura validada ni pedidos enviados al negocio. La simulación existe
+solo en memoria del componente y no crea eventos ni estados logísticos reales.
+Se comprueban dos pruebas focalizadas (validación y composición del borrador),
+tipos y build aprobados; recorrido de navegador a 1440/390 px correcto, sin
+errores JS, desborde o solicitudes externas. Revisión Impeccable: ship, seis
+capturas válidas sin correcciones materiales. Cierre/publicación bajo autorización
+persistente de Ruben y condicionado a CI aprobada. T49–T54 no se adelantan.

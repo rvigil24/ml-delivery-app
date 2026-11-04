@@ -16,7 +16,7 @@ Cliente, negocio, repartidor aprobado y operador. Ruben usa las cuatro vistas du
 
 ## Product Purpose
 
-Gestionar entregas locales simuladas y explicar el recorrido desde la solicitud hasta la entrega y el registro de efectivo. Dos modelos estiman duración y riesgo de retraso.
+Gestionar pedidos de comida y sus entregas locales simuladas, y explicar el recorrido desde la solicitud hasta la entrega y el registro de efectivo. Dos modelos estiman duración y riesgo de retraso.
 
 ## Operating Context
 
@@ -24,7 +24,7 @@ La pantalla inicial es Operaciones; un menú permite cambiar entre los cuatro ro
 
 ## Capabilities and Constraints
 
-T47 cubre layout, navegación y ejecución local. T48–T54 incorporan acciones e integración HTTP posteriormente. No inventar cotizaciones, métricas, estados consultados, rutas viales ni datos de entrenamiento. Ejemplos claramente identificados; sin credenciales en el frontend.
+T47 cubre layout, navegación y ejecución local. T48 añade un chat guiado local para pedir comida con cantidades e indicaciones, destino, revisión y confirmación simulada; sin envío al negocio ni persistencia. T49–T54 incorporan los paneles y la integración HTTP posteriormente. No inventar cotizaciones, métricas, estados consultados, rutas viales ni datos de entrenamiento. Ejemplos claramente identificados; sin credenciales en el frontend.
 
 ## Brand Commitments
 
