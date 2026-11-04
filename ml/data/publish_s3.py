@@ -13,8 +13,8 @@ import tempfile
 
 from botocore.exceptions import ClientError
 
-from delivery.adapters.s3 import create_s3_store, file_sha256
-from delivery.domain.objects import ObjectReference
+from delivery.storage.s3 import create_s3_store, file_sha256
+from delivery.models.objects import ObjectReference
 
 
 ROOT = Path(__file__).resolve().parents[2]

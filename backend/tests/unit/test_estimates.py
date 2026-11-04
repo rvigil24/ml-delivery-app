@@ -3,8 +3,8 @@
 import math
 
 import pytest
-from delivery.domain.estimation import EARTH_RADIUS_KM, haversine_km
-from delivery.domain.models import Location
+from delivery.models.entities import Location
+from delivery.models.estimation import EARTH_RADIUS_KM, haversine_km
 
 
 def test_distance_calculation():

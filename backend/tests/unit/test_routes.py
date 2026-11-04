@@ -2,9 +2,9 @@
 
 from decimal import Decimal
 
-from delivery.domain import Location, Order
-from delivery.domain.routing import RoutePolicy, StopType, suggest_route
-from delivery.domain.vehicle_rules import ServiceArea
+from delivery.models import Location, Order
+from delivery.models.routing import RoutePolicy, StopType, suggest_route
+from delivery.models.vehicle_rules import ServiceArea
 
 START = Location(0, 0)
 POLICY = RoutePolicy(

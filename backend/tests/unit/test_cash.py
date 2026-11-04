@@ -5,11 +5,8 @@ from datetime import datetime, timedelta, timezone
 from decimal import Decimal as D
 
 import pytest
-from delivery.adapters.memory import InMemoryBusinesses
-from delivery.adapters.memory_cash import InMemoryCashRepository
-from delivery.adapters.memory_dispatch import InMemoryDispatchRepository
-from delivery.domain.cash import CashStatus as C
-from delivery.domain.models import (
+from delivery.models.cash import CashStatus as C
+from delivery.models.entities import (
     Business,
     Courier,
     Location,
@@ -18,10 +15,13 @@ from delivery.domain.models import (
     QuoteAmounts,
     VehicleType,
 )
-from delivery.domain.models import OrderStatus as S
-from delivery.domain.order_lifecycle import MissingPrerequisite
-from delivery.domain.routing import RoutePolicy
-from delivery.domain.vehicle_rules import ServiceArea, VehicleLimits, VehiclePolicy
+from delivery.models.entities import OrderStatus as S
+from delivery.models.order_lifecycle import MissingPrerequisite
+from delivery.models.routing import RoutePolicy
+from delivery.models.vehicle_rules import ServiceArea, VehicleLimits, VehiclePolicy
+from delivery.repositories.memory import InMemoryBusinesses
+from delivery.repositories.memory_cash import InMemoryCashRepository
+from delivery.repositories.memory_dispatch import InMemoryDispatchRepository
 from delivery.services.assignments import AssignmentService, DispatchOrderRequirements
 from delivery.services.cash import CashService
 from delivery.services.orders import OrderService

@@ -6,10 +6,10 @@ from datetime import datetime, timedelta, timezone
 from threading import Barrier
 
 import pytest
-from delivery.adapters.memory import InMemoryBusinesses, InMemoryOrderRepository
-from delivery.domain import Business, Location, Order
-from delivery.domain import OrderStatus as S
-from delivery.domain.order_lifecycle import DuplicateOrder, OrderConflict, OrderNotFound
+from delivery.models import Business, Location, Order
+from delivery.models import OrderStatus as S
+from delivery.models.order_lifecycle import DuplicateOrder, OrderConflict, OrderNotFound
+from delivery.repositories.memory import InMemoryBusinesses, InMemoryOrderRepository
 from delivery.services.orders import OrderService
 
 NOW = datetime(2022, 1, 1, tzinfo=timezone.utc)

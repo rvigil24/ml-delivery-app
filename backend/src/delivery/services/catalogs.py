@@ -2,9 +2,8 @@
 
 from typing import Generic, Tuple, TypeVar
 
-from delivery.domain.catalogs import CatalogNotFound
-from delivery.ports.catalogs import CatalogRepository
-
+from delivery.models.catalogs import CatalogNotFound
+from delivery.repositories.base import CatalogRepository
 
 T = TypeVar("T")
 
@@ -20,7 +19,11 @@ class CatalogService(Generic[T]):
         return entity
 
     def list(self, limit: int) -> Tuple[T, ...]:
-        if isinstance(limit, bool) or not isinstance(limit, int) or not 1 <= limit <= 100:
+        if (
+            isinstance(limit, bool)
+            or not isinstance(limit, int)
+            or not 1 <= limit <= 100
+        ):
             raise ValueError("limit debe ser un entero entre 1 y 100")
         return self._repository.list(limit)
 

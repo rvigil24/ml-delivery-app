@@ -5,14 +5,14 @@ from datetime import datetime, timezone
 from decimal import Decimal as D
 
 import pytest
-from delivery.adapters.memory import InMemoryBusinesses
-from delivery.adapters.memory_dispatch import InMemoryDispatchRepository
-from delivery.domain.assignments import AssignmentConflict
-from delivery.domain.models import Business, Courier, Location, Order, VehicleType
-from delivery.domain.models import OrderStatus as S
-from delivery.domain.order_lifecycle import MissingPrerequisite
-from delivery.domain.routing import RoutePolicy, StopType
-from delivery.domain.vehicle_rules import ServiceArea, VehicleLimits, VehiclePolicy
+from delivery.models.assignments import AssignmentConflict
+from delivery.models.entities import Business, Courier, Location, Order, VehicleType
+from delivery.models.entities import OrderStatus as S
+from delivery.models.order_lifecycle import MissingPrerequisite
+from delivery.models.routing import RoutePolicy, StopType
+from delivery.models.vehicle_rules import ServiceArea, VehicleLimits, VehiclePolicy
+from delivery.repositories.memory import InMemoryBusinesses
+from delivery.repositories.memory_dispatch import InMemoryDispatchRepository
 from delivery.services.assignments import AssignmentService, DispatchOrderRequirements
 from delivery.services.orders import OrderService
 

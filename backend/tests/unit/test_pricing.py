@@ -2,7 +2,7 @@
 
 from decimal import Decimal, localcontext
 
-from delivery.domain.pricing import OperatorCosts, PricingPolicy, calculate_amounts
+from delivery.models.pricing import OperatorCosts, PricingPolicy, calculate_amounts
 
 D = Decimal
 

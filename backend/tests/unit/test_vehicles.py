@@ -2,9 +2,9 @@
 
 from decimal import Decimal
 
-from delivery.domain import Location, Order, VehicleType
-from delivery.domain.estimation import haversine_km
-from delivery.domain.vehicle_rules import (
+from delivery.models import Location, Order, VehicleType
+from delivery.models.estimation import haversine_km
+from delivery.models.vehicle_rules import (
     ServiceArea,
     VehicleLimits,
     VehiclePolicy,

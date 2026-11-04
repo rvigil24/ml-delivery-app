@@ -34,7 +34,7 @@ Con Node.js 22 o superior (CI usa Node 24), iniciar primero la API local
 con el `.env` privado ya configurado para MongoDB:
 
 ```bash
-uv run --locked --env-file .env uvicorn delivery.api.app:app --host 127.0.0.1 --port 8001
+uv run --locked --env-file .env uvicorn delivery.main:app --host 127.0.0.1 --port 8001
 ```
 
 En otra terminal, desde la raíz:
@@ -273,8 +273,8 @@ pesos locales; no necesita credenciales AWS. El bundle no está incluido en Git.
 
 ```bash
 uv sync --locked --python 3.12.14
-uv run --locked --env-file .env python -m delivery.adapters.mongo
-DELIVERY_DEMO_ENABLED=1 uv run --locked --env-file .env uvicorn delivery.api.app:app --host 127.0.0.1 --port 8000
+uv run --locked --env-file .env python -m delivery.database.connection
+DELIVERY_DEMO_ENABLED=1 uv run --locked --env-file .env uvicorn delivery.main:app --host 127.0.0.1 --port 8000
 ```
 
 Esta alternativa usa `MONGODB_URI` y `MONGODB_DATABASE` privados configurados en
@@ -311,17 +311,29 @@ una garantía de entrega ni una probabilidad calibrada para el entorno local.
 
 ## Organización del backend
 
-Para explicar el recorrido de una solicitud: `api/orders.py` →
-`services/orders.py` → `ports/orders.py` → `adapters/mongodb/orders.py`.
-Las reglas independientes de HTTP y MongoDB viven en `domain/`.
+```text
+backend/src/delivery/
+├── main.py          # Crea FastAPI y registra las rutas
+├── routers/         # Endpoints: negocios, pedidos, repartidores, predicciones
+├── schemas/         # Datos de las solicitudes y respuestas HTTP
+├── models/          # Entidades, estados y validaciones de los datos
+├── services/        # Operaciones y reglas del negocio
+├── repositories/    # Consultas y escrituras de pedidos, catálogos y efectivo
+├── database/        # Conexión, documentos y esquema de MongoDB
+├── ml/              # Carga y ejecución de modelos entrenados
+└── storage/         # Archivos en S3
+```
 
-- `api/app.py`: crea FastAPI y registra rutas.
-- `api/lifespan.py`: carga modelos, conecta MongoDB y cierra recursos.
-- `api/businesses.py`, `couriers.py`, `orders.py`: rutas por entidad.
-- `api/request_models.py` y `response_models.py`: contratos HTTP.
-- `api/errors.py`, `dependencies.py`, `validation.py`: errores y servicios HTTP.
-- `adapters/mongodb/`: conexión, catálogos, pedidos/asignaciones y efectivo.
-- `adapters/mongo.py`: conserva imports y comando de preparación anteriores.
+El recorrido para exponer es: **ruta → servicio → repositorio → MongoDB**.
+Por ejemplo: `routers/orders.py` → `services/orders.py` →
+`repositories/orders.py`. `models/` representa los datos y `schemas/` define
+lo que acepta/devuelve HTTP. `startup.py` prepara modelos/conexiones al arrancar;
+`dependencies.py`, `errors.py` y `validation.py` reúnen utilidades de FastAPI.
+
+Entrada principal: `delivery.main:app`. La entrada anterior `delivery.api.app:app`
+se conserva como alias para procesos que ya estaban configurados; no hay una
+segunda aplicación ni una segunda implementación de las rutas. MongoDB se
+prepara explícitamente con `python -m delivery.database.connection`.
 
 La suite principal contiene **exactamente 10 pruebas unitarias**, conservadas
 por su cobertura de registro, estados, concurrencia, precios, vehículos, rutas,

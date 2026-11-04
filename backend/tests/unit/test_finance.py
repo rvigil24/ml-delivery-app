@@ -5,8 +5,8 @@ from decimal import Decimal as D
 from decimal import localcontext
 
 import pytest
-from delivery.domain.finance import FinancialScenario, analyze_finances
-from delivery.domain.pricing import OperatorCosts, PricingPolicy, calculate_amounts
+from delivery.models.finance import FinancialScenario, analyze_finances
+from delivery.models.pricing import OperatorCosts, PricingPolicy, calculate_amounts
 
 
 def scenario():

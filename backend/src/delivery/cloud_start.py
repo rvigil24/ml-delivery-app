@@ -2,15 +2,14 @@
 
 import json
 import os
-from pathlib import Path
 import sys
 import time
-from typing import Optional
 import urllib.request
+from pathlib import Path
+from typing import Optional
 
-from delivery.adapters.mongo import MongoStorage
-from delivery.domain.catalogs import StorageUnavailable
-
+from delivery.database.connection import MongoStorage
+from delivery.models.catalogs import StorageUnavailable
 
 WAIT_STATE = Path("/tmp/delivery-cloud-start.json")
 
@@ -22,7 +21,9 @@ def healthcheck() -> bool:
             state = json.loads(WAIT_STATE.read_text())
             os.kill(int(state["pid"]), 0)
             return state["deadline"] is None or time.monotonic() < state["deadline"]
-        with urllib.request.urlopen("http://127.0.0.1:8000/health", timeout=2) as response:
+        with urllib.request.urlopen(
+            "http://127.0.0.1:8000/health", timeout=2
+        ) as response:
             return response.status == 200
     except (OSError, ValueError, KeyError, TypeError):
         return False
@@ -38,7 +39,10 @@ def wait_for_mongo(uri: str, database: str, deadline: Optional[float]) -> None:
             return
         except StorageUnavailable:
             # No imprimir excepciones: podrían contener URI, hosts o credenciales.
-            print("Esperando acceso y esquema MongoDB; revisar IP permitida/configuración.", flush=True)
+            print(
+                "Esperando acceso y esquema MongoDB; revisar IP permitida/configuración.",
+                flush=True,
+            )
         finally:
             if storage is not None:
                 storage.close()
@@ -58,7 +62,10 @@ def main() -> int:
         if not uri or not database or not 0 <= timeout <= 3600:
             raise ValueError
     except (KeyError, ValueError):
-        print("Configurar URI/base MongoDB y plazo 0 (sin límite) o entre 1 y 3600 segundos.", flush=True)
+        print(
+            "Configurar URI/base MongoDB y plazo 0 (sin límite) o entre 1 y 3600 segundos.",
+            flush=True,
+        )
         return 2
 
     deadline = time.monotonic() + timeout if timeout else None
@@ -67,13 +74,19 @@ def main() -> int:
     try:
         wait_for_mongo(uri, database, deadline)
     except (TimeoutError, ValueError):
-        print("Arranque cancelado: revisar acceso, credenciales y esquema MongoDB.", flush=True)
+        print(
+            "Arranque cancelado: revisar acceso, credenciales y esquema MongoDB.",
+            flush=True,
+        )
         return 1
     finally:
         WAIT_STATE.unlink(missing_ok=True)
     print("Esquema MongoDB verificado; iniciando API.", flush=True)
     # Reemplazar proceso conserva señales de parada y la red/IP de la tarea.
-    os.execvp("uvicorn", ["uvicorn", "delivery.api.app:app", "--host", "0.0.0.0", "--port", "8000"])
+    os.execvp(
+        "uvicorn",
+        ["uvicorn", "delivery.main:app", "--host", "0.0.0.0", "--port", "8000"],
+    )
     return 0
 
 

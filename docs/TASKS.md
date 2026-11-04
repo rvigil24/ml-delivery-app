@@ -1518,3 +1518,12 @@ con nombres breves en tests/unit, selección predeterminada y CI actualizadas.
 OpenAPI normal/demo idéntico; clases MongoDB idénticas por AST; diez pruebas
 aprobadas. Arranque local y lecturas health/negocios/menú200 verificados.
 Dominio y servicios intactos; integración condicionada a CI. Sin despliegue AWS.
+
+
+Ajuste explícito de Ruben: sustituir nomenclatura hexagonal por REST convencional.
+Carpetas definitivas: routers/schemas/models/services/repositories/database/ml/storage;
+entrada delivery.main:app con alias anterior compatible. Sin carpetas domain,
+ports o adapters. Se conserva la misma suite de diez pruebas y T54 pendiente.
+OpenAPI normal/demo vuelve a coincidir exactamente con el original; diez pruebas
+aprobadas y arranque local con MongoDB/modelos disponibles. Integración pendiente
+de CI. T54 se mantiene pendiente.
