@@ -620,6 +620,63 @@ Verificación T27: **58 pruebas del backend aprobadas en Python 3.12**, incluida
 cinco nuevas; estas también pasan en Python 3.9. Sin nuevas dependencias,
 credenciales, canales reales, API o infraestructura.
 
+## Efectivo y estados contables simulados — T28
+
+`CashService(repository, orders, quotes)` usa un repositorio de efectivo y el
+repositorio de pedidos existente. `quotes` implementa `CashQuoteSource`: consulta
+una cotización validada del mismo pedido, con importes. Sin esa fuente queda
+bloqueado; los borradores académicos no la sustituyen.
+
+`open(order_id)` guarda una expectativa pendiente por pedido, con ID de
+cotización, moneda e importe del envío. `collect(order_id, currency, amount)`
+registra el cobro completo tras entregar el pedido; `remit(...)` registra la
+entrega íntegra al operador. `amount` debe ser Decimal finito no negativo, igual
+al importe guardado; no hay redondeos nuevos, parciales, cambio, sobrepagos o
+deducciones automáticas del pago al repartidor. Un cero explícito en una
+cotización validada es admisible; la ausencia de importe nunca se sustituye por cero.
+
+`InMemoryCashRepository` protege estado/historial UTC como una sola operación
+local, sin sobrescribir aperturas ni duplicar eventos por reintentos. `get(id)`
+devuelve un snapshot inmutable identificado como simulado. No modifica pedidos,
+asignaciones o disponibilidad. Los términos guardados no se recotizan implícitamente.
+
+```bash
+uv run --locked pytest backend/tests/test_cash.py -q
+```
+
+Verificación T28: **64 pruebas del backend aprobadas en Python 3.12**, incluidas
+seis nuevas, también aprobadas en Python 3.9. Cotizaciones/valores de tests son
+fixtures. Sin dinero real, contabilidad general, API, MongoDB o dependencias nuevas.
+
+## Escenario financiero académico — T29
+
+`delivery.domain.finance` expone `FinancialScenario` y la función pura
+`analyze_finances(scenario)`. Requiere período, volumen entero no negativo,
+desglose unitario `QuoteAmounts` de T22, costos fijos adicionales, inversión y
+unidad monetaria. Todo usa la moneda del desglose; no hay valores predeterminados.
+Los costos fijos excluyen lo ya incluido por envío. Se exige margen conciliado
+y entradas alineadas a la unidad monetaria, sin redondearlas silenciosamente.
+
+El informe inmutable conserva el escenario y devuelve ingresos, pago/costos
+agregados, contribución, costo total y resultado operativo. Resultado = volumen
+× margen unitario − costos fijos adicionales. Equilibrio = menor volumen entero
+con resultado ≥ 0; puede no existir con margen no positivo. Si no hay costos
+fijos, el mínimo es cero, lo que no garantiza rentabilidad al aumentar volumen.
+ROI simple del período (%) = resultado / inversión × 100; inversión cero devuelve
+`None`. No se vuelve a restar la inversión como gasto operativo ni se anualiza.
+
+```bash
+uv run --locked pytest backend/tests/test_finance.py -q
+```
+
+Se conservan pérdidas. El equilibrio usa techo exacto; solo el porcentaje ROI
+puede aproximarse a 28 dígitos significativos, ROUND_HALF_UP. Los demás cálculos
+rechazan pérdida de precisión. No estima demanda, usa efectivo T28 como ingreso
+adicional ni altera pedidos. Todo resultado lleva `academic_only=True` y
+`demand_validated=False`: no es rentabilidad observada ni garantía de negocio.
+Verificación T29: **69 pruebas del backend aprobadas en Python 3.12**, incluidas
+cinco nuevas, también aprobadas en Python 3.9. Sin dependencias nuevas.
+
 ## Notebooks para estudiar y exponer
 
 [`notebooks/01_datos_y_procesamiento.ipynb`](notebooks/01_datos_y_procesamiento.ipynb)
