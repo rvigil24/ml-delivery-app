@@ -27,7 +27,7 @@ flowchart LR
     API --> Demo[Servicios de pedido y demo]
     Demo --> Estimate
     Demo --> Rules[Precios, vehículos, rutas y efectivo]
-    Demo --> Ports[Puertos de repositorio]
+    Demo --> Ports[Repositorios de datos]
     Ports --> Mongo[(MongoDB local o Atlas)]
     S3[(S3: bundle versionado)] -->|Solo al arrancar: SHA256| Cache[Caché temporal]
     Cache --> ETA
@@ -42,8 +42,8 @@ flowchart LR
 |---|---|
 | `delivery.api` | Validar entrada, componer dependencias, llamar servicios y traducir errores. |
 | `delivery.services` | Estimar y coordinar reglas/persistencia; no entrena modelos durante solicitudes. |
-| `delivery.domain` | Entidades inmutables, estados y reglas con entradas/configuración explícitas. |
-| `delivery.ports` y `delivery.adapters` | Aislar repositorios, MongoDB, S3 y carga del modelo del resto del producto. |
+| `delivery.models` | Entidades inmutables, estados y reglas con entradas/configuración explícitas. |
+| `delivery.repositories.base` y `delivery.repositories` | Aislar repositorios, MongoDB, S3 y carga del modelo del resto del producto. |
 | MongoDB | Negocios, repartidores, pedidos/eventos, asignaciones y efectivo. No guarda datasets o pesos. |
 | S3 `ml-kodigo-resources`, `us-east-1` | Bundles y documentación privados; `datasets/` contiene metadatos/licencia, no CSV redistribuidos. |
 | `ml/` y notebooks | Datos reales, transformaciones, experimentos y evaluación offline. No usan registros de demo para entrenar. |
@@ -133,10 +133,10 @@ documentados; no hace falta separar el backend en varios servicios desplegables.
 
 | Componente | Responsabilidad | Límite |
 |---|---|---|
-| `delivery.domain` | Entidades, unidades y reglas puras de negocio | No importa FastAPI, MongoDB, boto3 ni bibliotecas de entrenamiento. No fija parámetros comerciales pendientes. |
+| `delivery.models` | Entidades, unidades y reglas puras de negocio | No importa FastAPI, MongoDB, boto3 ni bibliotecas de entrenamiento. No fija parámetros comerciales pendientes. |
 | `delivery.services` | Coordinar pedidos, cotizaciones, asignaciones y efectivo simulado | Usa dominio y puertos; no conoce documentos MongoDB ni claves S3 concretas. |
-| `delivery.ports` | Describir operaciones de persistencia, archivos e inferencia | Contratos Python simples basados en tipos del dominio; sin clientes de SDK ni tipos HTTP. |
-| `delivery.adapters` | Implementar puertos con MongoDB, S3 y el modelo validado | Traduce datos externos al contrato interno; no decide tarifas ni entrena durante una solicitud. |
+| `delivery.repositories.base` | Describir operaciones de persistencia, archivos e inferencia | Contratos Python simples basados en tipos del dominio; sin clientes de SDK ni tipos HTTP. |
+| `delivery.repositories` | Implementar puertos con MongoDB, S3 y el modelo validado | Traduce datos externos al contrato interno; no decide tarifas ni entrena durante una solicitud. |
 | `delivery.api` | Validar solicitudes/respuestas, componer dependencias y traducir errores a HTTP | Invoca servicios; no contiene reglas comerciales ni acceso directo desde los handlers a MongoDB/S3. |
 | `ml/data` | Adquisición y transformaciones reproducibles | Trabaja con archivos de procedencia verificada; no consume pedidos simulados como etiquetas reales. |
 | `ml/experiments` | Entrenar, evaluar y exportar pipeline y manifiesto | Produce artefactos versionados para inferencia; no depende de la API ni de MongoDB. |
@@ -155,8 +155,8 @@ sección de arquitectura actual y en el contrato de manifiesto.
 
 ### Modelos de dominio implementados — T04
 
-Importación pública: `from delivery.domain import Business, Order, Courier, Quote`.
-Los tipos auxiliares también se exportan desde `delivery.domain`. Se usan
+Importación pública: `from delivery.models import Business, Order, Courier, Quote`.
+Los tipos auxiliares también se exportan desde `delivery.models`. Se usan
 `dataclasses` inmutables y enumeraciones de la biblioteca estándar, compatibles
 con Python 3.9+, sin dependencias de FastAPI/Pydantic, MongoDB, S3 ni ML.
 Las validaciones rechazan entradas inválidas con `ValueError`; no convierten
@@ -381,7 +381,7 @@ ISO 8601 canónico con microsegundos para no truncar la precisión del historial
 al formato BSON date de milisegundos. El codec reconstruye únicamente tipos
 conocidos por sus anotaciones, sin pickle o nombres de clases suministrados.
 
-`python -m delivery.adapters.mongo` prepara explícitamente validadores/índices
+`python -m delivery.database.connection` prepara explícitamente validadores/índices
 en la base configurada. JSON Schema exige campos/tipos, estados del dominio,
 límites geográficos y estructura; el dominio/servicios validan la semántica.
 Una colección existente con otro validador exige migración explícita: no se
@@ -671,7 +671,7 @@ costos, distancia usada e importes. Mantiene `academic_only=True` y
 por cero. No persiste, cobra, cambia estados ni habilita el validador de T20.
 No usa duración ML, vehículo, tarifas ocultas o reglas de combustible inventadas.
 
-**Contratos internos T20 aprobados:** `delivery.ports.orders` define
+**Contratos internos T20 aprobados:** `delivery.repositories.base` define
 `BusinessReader.get(business_id)`, `OrderRepository.get/create/transition` y
 `TransitionRequirements.validate(order, target)`. Este último falla con una
 excepción si no puede acreditar requisitos; devolver un booleano no es su contrato.
@@ -1286,3 +1286,41 @@ la vista. Acciones logísticas mantienen estado esperado y validación del backe
 no se habilitan con datos cuya actualización falló. Se mantienen límites de100
 registros y actualización manual. No es notificación instantánea ni snapshot
 transaccional entre vistas. Estimación ML permanece independiente del polling.
+
+
+### Refactor de presentación del backend — solicitado por Ruben
+
+No modifica reglas, rutas, métodos, códigos HTTP, esquemas, operationId ni
+arranque público `delivery.main:app`. Se separan composición (app), ciclo de
+vida (lifespan), errores, contratos de entrada/salida y routers explícitos por
+entidad. Se retiran api/storage.py y api/schemas.py; el código interno importa
+los módulos concretos. Los routers conservan el orden original, incluidos los
+estáticos anteriores a parámetros dinámicos.
+
+MongoDB se organiza en adapters/mongodb: connection, documents, catalogs, orders
+y cash. Pedidos y asignaciones permanecen juntos por compartir las transacciones.
+MongoStorage sigue agrupando conexión/repositorios; adapters/mongo.py conserva
+imports públicos y CLI de bootstrap. No cambia esquema, índices o codificación.
+Los cuerpos de las cuatro clases originales coinciden por AST tras moverlos.
+
+Por instrucción expresa, la suite predeterminada del proyecto contiene exactamente
+10 pruebas unitarias existentes del backend, agrupadas en tests/unit. Se eliminaron
+las otras93, sin ocultarlas con skips o wrappers. CI ejecuta esas10; comprobaciones
+ML separadas conservadas fuera de la selección predeterminada. El refactor se
+contrasta además con OpenAPI normal/demo capturado antes: idéntico en ambos casos.
+
+
+### Estructura REST convencional — ajuste solicitado por Ruben
+
+La estructura anterior separaba domain/ports/adapters y dificultaba la exposición.
+Se sustituyen por models, services, repositories, database, routers, schemas,
+ml y storage. main.py registra FastAPI y routers; startup.py compone servicios y
+cierra conexiones/modelos. No se agregan capas nuevas. Los tipos Protocol se
+reúnen en repositories/base.py o junto a ML/S3: anotan los objetos existentes,
+no constituyen una etapa adicional del recorrido HTTP.
+
+Entrada principal delivery.main:app; delivery.api.app permanece únicamente como
+alias compatible para procesos en ejecución. Docker y documentación usan la
+entrada principal. Esquema Mongo e interfaces HTTP conservados. Diez pruebas
+unitarias, sin nuevas pruebas. El contrato se vuelve a comparar con el OpenAPI
+previo al refactor (normal y demo).

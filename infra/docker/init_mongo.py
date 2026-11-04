@@ -5,7 +5,7 @@ import time
 from pymongo import MongoClient
 from pymongo.errors import OperationFailure, PyMongoError
 
-from delivery.adapters.mongo import MongoStorage
+from delivery.database.connection import MongoStorage
 
 
 def main() -> None:

@@ -1,8 +1,8 @@
 """T27: canal local de demostración; sin envío de mensajes o acceso a WhatsApp."""
 
-from delivery.domain.messages import SimulatedConversation, conversation_from_record
-from delivery.domain.models import Order
-from .orders import OrderService
+from delivery.models.entities import Order
+from delivery.models.messages import SimulatedConversation, conversation_from_record
+from delivery.services.orders import OrderService
 
 
 class WhatsAppSimulationService:
