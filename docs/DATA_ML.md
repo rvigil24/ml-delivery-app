@@ -1,6 +1,122 @@
 # DATA_ML — Datos reales, procesamiento y modelos predictivos
 
-**Responsabilidad actual:** Ruben Vigil asume T05–T19 por instrucción explícita del 2026-11-03. **Estado:** Meituan seleccionado y adquirido; auditoría T07 aprueba con condiciones la preparación académica de una cohorte de pedidos inmediatos. El resultado y las restricciones vigentes están en la sección T07. Las entregas anteriores descartadas de T05–T12 no se utilizan como evidencia. Las secciones previas conservan la historia de investigación y selección.
+## Resultados vigentes
+
+La versión que usa la demo es `meituan-eta-risk-v2`. Son **dos modelos**:
+duración creación–entrega y probabilidad de superar un plazo prometido. Se
+conserva el experimento v1 para comparar y reproducir su metodología; no es
+el predictor geográfico actual. Las secciones de investigación describen lo
+observado en su etapa; esta síntesis y la revisión v2 determinan el alcance vigente.
+
+### Fuente, etiquetas y variables
+
+Fuente seleccionada: Meituan/INFORMS, revisión
+`1f9b4288cee5a78d1e5da007fc306bbaa662fc6d`. El CSV original contiene 654,343
+registros de intentos; la cohorte procesada tiene 546,281 pedidos inmediatos
+completados, con una entrega inequívoca y cronología válida. Se excluyen
+reservas y casos ambiguos conforme a la auditoría; no se fabrican tiempos.
+
+| Resultado | Etiqueta aprendida | Variables conocidas al solicitar |
+|---|---|---|
+| Duración | `(arrive_time - platform_order_time) / 60`, minutos observados. | Hora/día UTC transformados cíclicamente y distancia esférica origen–destino. |
+| Retraso | `arrive_time > estimate_arrived_time`, evento real frente al plazo registrado. | Mismas variables más minutos del plazo prometido. |
+
+La entrega observada se utiliza para construir etiquetas, nunca como entrada.
+No se usan IDs, courier, grab/fetch, vehículo o preparación sin instante
+acreditado como predictores. El plazo no varía entre intentos del mismo pedido
+en la fuente auditada; el clasificador aprende respecto de plazos de Meituan,
+no una política de promesas calibrada para negocios locales.
+
+El informe oficial Meituan de 2024, sección 2.1, permite estimar distancias
+relativas bajo desplazamiento uniforme sin reescalado de coordenadas. El divisor
+1e6 se interpreta como codificación en microgrados; es **una inferencia de
+representación, no confirmación textual de la escala en el informe**. Haversine
+aproxima separación esférica, no kilómetros por calles. No se intentan recuperar
+direcciones originales ni se incluyen coordenadas absolutas en los modelos.
+
+### Preparación y diseño experimental
+
+Pandas materializa la cohorte y su auditoría; Dask y PySpark local demuestran
+transformaciones equivalentes y se miden bajo condiciones documentadas. Son
+herramientas offline: la API no necesita Spark para consultar estos modelos.
+Los notebooks separan preparación, experimento temporal y revisión v2.
+
+La frontera temporal de test es `2022-10-23T00:00:00Z`: 409,083 pedidos de
+entrenamiento, 136,799 de test y 399 purgados. Un pedido anterior al corte cuya
+entrega todavía no se había observado no se incorpora al entrenamiento. La
+validación usa tres folds por día con la misma restricción de disponibilidad.
+Preprocesamiento aprendido se ajusta dentro de cada fold, no con test.
+
+ETA se selecciona por MAE de validación; riesgo por log-loss. Los parámetros
+se fijaron antes de esta comparación. No se escoge por el mejor test ni se
+promete superioridad estadística. El test ya había sido consultado al evaluar
+v1, por lo que v2 es una revisión **exploratoria**, no una validación externa ciega.
+
+### Comparación real de duración
+
+| Candidato | MAE CV (min) | MAE test (min) | RMSE test (min) | R² test |
+|---|---:|---:|---:|---:|
+| median | 9.3358 | 9.5012 | 12.5625 | -0.0381 |
+| linear | 7.7783 | 7.8752 | 10.3379 | 0.2970 |
+| random_forest | 7.2566 | 7.3640 | 9.7612 | 0.3733 |
+| hist_gradient_boosting **(seleccionado)** | 7.2197 | 7.3697 | 9.8790 | 0.3581 |
+
+HistGradientBoosting se conserva por su validación, aunque Random Forest obtuvo
+un MAE de test ligeramente menor. Frente al Random Forest temporal v1 (MAE
+9.125362 min), el MAE v2 disminuye aproximadamente 19.2%. Aún hay errores relevantes;
+R² 0.358 no es un porcentaje de exactitud ni una garantía sobre un pedido.
+
+### Comparación real de riesgo
+
+| Candidato | Log-loss CV | Log-loss test | Brier test | ROC AUC test | AP test (`pr_auc`) |
+|---|---:|---:|---:|---:|---:|
+| prevalence | 0.4236 | 0.4222 | 0.1273 | 0.5000 | 0.1497 |
+| logistic | 0.4182 | 0.4150 | 0.1257 | 0.6126 | 0.1979 |
+| hist_gradient_boosting **(seleccionado)** | 0.4049 | 0.4039 | 0.1227 | 0.6477 | 0.2376 |
+
+Prevalencia de retraso en test: 14.97%. La referencia predice la prevalencia
+constante; no debe confundirse una gran proporción de entregas puntuales con
+un clasificador útil. Menor log-loss/Brier es mejor; mayor ROC AUC/PR AUC indica
+mejor discriminación. ROC AUC 0.648 muestra una mejora **modesta**, no 64.8% de
+exactitud. No se ha acreditado calibración de estas probabilidades en El Salvador. El campo
+`pr_auc` del archivo corresponde a average precision (AP), calculada con
+`average_precision_score`, no al área trapezoidal de la curva PR.
+
+### Experimentos previos y reproducibilidad
+
+El experimento temporal v1 incluyó baseline, regresión lineal, Random Forest,
+LinearSVR, validación/tuning y una MLP pequeña. Sus entradas eran solo calendario;
+sus métricas corresponden a esa versión. La MLP no se reentrenó con distancia
+en v2 y no se presenta como candidata v2 equivalente. La revisión actual añade
+la geometría y un problema de clasificación de retraso con las etiquetas descritas.
+
+Código reproducible: `ml/experiments/train_delivery_v2.py`. El comando completo
+está en el [README](../README.md); requiere los datos reales preparados y un
+nuevo directorio de salida. `notebooks/03_eta_y_riesgo.ipynb` muestra comparaciones
+y escenarios. La evidencia del bundle conserva hashes de datos, tamaños de las
+particiones, scores por fold, selección y todas las métricas de test.
+
+El bundle local `models/delivery-duration/meituan-eta-risk-v2/` y su copia privada
+S3 `models/delivery-duration/meituan-eta-risk-v2/` contienen `eta.pkl`, `risk.pkl`,
+`metadata.json`, `evidence.json` y `model_card.md`; S3 añade licencia y manifiesto.
+Se comprueban hashes/versiones del entorno antes de cargar los pesos propios.
+La publicación está vinculada al commit 6a5a074; los snapshots documentales S3
+son versiones inmutables de su fecha, no copias automáticas de cada cambio Git.
+
+### Límites e interpretación para la demostración
+
+- China y un período corto de observación: no hay validación para El Salvador.
+- Cohorte condicionada a pedidos inmediatos completados; no predice cancelación o entregas fallidas.
+- Distancia aproximada y escala de codificación inferida; no hay tráfico, proveedor vial o diferencias por vehículo.
+- Riesgo respecto de plazos del sistema original; no hay umbral comercial o garantía de cumplimiento.
+- Test reutilizado: los resultados de esta revisión no son evidencia externa independiente.
+- Las coordenadas, tarifas, cargas y límites de la demo son escenarios explícitos; las predicciones proceden de los modelos, pero no son viajes observados.
+- Los resultados no acreditan ROI, ahorro o cobertura reales; esos cálculos usan configuración aparte.
+
+Se conserva atribución y licencia Meituan para uso académico no comercial.
+No se redistribuyen CSV en Git/S3 o frontend; S3 contiene modelos, documentación
+y metadatos, sin registros del dataset. Las inferencias demo no se vuelven etiquetas.
+
 
 **Objetivo académico:** demostrar un flujo reproducible desde registros de entregas hasta predicciones evaluadas, diferenciando evidencia experimental de reglas comerciales e información simulada.
 
@@ -8,9 +124,9 @@
 
 Estimar **duración observada de una entrega en minutos** a partir de atributos conocidos antes de realizarla. Solo procede si existe una fuente con etiquetas observadas y variables válidas. Una duración derivada de dos timestamps reales observados puede ser válida si se explica claramente su definición; una duración generada con distancia/velocidad supuesta **no es una etiqueta real**.
 
-## Fuentes candidatas que deben evaluarse (no seleccionadas)
+## Fuentes consideradas durante la investigación
 
-Estas fuentes ayudan a iniciar T05, pero **no equivalen a datos aprobados**. La información descriptiva proviene de páginas públicas y repositorios secundarios; antes de decidir es obligatorio descargar los archivos originales y comprobar su licencia, su esquema y la procedencia de sus etiquetas.
+Estas fuentes formaron parte de la investigación inicial; **la fuente seleccionada es Meituan**. La información descriptiva proviene de páginas públicas y repositorios secundarios; antes de decidir es obligatorio descargar los archivos originales y comprobar su licencia, su esquema y la procedencia de sus etiquetas.
 
 | Candidato | Acceso inicial | Campos/objetivo descritos públicamente | Riesgos que hay que comprobar |
 |---|---|---|---|
@@ -1389,25 +1505,6 @@ Cuando se valide el dataset, compartir con quien implemente T30/T31:
 - Métricas reales, limitaciones y dominio de uso (país, vehículo, franja horaria, etc.).
 
 No afirmar que el modelo diferencia bicicleta/motocicleta si no está respaldado por features y etiquetas pertinentes. Las reglas de vehículo y combustible pertenecen al módulo de negocio.
-
-## Entregables de Ruben antes de T13
-
-1. Informe de auditoría de fuente(s) y decisión del dataset.
-2. Dataset y diccionario de datos versionados/reproducibles.
-3. Scripts ETL y notebook/reportes EDA, con controles de calidad.
-4. Equivalencias con Dask/PySpark local.
-5. Comparación de tiempos y pruebas verificables de transformaciones.
-
-Evitar notebooks gigantes que mezclen adquisición, lógica comercial, entrenamiento y presentación. Preferir módulos importables y notebooks solo para exploración cuando aporten valor.
-
-Por solicitud de Ruben, `notebooks/01_datos_y_procesamiento.ipynb` sirve para
-estudiar y exponer T05–T12: ejecuta las recetas existentes, muestra agregados y
-comprueba hashes. Incluye equivalencias y mediciones reales con su contexto.
-El entrenamiento T13–T19 tendrá un cuaderno separado cuando
-corresponda. Ver ejecución local/Colab y empaquetado de fuentes en README.
-El cuaderno versionado no guarda salidas; la ejecución local con resultados queda
-en `data/reports/presentation/`, ignorada por Git. No incluye filas de pedidos
-en sus salidas ni realiza operaciones AWS.
 
 ## Criterios de aceptación académica y precauciones
 

@@ -1,41 +1,104 @@
 # ARCHITECTURE — Arquitectura del Asistente de Delivery Económico
 
-**Estado:** diseño precisado en T03, no implementación terminada. Los contratos nuevos de este documento son propuestas para coordinación antes de implementarlos; no se consideran aprobados por el otro integrante. T04 implementa únicamente los modelos de dominio. Las decisiones aún abiertas se señalan expresamente.
+## Arquitectura actual
 
-**Propósito de este documento:** explicar qué responsabilidad tiene cada componente, cómo se comunican los dos integrantes y cómo almacenaremos los datos en AWS sin introducir infraestructura innecesaria.
+La aplicación ejecutable es una API FastAPI con servicios de dominio, MongoDB
+para datos operativos y dos modelos v2 cargados desde un bundle propio de S3.
+Docker Compose reproduce la demo local; Atlas es la alternativa de base en la
+nube ya verificada. Next.js y la infraestructura de despliegue aún no están
+implementados. Los detalles de versiones previas explican compatibilidad,
+no cambian el contrato v2 descrito en esta sección.
 
-## Visión de alto nivel
-
-```text
-               Next.js (T47–T54)
-          chat / negocio / repartidor / operador
-                        |
-                   HTTP/JSON
-                        v
-                 FastAPI (T30)
-          /health  /predict  + operaciones
-                        |
-          ┌─────────────┼──────────────────┐
-          v             v                  v
-     Pedidos/estados  Cotizaciones     Predicción ML
-     y asignaciones   costos/rutas      (inferencia)
-          |             |                  |
-          └─────────────┼──────────────────┘
-                        |
-             puertos/adaptadores de IO
-                   /            \
-              MongoDB          Amazon S3
-           entidades/eventos   datasets/ models/ docs/
-
-     Procesamiento/entrenamiento (offline Python)
-     fuente REAL → Pandas / Dask / PySpark local
-                → ML + MLP → métricas y artefacto
-                → S3 models/ [solo con autorización]
+```mermaid
+flowchart LR
+    Client[Swagger o cliente Python] --> API[FastAPI]
+    UI[Next.js pendiente] -. HTTP .-> API
+    API --> Estimate[Servicio de estimación]
+    Estimate --> ETA[Modelo de duración]
+    Estimate --> Risk[Modelo de retraso]
+    API --> Demo[Servicios de pedido y demo]
+    Demo --> Estimate
+    Demo --> Rules[Precios, vehículos, rutas y efectivo]
+    Demo --> Ports[Puertos de repositorio]
+    Ports --> Mongo[(MongoDB local o Atlas)]
+    S3[(S3: bundle versionado)] -->|Solo al arrancar: SHA256| Cache[Caché temporal]
+    Cache --> ETA
+    Cache --> Risk
+    Offline[Datos reales y entrenamiento offline] --> Bundle[Bundle y evidencia]
+    Bundle --> S3
 ```
 
-**Separación importante:** `predict()` estima una variable respaldada por datos; el motor comercial aplica reglas de tarifa/vehículo. Los resultados comerciales no se presentan como métricas ML.
+### Responsabilidades y datos
 
-## Stack acordado o previsto
+| Componente | Responsabilidad y límite |
+|---|---|
+| `delivery.api` | Validar entrada, componer dependencias, llamar servicios y traducir errores. |
+| `delivery.services` | Estimar y coordinar reglas/persistencia; no entrena modelos durante solicitudes. |
+| `delivery.domain` | Entidades inmutables, estados y reglas con entradas/configuración explícitas. |
+| `delivery.ports` y `delivery.adapters` | Aislar repositorios, MongoDB, S3 y carga del modelo del resto del producto. |
+| MongoDB | Negocios, repartidores, pedidos/eventos, asignaciones y efectivo. No guarda datasets o pesos. |
+| S3 `ml-kodigo-resources`, `us-east-1` | Bundles y documentación privados; `datasets/` contiene metadatos/licencia, no CSV redistribuidos. |
+| `ml/` y notebooks | Datos reales, transformaciones, experimentos y evaluación offline. No usan registros de demo para entrenar. |
+
+En Compose la base es una réplica de un nodo con volumen persistente y sin
+puerto publicado; la API se expone en `127.0.0.1`. En ejecución nativa,
+`MONGODB_URI`/`MONGODB_DATABASE` pueden seleccionar Atlas. No se escribe a ambas
+bases a la vez. Se prepara/verifica el esquema antes de habilitar la persistencia.
+
+### Contratos usados por la demo actual
+
+| Ruta | Entrada/resultado |
+|---|---|
+| `POST /predict/delivery` | Fecha ISO con zona, origen/destino y plazo positivo; devuelve minutos, probabilidad de retraso, distancia, versión, fuente y limitaciones. |
+| `POST /demo/deliveries` | Datos/configuración explícitos con `simulated=true` e IDs `demo-`; devuelve el recorrido completo y su recibo. Solo con `DELIVERY_DEMO_ENABLED=1`. |
+| `GET /orders`, `GET /orders/{order_id}` | Consulta de registros e historial persistidos. |
+| `/businesses`, `/couriers` | CRUD de catálogos, referencias y disponibilidad protegidas. |
+| `POST /orders/{order_id}/transitions` | Estado esperado/destino; no admite omitir validaciones de cotización o asignación. |
+| `GET /health`, `POST /predict` | Compatibilidad v1: proceso/disponibilidad y predicción solo temporal, respectivamente. |
+
+El esquema completo se publica en `/openapi.json` y `/docs`. Una entrada
+inválida produce 422, una referencia ausente 404, un conflicto 409 y un modelo
+no disponible 503. Los errores no devuelven credenciales o detalles internos.
+El campo `model_available` de health describe v1; la respuesta de inferencia
+v2 muestra `model_source=s3` o `local`.
+
+### Arranque e inferencia
+
+Con `DELIVERY_MODEL_V2_DIR` explícito se usa un bundle local. Si está vacío,
+las variables `DELIVERY_MODEL_V2_MANIFEST_KEY`, `_SHA256` y `_SIZE` fijan el
+manifiesto S3. Se verifican hash, lista exacta, versión y entorno antes de
+cargar `eta.pkl` y `risk.pkl`. La API cierra el cliente S3 y sirve los pesos
+desde memoria; la caché se elimina al apagar o fallar. No hay descargas por
+solicitud, reentrenamiento automático o fallback a pesos distintos.
+
+El complemento `compose.s3.yaml` monta el perfil de desarrollo solo en lectura.
+En un futuro despliegue se usarán variables y rol IAM con lectura del prefijo;
+no se montan credenciales personales. El bucket existente no se recrea.
+
+### Flujo y garantías
+
+La demo compone solicitud, estimación v2, desglose de precios, aceptación
+simulada, confirmación, reserva de repartidor, recogida, entrega, cobro y entrega
+de efectivo. La tarifa proviene de configuración y distancia, no del modelo.
+La ruta es una sugerencia abierta geométrica, no navegación vial. La duración
+estimada no se transforma en un viaje observado.
+
+MongoDB conserva estados/eventos con UTC y precisión monetaria Decimal128;
+versiones/CAS evitan cambios sobre snapshots obsoletos. La reserva de pedidos
+y ocupación del repartidor usan una transacción; el grupo se libera solo al
+completarse las entregas. Esto no convierte todo el recorrido en una única
+transacción: una interrupción conserva los pasos aceptados. El efectivo es
+simulado y su historial está separado del estado logístico.
+
+El recibo `data/reports/presentation/demo_result.json` conserva entradas,
+cotización/modelo, ruta, mensajes e historiales. La cotización completa no se
+almacena en una nueva colección ni se ofrece reanudación por pasos. La
+aceptación de la demo no habilita los validadores de los endpoints generales.
+
+La [metodología y resultados](DATA_ML.md#resultados-vigentes) explican el alcance
+experimental; el [README](../README.md) contiene los comandos de ejecución.
+
+## Stack utilizado y previsto
 
 | Capa | Tecnología | Función |
 |---|---|---|
@@ -44,7 +107,7 @@
 | BD operacional | MongoDB | Pedidos, negocios, repartidores, estados, eventos, índices/validaciones |
 | Objetos | AWS S3 con `boto3` | Datasets, modelos, documentos |
 | ETL | Pandas, Dask, PySpark local | Transformaciones comparables y benchmarks |
-| ML/DL | scikit-learn + framework MLP a acordar | Baseline, 3 familias ML y MLP pequeña |
+| ML/DL | scikit-learn + PyTorch | Baseline, 3 familias ML y MLP pequeña |
 | Demo | Next.js | Cuatro vistas y chat simulado |
 | Local | Docker / Docker Compose | Demo reproducible |
 | Infraestructura | Terraform + AWS | Provisionar recursos nuevos de despliegue con permiso |
@@ -76,12 +139,9 @@ adaptadores no se invocan entre sí para coordinar el negocio. El motor de
 cotización recibe un resultado del puerto de predicción, sin importar código
 de entrenamiento. La API carga una versión validada del pipeline al iniciar el
 servicio o mediante un mecanismo explícito de carga; no la descarga ni la
-reentrena en cada solicitud. La política definitiva de carga se concreta en
-T19/T30/T31.
+reentrena en cada solicitud. El arranque remoto v2 se especifica en la
+sección de arquitectura actual y en el contrato de manifiesto.
 
-T02 incorporó el paquete importable y las pruebas de entorno. T04 incorpora
-únicamente `delivery.domain` y sus pruebas; las demás capas se crearán a medida
-que sus tareas las necesiten.
 
 ### Modelos de dominio implementados — T04
 
@@ -174,7 +234,7 @@ comercial completa. La UI debe comunicar la dependencia pendiente; cualquier
 escenario ilustrativo se identifica como tal y permanece fuera del dataset ML.
 Los eventos y mensajes del simulador no son observaciones reales de entregas.
 
-## Contratos API y coordinación entre integrantes
+## Contratos API
 
 - **Obligatorios por guía:** `GET /health`, `POST /predict`, documentación OpenAPI.
 - El payload de `/predict` dependerá del **dataset real y sus features disponibles al momento de cotizar**. No congelar un contrato con features inventadas. T03 documenta el borrador; T13/T19 lo hacen viable; T30/T31 lo integran.
@@ -182,7 +242,7 @@ Los eventos y mensajes del simulador no son observaciones reales de entregas.
 - Modelos de dominio y DTOs de API se separan: los datos del negocio no se hacen depender de esquemas específicos de una fuente de ML.
 - Evitar que el entrenamiento y la inferencia dependan de MongoDB si no aporta al caso.
 
-### Borrador HTTP para coordinación
+### Contratos HTTP y compatibilidad
 
 **Contrato implementado T30:** `GET /health` devuelve 200 con
 `{"status":"ok","model_available":true|false}` como comprobación de proceso,
@@ -679,38 +739,18 @@ infra/terraform/      # IaC (futuro)
 docs/                # este diseño y acuerdos
 ```
 
-No crear código vacío de todas estas capas al inicio; T01 crea una base mínima y T03 ratifica el diseño. Usar imports y paths acordados entre agentes.
+Los módulos se organizan por responsabilidad; los contratos HTTP y los puertos mantienen separadas la inferencia, las reglas y la persistencia.
 
-### Acuerdos necesarios para trabajo paralelo
+## Decisiones pendientes para uso operativo
 
-| Punto de integración | Trabajo que puede avanzar con el backlog actual | Evidencia necesaria antes de integrar |
-|---|---|---|
-| Dominio y persistencia | Ruben define entidades en T04; Guillermo prepara MongoDB en T32 cuando estén disponibles los contratos. | Campos, unidades, identificadores, estados y validaciones revisados; mapeo MongoDB sin filtrar tipos del driver. |
-| Datos e inferencia | Guillermo investiga/valida y transforma en T05–T12; Ruben entrena en T13–T19 sobre la versión validada. | Definición del target, licencia/procedencia, features disponibles al cotizar, versión/hash de datos y artefacto. |
-| Cotización y API | Ruben implementa lógica en T20–T29; Guillermo integra API/modelo en T30–T31. | Tipos de entrada/salida y errores acordados; modelo evaluado y reglas comerciales aprobadas. |
-| API y demo | T47–T54 conservan sus responsables sin asignar. | OpenAPI de T30 y flujo verificable; no desarrollar un backend paralelo dentro de Next.js. |
-
-Esta tabla no cambia responsables, estados ni prioridades del backlog. Una
-modificación de contratos se registra aquí y se coordina antes de que el otro
-módulo dependa de ella; las propuestas no deben copiarse a código como acuerdos
-definitivos.
-
-## Decisiones abiertas y efecto sobre las tareas
-
-| Decisión pendiente | Dónde se resuelve | Qué impide cerrar |
-|---|---|---|
-| Fuente real, licencia y duración objetivo observada | T05–T07 y [DATA_ML.md](DATA_ML.md) | Entrenamiento válido y esquema definitivo de `/predict`. |
-| Features disponibles al cotizar y representatividad geográfica/vehículo | T07/T13/T19 | Prometer una predicción aplicable al escenario local o diferenciada por vehículo. |
-| Valores reales de zona/límites/carga, seguridad y método vial/comercial | [SPEC.md](SPEC.md), T21/T23/T26 | Criterios y asignación simulada configurables aprobados; faltan valores concretos, cobertura comercial y viabilidad vial. |
-| Valores de tarifas/costos, demanda e inversión y reglas adicionales de combustible/comisiones | [SPEC.md](SPEC.md), T22/T25/T29 | Fórmulas T22, comparación T25 y escenario T29 aprobados; faltan valores y evidencia para cotización comercial o rentabilidad observada. No se sustituyen pendientes por cero. |
-| Integración de requisitos, recotización y traducción de errores | T20/T26/T30/T32 y contratos de este documento | Conectar la base T20 aprobada con cotización/asignación, MongoDB y HTTP sin omitir requisitos. |
-| Agrupación operativa y efectivo ficticio | T24/T26/T28 | T26 reserva en memoria y T28 registra el efectivo simulado con reglas aprobadas; faltan viabilidad operativa, integración comercial y persistencia. |
-| Driver MongoDB, esquemas OpenAPI, errores y carga del modelo | T19/T30–T33 | Integración operativa API/storage/inferencia; no requiere resolverlos con código en T03. |
-| Topología de despliegue, presupuesto e IAM | T41–T46 | Despliegue AWS. Next.js junto al backend o separado sigue pendiente; S3 ya existe y no se recrea. |
-
-T03 puede precisar límites y propuestas sin resolver estos valores. Las tareas
-afectadas deben comunicar un bloqueo cuando necesiten una decisión; no completar
-tarifas, targets o permisos con supuestos silenciosos.
+| Aspecto | Situación |
+|---|---|
+| Validación local | Los modelos se evaluaron con Meituan; falta medir su desempeño en El Salvador y por vehículo. |
+| Cobertura y rutas | Zona/límites configurables de demo; sin proveedor vial, tráfico o validación comercial. |
+| Importes y rentabilidad | Fórmulas implementadas; costos, demanda e inversión reales pendientes. Los ejemplos no los sustituyen. |
+| Cotizaciones generales | La demo acepta su cotización solo durante un recorrido; los endpoints generales no adquieren esa autorización. |
+| Operación pública | Faltan autenticación/autorización, topología/presupuesto, permisos del servicio y validación del despliegue. |
+| Interfaz visual | Next.js pendiente; hoy se usa API/Swagger y el comando de demo. |
 
 ## Persistencia y AWS S3
 
@@ -796,15 +836,6 @@ GitHub → GitHub Actions (test/build) → Docker image
 ```
 
 Next.js puede desplegarse junto al backend o por separado, según costos y facilidad demostrable. La decisión final se toma en T41. **Terraform debe consultar/referenciar el bucket ya existente**, no declararlo como recurso nuevo ni ejecutar cambios sobre él sin autorización. Un recurso de datos (`data`) sería una opción si su compatibilidad y permisos se comprueban cuando llegue T42. Antes de ejecutar `terraform apply`: revisar `plan`, costos, credenciales, permisos y alcance del cambio. Nunca aplicar automáticamente como parte de T01–T12. Docker Compose local debe poder funcionar sin un AWS pagado para las piezas que no requieren S3.
-
-## Integración y orden
-
-1. **T01–T04**: estructura, entorno, arquitectura y tipos de dominio (Ruben).
-2. **T05–T12**: obtener/validar/transformar datos y comparar Pandas/Dask/PySpark (Guillermo, en paralelo).
-3. **T13–T19**: entrenar/evaluar modelos con dataset validado (Ruben).
-4. **T20–T34**: procesos de delivery y API/storage (responsables según backlog). Contratos revisados antes de conectarlos.
-5. **T35–T40**: calidad, documentación y defensa.
-6. **T41–T54**: despliegue y frontend, pendientes de asignar.
 
 ## Criterios transversales de calidad
 

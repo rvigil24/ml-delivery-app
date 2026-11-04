@@ -34,8 +34,8 @@ corresponden al reparto previo y deben interpretarse con esta actualización.
 - **T26–T27:** completadas por cierre autorizado, con evidencia abajo; integración verificable en el PR y la guía externa.
 - **T28–T29:** completadas por cierre autorizado, con evidencia abajo; integración verificable en el PR y la guía externa.
 - **T30–T31:** completadas por cierre autorizado con alcance académico, con evidencia abajo; integración verificable en el PR y la guía externa.
-- **T32–T33:** completadas por cierre autorizado con evidencia local, Atlas y S3 indicada abajo; integración verificable en el PR del bloque y la guía externa. T34 completada por cierre autorizado con evidencia abajo. T35 completada por cierre autorizado con evidencia abajo. T36 y la mejora ML con arranque v2 S3 completadas por cierre autorizado, con evidencia abajo. T37 completada por cierre autorizado, con evidencia abajo. Sin bloque activo; siguiente tarea: T38 (documentación técnica).
-- **T38–T40:** continuar según dependencias y criterios de aceptación.
+- **T32–T33:** completadas por cierre autorizado con evidencia local, Atlas y S3 indicada abajo; integración verificable en el PR del bloque y la guía externa. T34 completada por cierre autorizado con evidencia abajo. T35 completada por cierre autorizado con evidencia abajo. T36 y la mejora ML con arranque v2 S3 completadas por cierre autorizado, con evidencia abajo. T37 completada por cierre autorizado, con evidencia abajo. T38 completada por cierre autorizado, con reporte Word/PDF y evidencia abajo. Sin bloque activo; siguiente tarea: T39 (informe y evidencias).
+- **T39–T40:** continuar según dependencias y criterios de aceptación.
 - **T41–T54:** asignadas a Ruben Vigil; despliegue y gastos siguen requiriendo autorización explícita.
 
 Cada agente trabaja una tarea por iteración, informa resultados y evita hacer
@@ -590,6 +590,36 @@ commit/push y PR único con integración normal verificada en origin/main. La gu
 externa registra el resultado efectivo; ZIP actualizado, sin iniciar T38.
 
 
+### Cierre autorizado: T38 — reporte y documentación técnica
+
+Responsable Ruben Vigil. Rama docs/T38-documentacion desde origin/main 4d4c268.
+Dependencias: datos/experimentos, inferencia v2, S3, persistencia, demo y README.
+Criterio: arquitectura y contratos actuales, metodología y resultados reales,
+límites de interpretación y reproducción claramente documentados. Por solicitud
+explícita de Ruben, incluye reporte humano en Word y PDF. No se inician otras
+tareas de presentación/despliegue ni se repiten entrenamientos.
+
+Se actualizan ARCHITECTURE y DATA_ML con síntesis actual y comparación basada en
+evidence.json; se retiran instrucciones de coordinación y asignaciones antiguas
+de esos apartados técnicos. Se conservan contratos y recetas experimentales.
+No se modifican código, pesos, métricas o dependencias. T38 se registra como
+Completada por cierre autorizado; T39 conserva su estado pendiente.
+
+Evidencia: tablas completas cotejadas con evidence.json y hashes del bundle;
+546,281 pedidos conciliados entre particiones; enlaces locales válidos y rutas
+actuales presentes en OpenAPI. Diff sin errores. Se aclara que el campo pr_auc
+es average precision (AP), no un área trapezoidal o porcentaje de exactitud.
+Sin suites, inferencias nuevas, entrenamiento o escrituras cloud/demo. Por
+corrección explícita de Ruben, el entregable humano es ahora un reporte de ocho
+páginas en reports/Reporte_Tecnico_Asistente_Delivery.docx y .pdf, con portada,
+diagrama, tablas, gráficas, metodología, evidencia y referencias. Markdown queda
+como apoyo técnico. PDF renderizado y páginas de arquitectura/resultados revisadas
+visualmente; XML e imágenes Word, paginación y cifras cotejados. README enlaza
+ambos documentos. Cierre autorizado por Ruben: commit/push y un PR con integración
+normal, verificando el commit en origin/main. La guía externa registra el resultado
+efectivo y el ZIP se actualiza. Sin modificar Excel o iniciar/cerrar T39.
+
+
 ## Instrucciones concretas y criterios de aceptación: T01–T33
 
 ### T01 — Crear repositorio Git y estructura modular del proyecto
@@ -963,7 +993,7 @@ externa registra el resultado efectivo; ZIP actualizado, sin iniciar T38.
 | T35 | Pruebas, documentación y entrega | Implementar al menos 10 pruebas unitarias con pytest | Ruben Vigil | Completada |
 | T36 | Pruebas, documentación y entrega | Probar el flujo completo: solicitud → cotización → asignación → entrega → efectivo | Ruben Vigil | Completada |
 | T37 | Pruebas, documentación y entrega | Preparar README con instalación, ejecución y ejemplos | Ruben Vigil | Completada |
-| T38 | Pruebas, documentación y entrega | Documentar arquitectura, resultados, experimentos y limitaciones | Ruben Vigil | Pendiente |
+| T38 | Pruebas, documentación y entrega | Documentar arquitectura, resultados, experimentos y limitaciones | Ruben Vigil | Completada |
 | T39 | Pruebas, documentación y entrega | Preparar informe técnico y evidencias de los hitos | Ruben Vigil | Pendiente |
 | T40 | Pruebas, documentación y entrega | Preparar presentación y demostración para la defensa | Ruben Vigil | Pendiente |
 | T41 | Despliegue y CI/CD | Definir arquitectura de despliegue en AWS y revisar presupuesto estimado | Ruben Vigil | Pendiente |
