@@ -222,6 +222,62 @@ de las entidades de dominio.
 
 ### Organización prevista del código
 
+**Comparación académica T25 aprobada:** `CostComparisonService.compare(order_ids,
+start, individual_costs, grouped_costs)` requiere políticas T24/T22 explícitas.
+Lee cada pedido una vez y usa esos mismos snapshots para todas las rutas.
+`individual_costs` debe mapear exactamente los IDs solicitados a OperatorCosts,
+sin faltantes/extras; grouped_costs es obligatorio. Moneda igual a la política.
+
+Se planifica un recorrido abierto T24 por individual y uno por el grupo,
+desde el mismo inicio y con la misma política/zona. Todos los tramos incluyen
+aproximación a recogidas; no se añade regreso/reposicionamiento final. Cada ruta
+tiene una base de pago T22 más pago/km × longitud, redondeada con su unidad y
+ROUND_HALF_UP. Los costos variable/atribuible suministrados se redondean igual;
+total operador = pago + variable + atribuible. No se usan los campos de tarifa
+al cliente ni se calcula margen/ingresos: no son cotizaciones T22 por cliente.
+
+`CostComparison` inmutable conserva política completa, `CostedRoute` individuales
+y agrupada con sus planes/costos suministrados/desglose, agregados de componentes,
+distancias y diferencias `individual_minus_group_cost`/`individual_minus_group_km`.
+Positivo significa menor costo/distancia agrupado bajo esos supuestos; negativo
+no se oculta ni se convierte en cero. Contextos locales Decimal de 28 dígitos
+rechazan pérdida de precisión en operaciones previas al redondeo o agregados.
+
+Permanece académico, sin capacidad/ruta vial validada ni elección automática.
+Las rutas individuales son independientes: no se validan recursos ni se modela
+un mismo repartidor retornando gratis al inicio. Los extremos finales pueden
+diferir. No reserva/asigna, cambia estados, emite cotizaciones o usa tiempos ML.
+`CostComparisonConfigurationMissing` indica falta de políticas; datos/costos
+incompletos o incompatibles fallan sin valores de reemplazo. No certifica ahorro,
+ROI o viabilidad logística; T26/T29 completarán sus respectivos alcances.
+
+**Rutas académicas T24 aprobadas:** `RoutePolicy(version, max_orders, area)`
+exige un máximo entero positivo y ServiceArea T23 explícitos. No tiene tamaño
+de grupo o zona predeterminados. `RouteSuggestionService.suggest(order_ids,
+start)` lee snapshots por IDs elegidos por el llamador; no busca pedidos para
+formar grupos ni consulta/asigna repartidores.
+
+Se rechazan grupos vacíos/duplicados/excesivos, IDs inválidos, pedidos inexistentes,
+inicio/extremos fuera de zona y pedidos en asignado/recogido/entregado/cancelado.
+Se admiten solicitado/cotizado/confirmado. `suggest_route` elige en cada paso la
+parada más cercana por Haversine: recogidas aún pendientes o entregas de pedidos
+ya recogidos en la sugerencia. Es una precedencia del plan, no un evento real.
+Distancias iguales se resuelven por ID; snapshots se ordenan por ID para reproducir
+el mismo resultado aunque cambie el orden de entrada del grupo.
+
+Devuelve `RoutePlan` inmutable con política, inicio, snapshots, dos `RouteStop`
+por pedido, tipo recogida/entrega, ubicación y km desde la parada anterior.
+No fusiona paradas coincidentes: conserva su trazabilidad con tramos cero.
+El total suma esos tramos como Decimal en contexto local de 28 dígitos, sin
+redondeo monetario ni retorno automático. Registra el método Haversine T21.
+
+`academic_only=True`, `capacity_validated=False` y `road_route_validated=False`
+explicitan el alcance: heurística geográfica abierta, sin garantizar óptimo,
+capacidad acumulada, tiempos, seguridad vial o viabilidad de entrega. No modifica
+repositorios/historial, reserva capacidad, calcula tarifas o altera el modelo.
+T26 debe revalidar snapshots/estado y requisitos al asignar; esta lectura no es
+una transacción ni reserva del grupo. T25 comparará costos con supuestos explícitos.
+
 **Reglas de vehículos T23 aprobadas:** `ServiceArea(id, southwest, northeast)`
 describe un rectángulo en grados, con sur < norte y oeste < este, sin cruzar el
 antimeridiano. `contains` incluye bordes; deben estar dentro origen y destino.
@@ -377,9 +433,9 @@ definitivos.
 | Fuente real, licencia y duración objetivo observada | T05–T07 y [DATA_ML.md](DATA_ML.md) | Entrenamiento válido y esquema definitivo de `/predict`. |
 | Features disponibles al cotizar y representatividad geográfica/vehículo | T07/T13/T19 | Prometer una predicción aplicable al escenario local o diferenciada por vehículo. |
 | Valores reales de zona/límites/carga, seguridad y método vial/comercial | [SPEC.md](SPEC.md), T21/T23 | Haversine y criterios configurables T23 aprobados; valores concretos, cobertura comercial y asignación siguen pendientes. |
-| Valores de tarifas/costos y reglas adicionales de combustible/comisiones | [SPEC.md](SPEC.md), T22/T25/T29 | Fórmulas básicas T22 aprobadas; faltan importes concretos y acuerdos adicionales para cotización comercial/análisis financiero. No se sustituyen pendientes por cero. |
+| Valores de tarifas/costos y reglas adicionales de combustible/comisiones | [SPEC.md](SPEC.md), T22/T25/T29 | Fórmulas T22 y supuestos de comparación T25 aprobados; faltan importes concretos y acuerdos para cotización comercial/análisis financiero. No se sustituyen pendientes por cero. |
 | Integración de requisitos, recotización y traducción de errores | T20/T26/T30/T32 y contratos de este documento | Conectar la base T20 aprobada con cotización/asignación, MongoDB y HTTP sin omitir requisitos. |
-| Agrupación, secuencia de paradas, selección y efectivo ficticio | T24/T26/T28 | Cierre del flujo de asignación/contabilidad simulada. |
+| Agrupación operativa, capacidad, asignación y efectivo ficticio | T24/T26/T28 | Heurística T24 aprobada; faltan viabilidad, reserva/asignación y contabilidad simulada. |
 | Driver MongoDB, esquemas OpenAPI, errores y carga del modelo | T19/T30–T33 | Integración operativa API/storage/inferencia; no requiere resolverlos con código en T03. |
 | Topología de despliegue, presupuesto e IAM | T41–T46 | Despliegue AWS. Next.js junto al backend o separado sigue pendiente; S3 ya existe y no se recrea. |
 

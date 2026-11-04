@@ -525,6 +525,44 @@ Verificación T23: **36 pruebas del backend aprobadas en Python 3.12** y las cin
 nuevas también en Python 3.9. Zonas/cargas/límites de tests son fixtures, no valores
 recomendados. T26 sigue a cargo de asignar repartidores aprobados/disponibles.
 
+## Sugerencia académica de rutas — T24
+
+`RouteSuggestionService` recibe IDs de pedidos y un inicio explícitos, junto
+con `RoutePolicy` versionada (máximo de pedidos y zona T23 obligatorios).
+Usa vecino más cercano con Haversine, recogida antes de su entrega y desempate
+por ID. Devuelve snapshots, paradas y tramos en km, sin volver automáticamente
+al inicio. No fusiona paradas coincidentes ni omite pedidos inválidos.
+
+```bash
+uv run --locked pytest backend/tests/test_routes.py -q
+```
+
+Es una heurística académica, sin garantía de óptimo ni validación de capacidad,
+tiempos o recorrido vial. No agrupa automáticamente, asigna, reserva o cambia
+pedidos/precios/ML. Los pedidos ya asignados, recogidos o terminales se rechazan.
+Verificación: **41 pruebas del backend aprobadas en Python 3.12** y las cinco
+nuevas también en Python 3.9; sin repetir entrenamientos o pruebas ML intactas.
+
+## Comparación académica de costos — T25
+
+`CostComparisonService` usa los mismos snapshots, inicio y políticas T22/T24
+para rutas individuales abiertas independientes y una agrupada. Exige costos
+explícitos por individual y para el grupo, en la misma moneda. Pago del repartidor
+= una base por recorrido + pago/km × longitud completa. Total del operador:
+pago + costo variable + atribuible. Conserva desgloses y diferencias individual menos
+grupo, también negativas. No compara ingresos, tarifas al cliente, margen o ROI.
+
+```bash
+uv run --locked pytest backend/tests/test_cost_comparison.py -q
+```
+
+Es un escenario académico sin retorno/reposicionamiento final, con extremos
+posiblemente distintos y sin capacidad, recursos o rutas viales validados.
+No garantiza ahorro ni asigna, reserva, cobra o cambia pedidos. Valores de
+prueba son fixtures; no son costos observados ni recomendaciones comerciales.
+Verificación T25: **46 pruebas del backend aprobadas en Python 3.12** y las cinco
+nuevas también en Python 3.9; pruebas/entrenamientos ML intactos no se repiten.
+
 ## Notebooks para estudiar y exponer
 
 [`notebooks/01_datos_y_procesamiento.ipynb`](notebooks/01_datos_y_procesamiento.ipynb)

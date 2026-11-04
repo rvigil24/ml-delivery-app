@@ -108,6 +108,42 @@ no modifica el borrador académico T21 ni acredita cobertura comercial. T26
 comprobará estado del pedido, aprobación/disponibilidad del repartidor y
 asignación; T23 evalúa tipos de vehículo, sin reservarlos.
 
+## Sugerencia de rutas — base académica aprobada T24
+
+Ruben aprobó planificar pedidos elegidos explícitamente y un punto inicial,
+con ruta abierta por vecino más cercano usando Haversine. Cada entrega requiere
+haber recogido antes su propio pedido; se desempata por ID en distancias iguales.
+No se añade regreso automático al inicio ni se eligen pedidos para agrupar.
+
+Máximo de pedidos y zona rectangular T23 son configuración explícita, sin
+valores predeterminados. Inicio, recogidas y entregas deben estar dentro. Se
+rechazan grupos vacíos, duplicados, exceso del máximo y pedidos ya asignados,
+recogidos, entregados o cancelados. No se omiten pedidos inválidos silenciosamente.
+
+Es una sugerencia académica, sin garantía de óptimo, capacidad, ventanas de
+tiempo o recorrido vial. No asigna, reserva, cambia estados, calcula costos ni
+altera tiempos ML. La viabilidad logística y asignación siguen en T26.
+
+## Comparación de costos — supuestos académicos aprobados T25
+
+Ruben aprobó comparar solo costos del operador: pago al repartidor + costo
+variable + atribuible, con los mismos pedidos/snapshots, inicio, política T22
+y moneda. Cada individual es un recorrido independiente desde ese inicio;
+el grupo es un solo recorrido T24. Una base de pago se aplica por recorrido,
+no por pedido dentro del grupo. Los costos de cada individual y del grupo son
+entradas explícitas; no se deducen descuentos, costos cero o economías de escala.
+
+Se usan rutas abiertas sin retorno/reposicionamiento final y con extremos finales
+posiblemente distintos. No se simula que un mismo repartidor vuelva gratis al
+inicio entre individuales: son recorridos independientes, sin comprobar recursos
+disponibles. La distancia para pago incluye todos los tramos planificados desde
+el inicio, incluida aproximación a recogidas.
+
+Se muestra individual menos agrupado con signo, sin asumir ahorro ni recomendar
+automáticamente agrupar. No se comparan tarifas al cliente, ingresos, margen o
+ROI. Capacidad, tiempos y viabilidad vial siguen sin validar; no cambia estados,
+reserva o asigna pedidos. Es una comparación de supuestos, no rentabilidad medida.
+
 ## Prioridad de producto
 
 1. Evidencia académica: datos reales, ETL, tres ML + MLP, evaluación reproducible, FastAPI, MongoDB, S3, Docker, pruebas.
@@ -124,7 +160,7 @@ Marketplace de repartidores, validación automática de identidad, GPS continuo,
 - Dataset real/variable objetivo final, etiquetas, representatividad para El Salvador y vehículos.
 - Región/zona de demostración y método vial/comercial; Haversine de referencia académica ya fue aprobado en T21.
 - Valores reales de límites/capacidades y seguridad; los criterios configurables T23 ya fueron aprobados.
-- Reglas de agrupación, orden de paradas y asignación simulada.
+- Agrupación operativa, capacidad y asignación simulada; la sugerencia geográfica/precedencia T24 ya fue aprobada.
 - Valores de tarifas/costos y reglas adicionales de combustible/comisiones/ROI; las fórmulas básicas configurables T22 ya fueron aprobadas.
 - Integración de requisitos, recotización, errores y contratos REST adicionales; la matriz básica T20 ya fue aprobada.
 
