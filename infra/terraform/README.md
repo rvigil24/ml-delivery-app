@@ -39,16 +39,41 @@ se versiona. No hay scripts `local-exec` ni cambios implícitos con AWS CLI.
    usando el ARN de salida y un mecanismo privado. No crear `secret_version`
    desde Terraform: el valor quedaría en el estado. Atlas debe tener el esquema
    e índices ya preparados por el procedimiento de MongoDB del proyecto.
-3. Resolver el arranque con la IPv4 dinámica antes de habilitar una tarea:
-   la API actual verifica Atlas una sola vez al iniciar. Añadir el /32 después
-   de esa verificación no recupera sus repositorios; reemplazar la tarea vuelve
-   a cambiar su IP. La configuración de ejecución posterior deberá esperar
-   conectividad/esquema Atlas antes de iniciar Uvicorn, conservando la misma
-   tarea e IP durante esa espera. No abrir Atlas globalmente. Por este motivo
-   esta etapa valida exclusivamente `desired_count = 0`.
+3. El servicio ejecuta `python -m delivery.cloud_start`: espera conectividad y
+   esquema Mongo antes de iniciar Uvicorn mediante `exec`, sin cambiar tarea/IP.
+   El plazo es `start_timeout_seconds` (900 segundos por defecto, configurable
+   hasta 3600). No crea índices, colecciones o datos. Una configuración inválida
+   o el agotamiento del plazo detiene el proceso; los logs omiten credenciales.
+   Solo tras autorizar el arranque, cambiar `desired_count` de cero a uno,
+   obtener la IPv4 de la tarea y permitir su /32 en Atlas durante la espera.
+   Repetir al reemplazar la tarea; no abrir Atlas globalmente.
 4. Verificar predicción v2 y persistencia real; `/health` solo comprueba proceso.
    La demo automática sigue deshabilitada. El API utiliza el rol de tarea para
    descargar el bundle S3 fijado por SHA-256 al arrancar, sin claves locales.
+
+El healthcheck ECS ejecuta `python -m delivery.cloud_start --healthcheck`.
+Durante la espera comprueba PID y plazo; después consulta `/health`. Es una
+comprobación de vitalidad: ECS puede indicar HEALTHY antes de que la API esté
+lista. No usar ese estado como evidencia de predicción, Atlas o demo operativa.
+
+### Consultar la IP tras un arranque autorizado
+
+Comandos de lectura, con perfil real y sin endpoints de emulador:
+
+```bash
+aws ecs list-tasks --profile remote-admin --region us-east-1 \
+  --cluster delivery-demo --service-name delivery-demo-api
+aws ecs describe-tasks --profile remote-admin --region us-east-1 \
+  --cluster delivery-demo --tasks <ARN-de-tarea> \
+  --query 'tasks[].attachments[].details[?name==`networkInterfaceId`].value'
+aws ec2 describe-network-interfaces --profile remote-admin --region us-east-1 \
+  --network-interface-ids <eni-obtenida> \
+  --query 'NetworkInterfaces[].Association.PublicIp'
+```
+
+La API de redes se llama `ec2` también para Fargate; esto no crea ni utiliza una
+instancia EC2 del proyecto. No automatizar cambios de la lista Atlas desde la
+aplicación ni darle permisos administrativos sobre Atlas.
 
 No se incluyen EC2, EBS, Elastic IP, ALB, NAT Gateway, MongoDB en contenedor,
 Next.js, TLS ni CI/CD. La IP es variable y HTTP se limita al equipo autorizado;

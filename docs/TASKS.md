@@ -34,7 +34,7 @@ corresponden al reparto previo y deben interpretarse con esta actualización.
 - **T26–T27:** completadas por cierre autorizado, con evidencia abajo; integración verificable en el PR y la guía externa.
 - **T28–T29:** completadas por cierre autorizado, con evidencia abajo; integración verificable en el PR y la guía externa.
 - **T30–T31:** completadas por cierre autorizado con alcance académico, con evidencia abajo; integración verificable en el PR y la guía externa.
-- **T32–T33:** completadas por cierre autorizado con evidencia local, Atlas y S3 indicada abajo; integración verificable en el PR del bloque y la guía externa. T34 completada por cierre autorizado con evidencia abajo. T35 completada por cierre autorizado con evidencia abajo. T36 y la mejora ML con arranque v2 S3 completadas por cierre autorizado, con evidencia abajo. T37 completada por cierre autorizado, con evidencia abajo. T38 completada por cierre autorizado, con reporte Word/PDF y evidencia abajo. T39 completada por cierre autorizado, con informe y paquete de evidencias. T40 completada por cierre autorizado, con presentación y demo ensayada. T41 completada por cierre autorizado con propuesta ECS/Fargate y presupuesto breve; evidencia abajo. T42 completada por cierre autorizado con Terraform validado y plan sin apply.
+- **T32–T33:** completadas por cierre autorizado con evidencia local, Atlas y S3 indicada abajo; integración verificable en el PR del bloque y la guía externa. T34 completada por cierre autorizado con evidencia abajo. T35 completada por cierre autorizado con evidencia abajo. T36 y la mejora ML con arranque v2 S3 completadas por cierre autorizado, con evidencia abajo. T37 completada por cierre autorizado, con evidencia abajo. T38 completada por cierre autorizado, con reporte Word/PDF y evidencia abajo. T39 completada por cierre autorizado, con informe y paquete de evidencias. T40 completada por cierre autorizado, con presentación y demo ensayada. T41 completada por cierre autorizado con propuesta ECS/Fargate y presupuesto breve; evidencia abajo. T42 completada por cierre autorizado con Terraform validado y plan sin apply. T43 completada por cierre autorizado con arranque local verificado.
 - **T40:** completada con material editable, PDF y guía; evidencia abajo.
 - **T41–T54:** asignadas a Ruben Vigil; despliegue y gastos siguen requiriendo autorización explícita.
 
@@ -1043,7 +1043,7 @@ fuentes actualizados. Sin modificar Excel, borrar ramas o iniciar despliegue.
 | T40 | Pruebas, documentación y entrega | Preparar presentación y demostración para la defensa | Ruben Vigil | Completada |
 | T41 | Despliegue y CI/CD | Definir arquitectura de despliegue en AWS y revisar presupuesto estimado | Ruben Vigil | Completada |
 | T42 | Despliegue y CI/CD | Implementar infraestructura como código con Terraform (ECS/Fargate, ECR, red, IAM y S3 existente) | Ruben Vigil | Completada |
-| T43 | Despliegue y CI/CD | Configurar servicio ECS/Fargate y variables para despliegue; conservar Compose local | Ruben Vigil | Pendiente |
+| T43 | Despliegue y CI/CD | Configurar servicio ECS/Fargate y variables para despliegue; conservar Compose local | Ruben Vigil | Completada |
 | T44 | Despliegue y CI/CD | Crear pipeline CI/CD en GitHub Actions para pruebas, build y despliegue | Ruben Vigil | Pendiente |
 | T45 | Despliegue y CI/CD | Configurar secretos, permisos mínimos y acceso seguro a la infraestructura | Ruben Vigil | Pendiente |
 | T46 | Despliegue y CI/CD | Validar despliegue, logs, persistencia y consumo de recursos | Ruben Vigil | Pendiente |
@@ -1119,3 +1119,42 @@ antes de iniciar Uvicorn dentro de la misma tarea. La API valida Mongo una sola
 vez al iniciar; permitir el /32 después no la recupera, y reemplazar una tarea
 cambia su IP. No habilitar tareas hasta resolverlo. T42 completada por cierre explícitamente autorizado. Integración verificable
 en el PR y guía externa. No se ejecutó apply.
+
+## T43 — arranque y configuración Fargate
+
+Responsable: Ruben Vigil. Inicio explícitamente autorizado tras cerrar T42.
+Rama `infra/T43-arranque-fargate` desde `origin/main` `1a522be` actualizado.
+Dependencias: T41–T42 y contenedor existente. Criterio: definición de tarea y
+variables cloud coherentes, espera de Atlas antes de Uvicorn y procedimiento
+reproducible, sin secretos versionados o despliegue implícito.
+
+Se implementa `delivery.cloud_start`: espera esquema/conectividad con clientes
+cerrados por intento y plazo configurable; luego exec de Uvicorn sin reemplazar
+la tarea. Healthcheck de vitalidad PID/plazo durante espera, HTTP después:
+HEALTHY no acredita disponibilidad funcional. Terraform usa el comando, permite
+cero/una tarea y conserva cero por defecto. Compose/Dockerfile no cambian.
+
+T43 no crea ECR/IAM/secretos ni publica imagen; esos pasos requieren autorización
+de infraestructura/despliegue. Se documentan consulta de IPv4 y alta /32 Atlas,
+sin acceso global ni permisos administrativos Atlas dentro de la aplicación.
+Completada por cierre autorizado; evidencia final abajo.
+
+Comprobaciones T43: `uv run --locked pytest backend/tests/test_cloud_start.py -q`:
+2 aprobadas (0.12 s), reintento/exec/cierre de clientes y timeout sin fuga de URI.
+Docker build de `ml-delivery-api:t43-check` aprobado. Un contenedor temporal
+sin Mongo permaneció vivo; al conectar la red del Mongo local verificó esquema
+y arrancó HTTP sin cambiar contenedor ni PID. Red/contenedor de comprobación
+eliminados; API local existente conservada. Solo lecturas Mongo, sin Atlas real,
+modelos, puertos publicados o nuevas escrituras de datos.
+
+Terraform fmt/validate aprobados y plan real actualizado con entradas de ejemplo:
+16 creaciones, cero cambios/destrucciones, `desired_count = 0`; sin apply.
+Evidencia ignorada: `cloud_start_local.json`, `t43_plan.txt`, `t43.tfplan` y
+`t43_verification.json` en data/reports/presentation/terraform/. Propuesta Word/PDF,
+README, arquitectura, guía externa y ZIP actualizados. No se repiten suites,
+entrenamientos o publicación S3. Sin commit/push de T43.
+
+**Autorización persistente de Ruben — 2026-11-04:** integrar cada tarea siguiente
+con commit, push y merge normal, y continuar sin repetir confirmación. Se mantienen
+ramas desde origin/main actualizado, comprobaciones y evidencia por tarea. No
+incluye crear recursos, configurar IAM real, desplegar o generar gastos AWS.

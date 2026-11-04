@@ -848,10 +848,11 @@ Terraform: ECR, ECS, red, roles, secreto y logs (pendiente)
   entrada al puerto de la API solo desde la IP del presentador. Sin ALB ni NAT
   Gateway. La IP cambia al reemplazar la tarea: actualizar la lista Atlas con
   su salida /32 y comprobar conectividad antes de afirmar disponibilidad.
-  La API comprueba Mongo solo al iniciar: la ejecución cloud debe esperar
-  conectividad y esquema Atlas antes de iniciar Uvicorn conservando la misma
-  tarea/IP. Ese arranque está pendiente; Terraform restringe el servicio a cero
-  tareas hasta resolverlo. No ampliar Atlas a todo internet. Endpoint estable y HTTPS quedan pendientes;
+  La API comprueba Mongo solo al iniciar. El comando cloud
+  `python -m delivery.cloud_start` espera acceso/esquema Atlas y luego reemplaza
+  el proceso por Uvicorn, conservando tarea/IP. Plazo configurable de 900 segundos
+  por defecto; no escribe datos ni modifica el esquema. `desired_count` conserva
+  cero por defecto y permite uno solo para un despliegue expresamente autorizado. No ampliar Atlas a todo internet. Endpoint estable y HTTPS quedan pendientes;
   esta configuración inicial no es una publicación general del producto.
 - Atlas sigue externo; no ejecutar MongoDB dentro de Fargate. Next.js se añadirá
   después y requerirá revisar acceso, TLS y recursos. No se presume alta disponibilidad.
@@ -954,3 +955,20 @@ Compose base permanece local. compose.s3.yaml es un complemento de desarrollo
 para la misma API con descarga S3 y perfil montado en lectura bajo UID/GID del
 host; no es configuración de despliegue. En AWS no se monta ese perfil: el SDK
 usará el rol IAM y lectura del prefijo del bundle, a configurar en T45/T43.
+
+### Arranque Fargate y comprobación de vitalidad
+
+El comando y healthcheck se declaran en la definición de tarea Terraform;
+Dockerfile y Compose conservan el arranque local existente. Mientras se permite
+el /32 en Atlas, un archivo temporal con PID/plazo permite comprobar que el
+proceso de espera está vivo. Se elimina al terminar la espera. Agotado el plazo,
+el proceso falla; no inicia la API con persistencia deshabilitada por ese fallo.
+Tras verificar Mongo, `exec` conserva señales y red de la tarea. No se imprimen
+URI o excepciones potencialmente sensibles.
+
+HEALTHY durante la espera significa vitalidad, no disponibilidad funcional.
+Después se consulta `/health`, que tampoco acredita por sí mismo modelo v2 o
+persistencia. Antes de una exposición deben comprobarse predicción y operación
+Mongo de forma explícita. No se añade endpoint, contrato o dependencia hacia
+archivos de agentes. Imagen ECR, valor del secreto y prueba cloud siguen pendientes
+hasta autorizar creación/despliegue; el código no los publica automáticamente.
