@@ -34,8 +34,8 @@ corresponden al reparto previo y deben interpretarse con esta actualización.
 - **T26–T27:** completadas por cierre autorizado, con evidencia abajo; integración verificable en el PR y la guía externa.
 - **T28–T29:** completadas por cierre autorizado, con evidencia abajo; integración verificable en el PR y la guía externa.
 - **T30–T31:** completadas por cierre autorizado con alcance académico, con evidencia abajo; integración verificable en el PR y la guía externa.
-- **T32–T33:** completadas por cierre autorizado con evidencia local, Atlas y S3 indicada abajo; integración verificable en el PR del bloque y la guía externa. No hay bloque activo; siguiente tarea: T34 (Docker/Compose).
-- **T34–T40:** continuar según dependencias y criterios de aceptación.
+- **T32–T33:** completadas por cierre autorizado con evidencia local, Atlas y S3 indicada abajo; integración verificable en el PR del bloque y la guía externa. T34 completada por cierre autorizado con evidencia abajo. Sin bloque activo; siguiente tarea: T35 (pruebas unitarias).
+- **T35–T40:** continuar según dependencias y criterios de aceptación.
 - **T41–T54:** asignadas a Ruben Vigil; despliegue y gastos siguen requiriendo autorización explícita.
 
 Cada agente trabaja una tarea por iteración, informa resultados y evita hacer
@@ -402,6 +402,40 @@ data/reports/presentation/t32_atlas_smoke.json. La condición previa de conexió
 cloud pendiente de T32 queda resuelta; no se afirma una repetición de toda la
 suite de integración contra Atlas. El cierre conserva esta distinción entre
 las pruebas locales completas y la comprobación cloud.
+
+### Cierre autorizado: T34 — Docker y Docker Compose
+
+Responsable: Ruben Vigil. Rama `infra/T34-docker`, creada desde `origin/main`
+actualizado en `aab5d02` (PR #17 integrado). Alcance autorizado al continuar
+con la siguiente tarea: únicamente T34; sin publicación Git automática.
+
+**Dependencias:** API T30–T31, adaptadores MongoDB T32 y modelo T19. El
+frontend aún no existe (T47); Atlas/S3 continúan como servicios externos.
+
+**Implementar:** imagen Python 3.12.14 con dependencias de inferencia tomadas
+del lock, usuario sin privilegios y contexto sin secretos/datasets/modelos;
+Compose local con réplica MongoDB de un nodo, preparación idempotente del
+esquema, volumen persistente, modelo montado en lectura y healthchecks.
+
+**Terminado cuando:** build real, arranque ordenado, lecturas/escrituras HTTP,
+transacciones, persistencia tras recrear contenedores, inferencia con el bundle
+local y limpieza comprobados. Documentar comandos, límites y uso opcional de
+Atlas/S3 sin modificar esos servicios. No incluye frontend, CI/CD, Terraform
+ni despliegue AWS. Ruben autorizó el cierre: se actualiza el backlog local,
+se publica un PR y se verifica la integración en origin/main; sin modificar Excel.
+
+**Evidencia T34 — 2026-11-04:** imagen construida realmente con 32 dependencias
+externas bloqueadas, Python 3.12.14 y UID 10001; sin Torch/Spark/Dask/Matplotlib/
+pytest en runtime. Compose válido y arranque con réplica, inicializador y API
+saludables. Fixture técnico creado por HTTP, pedido cancelado con historial UTC
+y persistencia conservada tras `down`/`up` que recreó los contenedores. El modelo
+T19 local cargó y predijo sobre fecha ilustrativa con su entorno exacto. Se
+eliminaron únicamente contenedores/redes/volumen del proyecto temporal
+`delivery-t34-check`; imagen conservada. Evidencia agregada ignorada:
+`data/reports/presentation/t34_docker.json`. Guía y ZIP actualizados; sin pruebas
+cloud ni cambios en dependencias del proyecto. Cierre Git autorizado por Ruben;
+el resultado efectivo del PR y merge se registra en la guía externa.
+
 
 ## Instrucciones concretas y criterios de aceptación: T01–T33
 
@@ -772,7 +806,7 @@ las pruebas locales completas y la comprobación cloud.
 | T31 | API, almacenamiento e infraestructura | Integrar el modelo predictivo con el motor de cotizaciones | Ruben Vigil | Completada |
 | T32 | API, almacenamiento e infraestructura | Configurar MongoDB con CRUD, índices y validaciones | Ruben Vigil | Completada |
 | T33 | API, almacenamiento e infraestructura | Integrar almacenamiento de objetos con S3 o MinIO | Ruben Vigil | Completada |
-| T34 | API, almacenamiento e infraestructura | Contenerizar los servicios mediante Docker y Docker Compose | Ruben Vigil | Pendiente |
+| T34 | API, almacenamiento e infraestructura | Contenerizar los servicios mediante Docker y Docker Compose | Ruben Vigil | Completada |
 | T35 | Pruebas, documentación y entrega | Implementar al menos 10 pruebas unitarias con pytest | Ruben Vigil | Pendiente |
 | T36 | Pruebas, documentación y entrega | Probar el flujo completo: solicitud → cotización → asignación → entrega → efectivo | Ruben Vigil | Pendiente |
 | T37 | Pruebas, documentación y entrega | Preparar README con instalación, ejecución y ejemplos | Ruben Vigil | Pendiente |

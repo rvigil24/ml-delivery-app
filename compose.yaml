@@ -1,0 +1,57 @@
+name: delivery-local
+
+services:
+  mongo:
+    image: mongo:8.0@sha256:b9924c330a8bbc5800fe9c69f04a84e221eca7b28fd049a0354147d9908fa142
+    command: ["mongod", "--replSet", "delivery-local", "--bind_ip_all"]
+    volumes:
+      - mongo-data:/data/db
+    networks: [backend]
+    # Sin puerto publicado: MongoDB sin autenticación solo en esta red local.
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "quit(db.adminCommand('ping').ok ? 0 : 1)"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+
+  mongo-init:
+    image: ml-delivery-api:local
+    build: .
+    command: ["python", "/app/init_mongo.py"]
+    healthcheck:
+      disable: true
+    environment:
+      MONGODB_DATABASE: delivery
+    depends_on:
+      mongo:
+        condition: service_healthy
+    networks: [backend]
+    restart: "no"
+
+  api:
+    image: ml-delivery-api:local
+    build: .
+    environment:
+      MONGODB_URI: mongodb://mongo:27017/?replicaSet=delivery-local
+      MONGODB_DATABASE: delivery
+      DELIVERY_MODEL_DIR: ${DELIVERY_LOCAL_MODEL_DIR:-/models/delivery-duration/meituan-temporal-rf-v1}
+    volumes:
+      - type: bind
+        source: ./models
+        target: /models
+        read_only: true
+    ports:
+      - "127.0.0.1:${DELIVERY_API_PORT:-8000}:8000"
+    depends_on:
+      mongo-init:
+        condition: service_completed_successfully
+    networks: [backend, http]
+    init: true
+
+volumes:
+  mongo-data:
+
+networks:
+  backend:
+    internal: true
+  http:

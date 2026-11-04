@@ -809,3 +809,25 @@ Next.js puede desplegarse junto al backend o por separado, según costos y facil
 ## Criterios transversales de calidad
 
 Pruebas automatizadas, separación configuración/secretos, manejo explícito de errores, reproducibilidad, historial Git y revisión cruzada. No asumir que la API funciona con una predicción real hasta contar con artefacto entrenado y evaluado.
+
+
+## Ejecución local en contenedores — T34
+
+`Dockerfile` produce una imagen de API/inferencia con Python 3.12.14, compatible
+con el entorno exacto del bundle T19, dependencias exportadas del lock sin las
+herramientas offline y usuario UID 10001. El contexto usa una lista permitida;
+modelos y credenciales se suministran en ejecución, nunca mediante COPY.
+
+`compose.yaml` define API, MongoDB local y un inicializador de una sola ejecución.
+MongoDB inicia como réplica de un nodo; el inicializador espera al primario y
+aplica las validaciones/índices T32. La API depende de su finalización exitosa.
+MongoDB conserva datos en volumen y solo se comunica por una red interna sin
+puertos publicados; la API se conecta además a una red HTTP para publicar
+el puerto en loopback (Docker no publica puertos en redes solo internas). El modelo local se monta
+solo para lectura. El healthcheck HTTP acredita el proceso, no la preparación
+comercial ni el acceso MongoDB; comprobar catálogos por HTTP por separado.
+
+Esta topología permite demostrar la aplicación sin AWS. No sustituye Atlas en
+la arquitectura cloud: la misma imagen admite la configuración Atlas/S3 explícita
+con `docker run`, como documenta README. No contiene frontend, reentrenamiento,
+emulador S3, Terraform ni configuración de despliegue de producción.
