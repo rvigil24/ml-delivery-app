@@ -40,9 +40,34 @@ Los perfiles, mensajes, rutas y cobros del MVP son **simulados**. No se necesita
 
 Para evitar inventar reglas, T04 puede modelar campos esenciales y enumeraciones sin fijar todavía tarifas ni límites logísticos.
 
-## Estados de pedido propuestos para revisión en T03/T04
+## Estados de pedido — base aprobada para T20
 
-`solicitado → cotizado → confirmado → asignado → recogido → entregado`; `cancelado` solo desde estados permitidos. Estos nombres y transiciones son **propuesta**, no contrato definitivo. Deben revisarse antes de darles persistencia.
+Ruben aprobó el 2026-11-03 el flujo
+`solicitado → cotizado → confirmado → asignado → recogido → entregado`.
+Solo se cancela desde `solicitado`, `cotizado` o `confirmado`; `entregado` y
+`cancelado` son terminales. Saltos, retrocesos y cambios repetidos se rechazan
+sin cambiar el pedido ni añadir eventos. El cliente debe consultar el estado
+actual antes de reintentar una operación rechazada.
+
+Los avances exigen validación de cotización/asignación y contexto correspondiente.
+En T20, sin ese validador, se rechazan; no se inventan cotizaciones, tarifas ni
+asignaciones para habilitarlos. Registro/consulta e historial UTC funcionan con
+almacenamiento local en memoria; MongoDB se integra en T32. Registrar una solicitud
+no constituye una cotización ni acredita cobertura local: la validación del área
+de servicio sigue dependiendo de la configuración por concretar en T21/T23.
+
+## Base académica aprobada para estimaciones T21
+
+Ruben aprobó usar Haversine como distancia aproximada por círculo máximo,
+sin rutas por calles, y el modelo T19 como duración experimental. El resultado
+es un borrador académico sin importes ni cambio de estado. La distancia no se
+convierte a minutos mediante una velocidad inventada: el modelo solo recibe
+hora/día UTC de creación y predice creación–entrega, no tiempo de conducción.
+No distingue vehículos ni está validado para El Salvador.
+
+La cobertura local queda explícitamente sin validar; no se inventan zonas o
+límites máximos. El borrador no habilita una cotización comercial ni sustituye
+los requisitos de T20. Tarifas, cobertura y reglas logísticas siguen pendientes.
 
 ## Prioridad de producto
 
@@ -58,10 +83,10 @@ Marketplace de repartidores, validación automática de identidad, GPS continuo,
 ## Decisiones pendientes que requieren acuerdo entre ambos
 
 - Dataset real/variable objetivo final, etiquetas, representatividad para El Salvador y vehículos.
-- Región/zona de demostración y cómo obtener distancias sin GPS/tráfico vivo.
+- Región/zona de demostración y método vial/comercial; Haversine de referencia académica ya fue aprobado en T21.
 - Umbrales bicicleta/motocicleta, capacidad y seguridad.
 - Reglas de agrupación, orden de paradas y asignación simulada.
 - Fórmulas y parámetros de tarifas, pago al repartidor, costos fijos y margen/ROI.
-- Convenciones definitivas de estados, errores y contratos REST adicionales.
+- Integración de requisitos, recotización, errores y contratos REST adicionales; la matriz básica T20 ya fue aprobada.
 
 No codificar constantes arbitrarias como decisiones comerciales aprobadas.

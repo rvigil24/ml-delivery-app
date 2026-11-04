@@ -140,12 +140,32 @@ correctamente. No se instalaron dependencias nuevas ni se accedió a AWS o BD.
 | Efectivo simulado | Servicio registra cobro/entrega ficticios según el flujo contable acordado. | Registro de efectivo separado del estado logístico; ninguna operación financiera real. | T28, T51 |
 | Comparación | Operador compara escenarios individuales y agrupados usando las mismas reglas y supuestos identificados. | Desglose de costos/margen y supuestos; sin afirmar ahorro o ROI no medido. | T25, T29, T51, T54 |
 
-Un paso rechazado no adelanta el estado del pedido. La propuesta de secuencia
-sigue siendo `solicitado → cotizado → confirmado → asignado → recogido → entregado`.
-La matriz completa de transiciones, cancelación, recotización y tratamiento de
-reintentos queda por acordar en T04/T20; esta secuencia no autoriza transiciones
-arbitrarias. En entregas agrupadas, el estado de cada pedido no se deduce de que
-otro pedido del grupo haya sido entregado.
+Un paso rechazado no adelanta el estado del pedido. Para T20, Ruben aprobó el
+2026-11-03 la siguiente matriz básica:
+
+| Estado actual | Destinos permitidos |
+|---|---|
+| `solicitado` | `cotizado`, `cancelado` |
+| `cotizado` | `confirmado`, `cancelado` |
+| `confirmado` | `asignado`, `cancelado` |
+| `asignado` | `recogido` |
+| `recogido` | `entregado` |
+| `entregado` | Ninguno |
+| `cancelado` | Ninguno |
+
+Los avances requieren validar cotización/asignación y contexto según corresponda.
+T20 exige un `TransitionRequirements` que consulte fuentes autoritativas; sin
+validador, o si este rechaza, el avance falla sin escribir. Cotizar/confirmar
+requiere cotización válida del pedido; asignar/recoger/entregar requiere la
+asignación válida correspondiente. Implementar esos requisitos comerciales y
+su conexión sigue en las tareas de cotización/asignación, sin un validador
+permisivo de producción. Cancelar antes de asignar no crea cobros ni asignaciones.
+
+Se rechazan saltos, retrocesos y estados repetidos; no se añaden eventos por
+reintentos rechazados. La actualización exige el estado esperado y cambia
+pedido/historial de forma atómica. La recotización no se habilita implícitamente
+con un regreso de estado; sigue pendiente de un diseño específico. En entregas
+agrupadas, el estado de cada pedido no se deduce del de otro.
 
 Si falta un modelo válido, no se devuelve una duración fabricada. Si faltan
 fórmulas o parámetros comerciales aprobados, no se emite una cotización
@@ -174,7 +194,7 @@ OpenAPI antes de conectar el frontend.
 | Inferencia | `POST /predict` (requerida) | Entrada pendiente de T07/T13. Si el target candidato se valida, duración en minutos, versión del modelo y definición del intervalo; sin tarifa. |
 | Crear y consultar pedido | `POST /orders`, `GET /orders/{order_id}` | Datos de negocio/origen/destino/detalles; identificador y estado del pedido. Campos finales en T04. |
 | Solicitar cotización | `POST /orders/{order_id}/quotes` | Referencia al pedido; cotización identificada con distancia/unidad, duración/procedencia y desglose monetario con moneda explícita. Parámetros en T21–T23. |
-| Solicitar transición | `POST /orders/{order_id}/transitions` | Estado solicitado y contexto necesario; pedido actualizado o rechazo. Matriz y requisitos pendientes de T04/T20. |
+| Solicitar transición | `POST /orders/{order_id}/transitions` | Estado solicitado y contexto necesario; pedido actualizado o rechazo. Matriz interna T20 aprobada; DTOs y conexión HTTP siguen en T30. |
 | Crear asignación | `POST /assignments` | Referencias a pedidos y contexto de selección; asignación a repartidor aprobado y paradas, según T24/T26. |
 | Registrar efectivo ficticio | `POST /orders/{order_id}/cash-events` | Evento contable simulado; registro identificado. Campos y validaciones pendientes de T28. |
 
@@ -194,13 +214,38 @@ No devolver `200` con una estimación ficticia para ocultar un fallo.
 | Almacenamiento de archivos | Leer un objeto identificado por clave y versión; publicar solo desde procesos autorizados | Contenido y manifiesto con hash; bucket/región desde configuración. T33 concreta operaciones y permisos, sin crear buckets. |
 | Predictor de duración | Cargar pipeline validado y predecir con entradas compatibles | Esquema de features de T07/T13, resultado/unidad/intervalo y versión de T19. Ausencia/incompatibilidad del modelo es un error explícito. |
 
-No se fijan todavía firmas Python ni DTOs con features desconocidas. El adapter
+No se fijan todavía DTOs HTTP ni features desconocidas. El adapter
 de inferencia valida la compatibilidad entre esquema y artefacto; el cálculo
 de tarifas usa sus propias reglas y no extrae conclusiones comerciales de las
 métricas del modelo. Las rutas de archivos y el driver de MongoDB quedan fuera
 de las entidades de dominio.
 
 ### Organización prevista del código
+
+**Contratos internos T20 aprobados:** `delivery.ports.orders` define
+`BusinessReader.get(business_id)`, `OrderRepository.get/create/transition` y
+`TransitionRequirements.validate(order, target)`. Este último falla con una
+excepción si no puede acreditar requisitos; devolver un booleano no es su contrato.
+El repositorio devuelve `OrderRecord(order, events)` inmutable; `transition`
+recibe `expected`, `target` y fecha UTC, y debe comparar estado/cambiar pedido/
+añadir evento como una sola operación. T32 debe conservar esa semántica en MongoDB.
+
+`OrderService.register` exige un `Order` inicialmente solicitado, negocio
+existente y origen igual a su ubicación. Los IDs se suministran, sin generarlos
+ni permitir duplicados. `get` consulta y `transition` verifica flujo/requisitos
+antes de actualizar condicionalmente. Cada creación/cambio aceptado añade un
+`OrderEvent(previous_status, status, occurred_at)` UTC; los rechazos no escriben.
+El reloj es inyectable para pruebas, normaliza a UTC y no admite fechas sin zona.
+Se rechazan eventos anteriores al último registrado.
+
+`InMemoryBusinesses` usa un catálogo explícito, sin negocios prefijados;
+`InMemoryOrderRepository` protege actualización e historial con un lock local.
+No persiste al reiniciar ni coordina procesos distintos: no equivale a MongoDB.
+Errores internos: `OrderNotFound`, `BusinessNotFound`, `OrderConflict` (incluye
+`DuplicateOrder`) y `MissingPrerequisite`. T30 concretará su traducción HTTP.
+El registro captura una solicitud, sin certificar cobertura/tarifa; T21/T23
+deben aportar la validación local para cotizar. Los eventos son de simulación,
+no observaciones reales para entrenar ML.
 
 **Artefacto académico local T19:** el bundle versionado en
 `models/delivery-duration/meituan-temporal-rf-v1/` contiene transformación T13 y
@@ -212,6 +257,33 @@ deserializar un bundle propio de confianza. Incompatibilidad/ausencia falla
 explícitamente. No es un DTO HTTP ni cambia los puertos propuestos: T30/T31
 concretarán el adapter/API. No se publica en S3 ni se acredita uso operativo;
 ver selección y límites en DATA_ML.
+
+**Estimación académica T21 aprobada:** `AcademicQuoteService.estimate(order_id,
+quote_id)` consulta un pedido solicitado y devuelve `AcademicQuoteEstimate`.
+Contiene un `Quote` sin importes y marcas inmutables `academic_only=True` y
+`coverage_validated=False`, con limitaciones explícitas. No persiste el borrador
+ni cambia el pedido; recotización y emisión comercial quedan fuera del alcance.
+Los identificadores se suministran como en T04.
+
+La distancia usa Haversine con el radio medio IUGG para WGS-84,
+6371.0087714150598 km, documentado por [GeoPy](https://geopy.readthedocs.io/en/stable/#calculating-distance).
+Se implementa con `math`, sin instalar GeoPy. Es longitud aproximada de círculo
+máximo sobre una esfera, no recorrido vial, cobertura ni distancia válida para
+facturar. Solo acepta `Location` en grados; no usa coordenadas raw de Meituan.
+El radio terrestre es una constante geométrica, no un límite de negocio.
+
+`DurationPredictor.predict(requested_at)` recibe la creación del pedido con zona
+horaria. `LocalDurationPredictor` carga una vez un bundle T19 propio de confianza
+mediante el cargador verificado, comprueba target/unidad/versión y reutiliza el
+pipeline. Deriva hora/día en UTC y devuelve `DeliveryDuration` con fuente
+`prediccion`, versión del modelo y definición creación (`platform_order_time`)
+hasta entrega (`arrive_time`). No incluye distancia o vehículo entre predictores,
+no usa la hora de una consulta posterior y no entrena durante inferencia.
+
+Modelo ausente/incompatible o salida inválida produce `PredictionUnavailable`;
+una fecha sin zona se rechaza. No hay fallback de tiempo ficticio. El resultado
+continúa siendo experimental/externo al dominio local, con las limitaciones de
+T19. No se conectan HTTP, S3, proveedor de mapas ni un validador comercial de T20.
 
 ```text
 backend/
@@ -252,9 +324,9 @@ definitivos.
 |---|---|---|
 | Fuente real, licencia y duración objetivo observada | T05–T07 y [DATA_ML.md](DATA_ML.md) | Entrenamiento válido y esquema definitivo de `/predict`. |
 | Features disponibles al cotizar y representatividad geográfica/vehículo | T07/T13/T19 | Prometer una predicción aplicable al escenario local o diferenciada por vehículo. |
-| Zona de demo, método de distancia y reglas de vehículo/carga | [SPEC.md](SPEC.md), T21/T23 | Validación del alcance local y selección logística justificadas. |
+| Zona de demo, método vial/comercial y reglas de vehículo/carga | [SPEC.md](SPEC.md), T21/T23 | Haversine académico aprobado en T21; cobertura local, uso comercial y selección logística siguen pendientes. |
 | Fórmulas de tarifas, pago, combustible, comisiones y costos | [SPEC.md](SPEC.md), T22/T25/T29 | Cotización comercial y análisis financiero completos. No se usan ceros como sustituto de valores pendientes. |
-| Tipos, matriz de estados, cancelación y reintentos | T04/T20 y contratos de este documento | Persistencia y comportamiento HTTP definitivos para cambios de estado. |
+| Integración de requisitos, recotización y traducción de errores | T20/T26/T30/T32 y contratos de este documento | Conectar la base T20 aprobada con cotización/asignación, MongoDB y HTTP sin omitir requisitos. |
 | Agrupación, secuencia de paradas, selección y efectivo ficticio | T24/T26/T28 | Cierre del flujo de asignación/contabilidad simulada. |
 | Driver MongoDB, esquemas OpenAPI, errores y carga del modelo | T19/T30–T33 | Integración operativa API/storage/inferencia; no requiere resolverlos con código en T03. |
 | Topología de despliegue, presupuesto e IAM | T41–T46 | Despliegue AWS. Next.js junto al backend o separado sigue pendiente; S3 ya existe y no se recrea. |

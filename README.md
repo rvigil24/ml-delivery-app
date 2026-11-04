@@ -435,6 +435,51 @@ artefactos propios de confianza y con el mismo código/entorno; pickle puede eje
 código y los hashes no autentican su origen. El modelo conserva R² bajo y errores
 relevantes: uso académico local, sin validación operativa ni publicación en S3.
 
+## Pedidos y estados — T20
+
+`delivery.services.orders.OrderService` registra/consulta pedidos y aplica el
+flujo aprobado, con historial UTC y actualizaciones por estado esperado.
+Los adaptadores en memoria se componen con un catálogo explícito de negocios;
+el servicio valida negocio, origen, unicidad y estado inicial solicitado.
+
+Cancelación permitida solo desde solicitado/cotizado/confirmado. Se rechazan
+saltos, retrocesos, repeticiones y estados obsoletos sin escribir. Cada avance
+requiere un `TransitionRequirements` que acredite cotización/asignación válida;
+sin ese validador queda bloqueado. T20 no fabrica esos requisitos ni configura
+tarifas/zonas. Registrar no implica aceptar cobertura o emitir una cotización.
+
+```bash
+uv run --locked pytest backend/tests/test_orders.py -q
+```
+
+El repositorio actual es efímero y local al proceso; MongoDB sigue en T32 y
+HTTP en T30. Contratos/matriz en `docs/ARCHITECTURE.md`. Los fixtures de prueba
+y eventos simulados no son pedidos reales ni datos de entrenamiento.
+Verificación: **55 pruebas aprobadas en Python 3.12**; las cinco nuevas también
+en Python 3.9 con un entorno aislado de pytest y las fuentes del backend.
+
+## Distancia y duración académicas — T21
+
+`AcademicQuoteService` produce un borrador para un pedido solicitado:
+distancia Haversine aproximada en km y duración del modelo T19 basada en hora/día
+UTC de creación. No calcula rutas, tiempos por vehículo ni minutos desde km.
+`LocalDurationPredictor` verifica/carga el bundle una vez y reutiliza el pipeline;
+si falta o falla, devuelve un error explícito, sin inventar un tiempo.
+
+```bash
+uv run --locked pytest backend/tests/test_estimates.py -q
+```
+
+El resultado contiene `quote`, `academic_only=True`, `coverage_validated=False`
+y limitaciones. La duración es creación–entrega experimental, sin validación
+para El Salvador. El borrador no tiene importes, no se persiste ni cambia el
+estado del pedido. Cobertura, tarifas y emisión comercial siguen pendientes;
+T20 no permite avanzar por disponer únicamente de este borrador. No añade
+dependencias ni usa mapas externos, HTTP o AWS.
+Verificación: **60 pruebas aprobadas en Python 3.12**, las cinco nuevas también
+en Python 3.9, e integración con el modelo real usando entradas ilustrativas
+separadas de los experimentos ML, sin reentrenar ni modificar el pedido.
+
 ## Notebooks para estudiar y exponer
 
 [`notebooks/01_datos_y_procesamiento.ipynb`](notebooks/01_datos_y_procesamiento.ipynb)
