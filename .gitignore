@@ -24,6 +24,8 @@ htmlcov/
 # Next.js / Node
 node_modules/
 .next/
+.next-production/
+frontend/next-env.d.ts
 out/
 *.tsbuildinfo
 

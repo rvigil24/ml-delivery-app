@@ -1426,3 +1426,10 @@ conflicto409 sin éxito falso, recogida/entrega, doble clic, cierre/disponibilid
 y recuperación. Sin errores JS ni desborde. Revisión Impeccable ship, seis
 capturas válidas sin correcciones materiales. Cierre autorizado persistente
 condicionado a CI aprobada; no se despliega AWS.
+
+
+Corrección de ejecución detectada al cerrar T50: se separan salidas Next.js de
+desarrollo (.next) y producción (.next-production), y se deja de versionar
+next-env.d.ts generado. Se verificó build con dev activo: proxies courier,
+business y food siguieron devolviendo200; preview producción3001 también200.
+Sin cambio de UI, contratos, responsables, AWS o IP.

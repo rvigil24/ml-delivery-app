@@ -87,6 +87,10 @@ npm run build
 npm run start -- --port 3001
 ```
 
+Desarrollo usa `.next/`; la compilación y el servidor de producción usan
+`.next-production/`, para que un build no rompa las rutas del servidor dev activo.
+`next-env.d.ts` se genera automáticamente y no se versiona.
+
 Detener con `Ctrl+C`. La interfaz local aún no se ha desplegado en AWS.
 
 ## Datos simulados para exposición
