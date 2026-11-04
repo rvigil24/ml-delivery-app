@@ -1287,3 +1287,20 @@ nueva comprobados. GET de catálogos/pedidos confirma 3 negocios, 2 repartidores
 3 pedidos SIMULADOS. Recibo privado presentation_verified.json. URL de README
 actualizada; cierre por autorización persistente, sin redespliegue documental.
 T47 sigue pendiente. No se modificaron datasets, pesos o responsables.
+
+## Actualización explícita de reportes — sin iniciar T47
+
+Ruben solicitó actualizar todo el material necesario tras revisar desajustes.
+Rama docs/reportes-actualizados desde origin/main actualizado. Se actualizan
+reporte técnico Word/PDF (8 páginas), AWS Word/PDF (2), guía Word/PDF (4),
+presentación PPTX/PDF (12 diapositivas + 12 notas) y ZIP (29 archivos).
+AWS/IP/imagen actuales, roles IAM presentes, ejemplos Swagger y fixtures 3/2/3;
+se separan predicción/CRUD cloud del flujo completo de efectivo local.
+Se conserva el anexo científico byte por byte y las métricas existentes.
+
+Comprobaciones: conteo de páginas/diapositivas/notas, XML Office y CRC/hashes ZIP,
+referencias obsoletas eliminadas y revisión visual de páginas/diapositivas
+modificadas. PPTX mantiene formas/textos editables y colores corregidos.
+ZIP incorpora JSON de fixtures, cargador y evidencia de exposición sin secretos
+ni registros de entrenamiento. Guía externa actualizada; sin cambios runtime,
+redespliegue, AWS o IP. Publicación por autorización persistente, con CI normal.
