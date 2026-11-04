@@ -1,0 +1,84 @@
+{
+  "simulated": true,
+  "business": {
+    "id": "demo-business",
+    "name": "Negocio SIMULADO",
+    "location": {
+      "latitude": 0.0,
+      "longitude": 0.0
+    }
+  },
+  "courier": {
+    "id": "demo-courier",
+    "vehicle": "bicicleta",
+    "approved": true,
+    "available": true
+  },
+  "order": {
+    "id": "demo-order",
+    "business_id": "demo-business",
+    "origin": {
+      "latitude": 0.0,
+      "longitude": 0.0
+    },
+    "destination": {
+      "latitude": 0.0,
+      "longitude": 0.01
+    },
+    "details": "Envío SIMULADO para exposición",
+    "status": "solicitado"
+  },
+  "pricing": {
+    "version": "demo-only",
+    "currency": "USD",
+    "monetary_quantum": 0.01,
+    "customer_base": 1,
+    "customer_per_km": 2,
+    "courier_base": 0.5,
+    "courier_per_km": 0.5
+  },
+  "vehicle_policy": {
+    "version": "demo-only",
+    "area": {
+      "id": "demo-area",
+      "southwest": {
+        "latitude": -1.0,
+        "longitude": -1.0
+      },
+      "northeast": {
+        "latitude": 1.0,
+        "longitude": 1.0
+      }
+    },
+    "bicycle": {
+      "max_distance_km": 20,
+      "max_load_kg": 5
+    },
+    "motorcycle": {
+      "max_distance_km": 30,
+      "max_load_kg": 10
+    }
+  },
+  "route_policy": {
+    "version": "demo-only",
+    "max_orders": 1,
+    "area": {
+      "id": "demo-area",
+      "southwest": {
+        "latitude": -1.0,
+        "longitude": -1.0
+      },
+      "northeast": {
+        "latitude": 1.0,
+        "longitude": 1.0
+      }
+    }
+  },
+  "costs": {
+    "currency": "USD",
+    "variable_cost": 0.1,
+    "attributable_cost": 0.2
+  },
+  "load_kg": 1,
+  "promised_minutes": 30.0
+}

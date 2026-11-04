@@ -34,8 +34,8 @@ corresponden al reparto previo y deben interpretarse con esta actualización.
 - **T26–T27:** completadas por cierre autorizado, con evidencia abajo; integración verificable en el PR y la guía externa.
 - **T28–T29:** completadas por cierre autorizado, con evidencia abajo; integración verificable en el PR y la guía externa.
 - **T30–T31:** completadas por cierre autorizado con alcance académico, con evidencia abajo; integración verificable en el PR y la guía externa.
-- **T32–T33:** completadas por cierre autorizado con evidencia local, Atlas y S3 indicada abajo; integración verificable en el PR del bloque y la guía externa. T34 completada por cierre autorizado con evidencia abajo. T35 completada por cierre autorizado con evidencia abajo. Sin bloque activo; siguiente tarea: T36 (flujo integrado simulado).
-- **T36–T40:** continuar según dependencias y criterios de aceptación.
+- **T32–T33:** completadas por cierre autorizado con evidencia local, Atlas y S3 indicada abajo; integración verificable en el PR del bloque y la guía externa. T34 completada por cierre autorizado con evidencia abajo. T35 completada por cierre autorizado con evidencia abajo. T36 y la mejora ML con arranque v2 S3 completadas por cierre autorizado, con evidencia abajo. Sin bloque activo; siguiente tarea: T37 (README).
+- **T37–T40:** continuar según dependencias y criterios de aceptación.
 - **T41–T54:** asignadas a Ruben Vigil; despliegue y gastos siguen requiriendo autorización explícita.
 
 Cada agente trabaja una tarea por iteración, informa resultados y evita hacer
@@ -455,6 +455,117 @@ README y guía externa actualizados. Cierre autorizado por Ruben: se marca T35
 completada y se publica un PR, verificando su integración en origin/main.
 Sin modificar Excel ni iniciar T36; no se repiten pruebas sin cambios de código.
 
+### Cierre autorizado: T36 — flujo integrado simulado
+
+**Responsable:** Ruben Vigil. Rama `test/T36-flujo-simulado`, creada desde
+origin/main `2eca136` (T35 integrada). **Dependencias:** servicios de pedidos,
+estimación/precios, asignación, WhatsApp simulado y efectivo (T20–T28).
+
+**Criterio:** una prueba integrada de solicitud → cotización → confirmación →
+asignación → recogida → entrega → cobro → entrega de efectivo, con historial
+conservado y liberación del repartidor. Se prueba la composición de servicios
+en memoria, sin API/cloud ni validación comercial real.
+
+**Evidencia — 2026-11-04:**
+`uv run --locked pytest backend/tests/test_delivery_flow.py -q`:
+**1 passed in 0.04s**. Comprueba también el bloqueo sin cotización fixture y
+sin entrega para cobrar. Reutiliza servicios y repositorios existentes;
+único archivo de prueba nuevo. Predictor, cotización, tarifas, zona y carga
+son fixtures explícitos, exclusivos del test; ningún validador se añade a la
+API. Un primer intento detectó que el doble predictivo debía respetar el
+contrato PREDICTION; se corrigió el fixture sin modificar código del producto.
+No se repitió la suite completa. README/guía/ZIP actualizados; pendiente del
+cierre autorizado, sin commits/push ni inicio de T37.
+
+**Ampliación solicitada por Ruben para exponer — 2026-11-04:** se conectó el
+flujo completo mediante POST /demo/deliveries, optativo con DELIVERY_DEMO_ENABLED=1.
+Usa predictor entrenado y MongoDB reales; políticas, zona, carga y ubicaciones del
+archivo examples/demo_delivery.json son explícitamente simuladas. scripts/demo_delivery.py
+genera IDs demo- nuevos y guarda entrada/recibo en data/reports/presentation/demo_result.json.
+El recibo conserva la cotización completa; MongoDB guarda el recorrido operativo.
+Aceptación exclusiva de la simulación, sin cambiar validadores generales ni
+pretender reanudación por pasos o una transacción global del recorrido.
+
+**Comprobación real:** Docker build/up --wait y POST completo verificados.
+Modelo meituan-temporal-rf-v1 produjo 32.57790982477246 minutos para el calendario
+del pedido demo; no es duración observada ni validación local. Tarifa simulada
+3.22 USD, pedido entregado, seis eventos logísticos y tres de efectivo hasta
+entregado_al_operador; importe conciliado y repartidor liberado. GET del pedido
+persistido confirmado. Se corrigió la presentación CLI del estado de efectivo
+(derivado del último evento); dos recorridos de demo permanecen en MongoDB local.
+Sin suite adicional. Contenedores delivery-local e información conservados para
+la presentación; no se modificó Atlas/S3. Contrato, README, guía y ZIP actualizados.
+
+
+### Cierre autorizado: corrección ML y conexión T36 — 2026-11-04
+
+Responsable Ruben Vigil. Rama activa `ml/eta-riesgo-presentacion`, desde el HEAD
+main 2eca136; se conservó el trabajo no publicado de T36. Se revisa T13–T19 por
+solicitud expresa: el modelo temporal era insuficiente. Los estados históricos
+no se reescriben ni se declara cierre de esta ampliación automáticamente.
+
+Informe oficial Meituan 2024, sección 2.1, y artículo 2025, sección 3.1, resuelven
+la duda de preservación de distancias relativas. Divisor 1e6 registrado como
+inferencia de codificación, sin atribuir confirmación textual al editor.
+Protocolo fijado antes de entrenar: misma cohorte/frontera, tres folds temporales,
+ETA seleccionada por MAE CV, riesgo por log-loss CV; test ya observado y revisión
+exploratoria. Bundle nuevo v2 con dos predictores, sin sobrescribir v1.
+
+Evidencia: ETA test MAE 7.369698, RMSE 9.878996, R² 0.358061; error MAE ~19.2%
+menor que v1. Riesgo ROC AUC 0.647745, Brier 0.122650 y log-loss 0.403900 frente
+a 0.422204 de referencia. Clasificación útil pero modesta; sin validación local.
+Endpoint POST /predict/delivery y demo T36 usan el bundle real. Escenarios HTTP
+con la misma fecha: 1.11 km/plazo 30 → ETA 23.10, riesgo 17.67%; 5.56 km/plazo 30 →
+ETA 45.38, riesgo 70.60%; mismo recorrido/plazo 45 → riesgo 32.89%. Son inferencias
+sobre entradas ilustrativas, no viajes observados. Recibo demo v2 confirma pedido
+entregado y efectivo entregado_al_operador en MongoDB local.
+
+Una prueba nueva de variables y una existente de OpenAPI aprobadas; sin otras
+suites. Notebook 03, informe, guía y ZIP actualizados. API local conservada para
+exponer. V2 se publicó después en S3; la adaptación de arranque remoto se
+documenta abajo. Sin recursos cloud nuevos o cierre formal de esta ampliación.
+
+### Adaptación T33: arranque v2 desde S3 — autorizada por Ruben
+
+Responsable Ruben Vigil; misma rama de mejora ML. La implementación T33
+original cargaba v1; al incorporar dos pesos v2 faltaba adaptar el arranque.
+Se implementa descarga de manifiesto v2 fijado por SHA256/tamaño, esquema y
+lista exacta, verificación de versión/hashes/entorno y carga única en memoria.
+Caché/cliente cerrados, limpieza al apagar o fallar, 503 sin fallback.
+
+Configuración v2 en .env.example y .env privado sin mostrar credenciales;
+compose.s3.yaml permite verificarlo con perfil local montado en lectura. Para
+AWS, perfil vacío y rol IAM a configurar en T45/T43; no se crean permisos,
+recursos o despliegues. Respuesta model_source permite distinguir s3/local.
+No se modifica el estado histórico/formal de T33 por esta ampliación.
+
+Evidencia real: API sin directorio v2 descargó siete archivos desde S3 al
+iniciar, atendió dos inferencias sin nuevas descargas y eliminó caché al cerrar.
+Hash de manifiesto incorrecto produjo 503 y limpieza; cliente S3 cerrado en
+ambos casos. La prueba existente de arranque v1 pasó (1 passed). Build/Compose
+S3 y recorrido completo en Docker verificados: model_source=s3, pedido entregado
+y efectivo entregado_al_operador. Evidencia local v2_s3_api_startup.json y
+v2_s3_docker_demo.json; demo/recibos conservados para exponer. Sin suites completas,
+reentrenamiento, IAM o despliegue AWS. Guía y ZIP actualizados; sin commit/push.
+
+
+### Cierre del bloque ML/T36 y adaptación T33 — 2026-11-04
+
+Ruben autorizó el cierre tras completar la demo real y la carga S3. T36 queda
+Completada en el backlog local; T13–T19/T33 conservan sus cierres históricos y
+esta ampliación se integra con un único PR. El commit publicado 6a5a074 se
+conserva y se añade el cambio de arranque S3. Se verifica inclusión de ambos
+commits en origin/main y se registra el resultado efectivo en la guía externa.
+
+Se contrastaron recibos de arranque S3 y Docker/demo con estados finales,
+24 objetos privados publicados y hashes del bundle v2. Se reutilizan las
+pruebas/entrenamiento ya acreditados: flujo unitario, variables v2, OpenAPI,
+arranque v1 y comprobaciones reales HTTP/S3. No se repiten suites ni ML sin
+cambios de ejecución. Límites conservados: test reutilizado, coordenadas con
+codificación inferida, riesgo modesto y falta de validación local; aceptación
+y tarifas de demo explícitamente simuladas, sin rollback global del recorrido.
+Sin modificar Excel, borrar ramas, desplegar AWS o iniciar T37 en este cierre.
+
 ## Instrucciones concretas y criterios de aceptación: T01–T33
 
 ### T01 — Crear repositorio Git y estructura modular del proyecto
@@ -826,7 +937,7 @@ Sin modificar Excel ni iniciar T36; no se repiten pruebas sin cambios de código
 | T33 | API, almacenamiento e infraestructura | Integrar almacenamiento de objetos con S3 o MinIO | Ruben Vigil | Completada |
 | T34 | API, almacenamiento e infraestructura | Contenerizar los servicios mediante Docker y Docker Compose | Ruben Vigil | Completada |
 | T35 | Pruebas, documentación y entrega | Implementar al menos 10 pruebas unitarias con pytest | Ruben Vigil | Completada |
-| T36 | Pruebas, documentación y entrega | Probar el flujo completo: solicitud → cotización → asignación → entrega → efectivo | Ruben Vigil | Pendiente |
+| T36 | Pruebas, documentación y entrega | Probar el flujo completo: solicitud → cotización → asignación → entrega → efectivo | Ruben Vigil | Completada |
 | T37 | Pruebas, documentación y entrega | Preparar README con instalación, ejecución y ejemplos | Ruben Vigil | Pendiente |
 | T38 | Pruebas, documentación y entrega | Documentar arquitectura, resultados, experimentos y limitaciones | Ruben Vigil | Pendiente |
 | T39 | Pruebas, documentación y entrega | Preparar informe técnico y evidencias de los hitos | Ruben Vigil | Pendiente |

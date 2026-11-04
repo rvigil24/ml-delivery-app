@@ -311,3 +311,26 @@ Marketplace de repartidores, validación automática de identidad, GPS continuo,
 - Integración de requisitos, recotización, errores y contratos REST adicionales; la matriz básica T20 ya fue aprobada.
 
 No codificar constantes arbitrarias como decisiones comerciales aprobadas.
+
+
+## Demostración ejecutable de extremo a extremo — ampliación T36
+
+El entorno local puede habilitar POST /demo/deliveries con DELIVERY_DEMO_ENABLED=1.
+Ejecuta un envío simulado completo, incluida aceptación explícita para ese
+recorrido, asignación, entrega y entrega del efectivo al operador. La duración
+proviene del modelo entrenado; tarifas, cobertura, cargas y ubicaciones son
+parámetros de ejemplo identificados. No se añaden registros demo al entrenamiento.
+El comando scripts/demo_delivery.py conserva parámetros/cotización/resultados en
+un recibo JSON y MongoDB persiste los historiales operativos. El recorrido es
+consecutivo y conserva pasos completados si se interrumpe. No se afirma que este
+endpoint sustituya las operaciones individuales o valide condiciones comerciales
+reales; está destinado a la exposición local del proyecto académico.
+
+
+### Revisión predictiva solicitada para la exposición
+
+La demostración usa v2: duración condicionada por distancia/calendario y riesgo
+de superar un plazo prometido explícito. El riesgo es una salida aprendida de
+entregas/plazos reales, sin umbral comercial inventado. El modelo no calcula
+precio, elige vehículo o garantiza cumplimiento. La mejora en test se documenta
+junto a la ausencia de validación local y la reutilización exploratoria del test.

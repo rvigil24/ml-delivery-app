@@ -1423,3 +1423,72 @@ La aplicación académica puede simular un recorrido completo con pedidos fictic
 - Definición original publicada del problema DoorDash y advertencia de ruido: https://github.com/Sean329/DoorDash-Delivery-Duration/blob/main/%23%23%23%23%20Data%20description%20%23%23%23%23
 
 Antes de usar un candidato, Ruben debe confirmar directamente los derechos de acceso, uso y almacenamiento, además de verificar que el archivo descargado corresponde a la descripción pública.
+
+
+## Corrección del modelo v2 — T13–T19 revisadas por petición de Ruben
+
+Se preserva el experimento temporal v1; no se sobreescriben artefactos ni métricas.
+La solicitud prioriza utilidad del ML sobre continuar tareas de infraestructura.
+El informe oficial Meituan 2024, sección 2.1, confirma desplazamiento uniforme
+sin reescalado y permite despreciar su impacto en la distancia esférica:
+https://github.com/meituan/Meituan-INFORMS-TSL-Research-Challenge/blob/main/tsl_meituan_2024_data_report_20241015.pdf
+El artículo oficial 2025, sección 3.1, confirma preservación de distancias relativas:
+https://github.com/meituan/Meituan-INFORMS-TSL-Research-Challenge
+
+Esto resuelve la restricción previa sobre el uso relativo de coordenadas, que
+no era una prohibición del editor. La representación entera se interpreta como
+microgrados (divisor 1e6), inferencia de codificación apoyada en rangos y ejemplos
+del editor, no una fórmula textual hallada en el PDF. Se conserva esa distinción.
+No se reconstruyen direcciones reales ni se afirma distancia por calles. Se usan
+solo diferencias geométricas/distance, nunca coordenadas absolutas o IDs.
+
+Protocolo fijado antes de entrenar: misma cohorte T08 y frontera de test T13,
+con purga de etiquetas pendientes. Tres folds por día dentro del entrenamiento;
+selección de ETA por MAE de validación y riesgo por log-loss de validación.
+ETA compara mediana, regresión lineal, Random Forest e HistGradientBoosting con
+parámetros fijados. Riesgo compara prevalencia, regresión logística e
+HistGradientBoostingClassifier. Sin búsqueda extensa de hiperparámetros.
+El riesgo usa como entrada el plazo prometido inicial, además de distancia y
+calendario; etiqueta = entrega observada posterior al plazo real del dataset.
+No se usan grab/fetch/arrive como predictores ni se toma como entrada un error
+calculado tras entregar. No se añade preparación estimada sin acreditar su instante.
+
+Se comparan resultados en el mismo test previamente observado; esta revisión es
+exploratoria y no se presenta como nueva validación ciega. Se informan MAE/RMSE/R²
+para ETA y log-loss/Brier/ROC-AUC/PR-AUC para riesgo, con referencias simples.
+Validación para El Salvador y por vehículo sigue pendiente. Dataset y bundles
+permanecen locales; ninguna tarifa/ROI depende del modelo. La clasificación de
+riesgo no prescribe un umbral comercial: devuelve probabilidad estimada.
+
+
+### Resultado real de la corrección v2 — 2026-11-04
+
+Entrenamiento: 409,083 pedidos, test: 136,799, purga: 399. La ETA seleccionada
+por CV es HistGradientBoosting (MAE CV 7.219711). En test: MAE 7.369698,
+RMSE 9.878996, R² 0.358061. Frente al RF temporal v1 (MAE
+9.125362), el error absoluto medio disminuye aproximadamente 19.2%, sin convertir
+esta comparación exploratoria en una validación externa ciega. Random Forest
+espacial logra MAE test 7.363985; no reemplaza al seleccionado porque la selección
+se congeló con CV antes de evaluar test.
+
+Riesgo: HistGradientBoostingClassifier seleccionado por log-loss CV 0.404902.
+Test: log-loss 0.403900 frente a prevalencia 0.422204; Brier
+0.122650, ROC AUC 0.647745, PR AUC 0.237624.
+Prevalencia de retraso test 0.149694. Discriminación modesta, sin garantía o
+calibración local. El plazo es único por pedido y no varía entre intentos en la
+fuente auditada; todos los plazos de la cohorte son positivos (mínimo 30 min).
+
+El bundle local `models/delivery-duration/meituan-eta-risk-v2/` contiene eta.pkl,
+risk.pkl, evidencia, tarjeta y metadatos con hashes/entorno/entradas/rangos.
+No sobrescribe v1; v2 se publicó posteriormente en AWS con su propio prefijo
+y manifiesto fijado por SHA256/tamaño, conservando ambos bundles.
+`ml/experiments/train_delivery_v2.py` reproduce el experimento en una carpeta nueva.
+`notebooks/03_eta_y_riesgo.ipynb` explica y compara resultados reales y consultas.
+Solo una nueva prueba unitaria de variables y la prueba OpenAPI afectada se
+comprobaron; no se repitieron suites completas o experimentos anteriores.
+
+
+La adaptación T33 permite recuperar v2 desde S3 al iniciar la API, sin directorio
+local de pesos. Se conserva el manifiesto publicado de 1216 bytes/SHA256
+0381a68fb7a7634823217d85718ce0efa5dad04fe3bf4f4b36358fa189d5e102.
+No cambia el entrenamiento, sus métricas o las limitaciones de las coordenadas.

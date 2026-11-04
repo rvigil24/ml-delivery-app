@@ -13,10 +13,12 @@ OUTPUT = ROOT / "data" / "reports" / "presentation" / "delivery_source.zip"
 
 
 def main() -> None:
-    paths = [ROOT / name for name in ("pyproject.toml", "uv.lock", ".python-version", "README.md", "Dockerfile", ".dockerignore", "compose.yaml")]
+    paths = [ROOT / name for name in ("pyproject.toml", "uv.lock", ".python-version", "README.md", "Dockerfile", ".dockerignore", "compose.yaml", "compose.s3.yaml")]
     for name in ("backend/src", "backend/tests", "ml/src", "ml/data", "ml/experiments", "ml/tests", "infra/docker"):
         paths.extend((ROOT / name).rglob("*.py"))
     paths.extend((ROOT / "docs").glob("*.md"))
+    paths.extend((ROOT / "scripts").glob("*.py"))
+    paths.extend((ROOT / "examples").glob("*.json"))
     files = sorted(set(paths))
     manifest = {
         "created_at_utc": datetime.now(timezone.utc).isoformat(),

@@ -1,0 +1,24 @@
+# Complemento local para probar la descarga S3 usando un perfil fuera de la imagen.
+# En AWS se usa el rol IAM del servicio, sin este montaje de desarrollo.
+services:
+  api:
+    user: "${DELIVERY_RUN_UID:?Definir DELIVERY_RUN_UID con id -u}:${DELIVERY_RUN_GID:?Definir DELIVERY_RUN_GID con id -g}"
+    environment:
+      DELIVERY_MODEL_V2_DIR: ""
+      DELIVERY_MODEL_V2_MANIFEST_KEY: ${DELIVERY_MODEL_V2_MANIFEST_KEY:?Configurar manifiesto v2}
+      DELIVERY_MODEL_V2_MANIFEST_SHA256: ${DELIVERY_MODEL_V2_MANIFEST_SHA256:?Configurar SHA256}
+      DELIVERY_MODEL_V2_MANIFEST_SIZE: ${DELIVERY_MODEL_V2_MANIFEST_SIZE:?Configurar tamaño}
+      DELIVERY_AWS_PROFILE: ${DELIVERY_AWS_PROFILE:?Configurar perfil local}
+      AWS_REGION: ${AWS_REGION:-us-east-1}
+      S3_BUCKET: ${S3_BUCKET:-ml-kodigo-resources}
+      S3_ENDPOINT_URL: https://s3.us-east-1.amazonaws.com
+      AWS_SHARED_CREDENTIALS_FILE: /aws/credentials
+      AWS_CONFIG_FILE: /aws/config
+      AWS_EC2_METADATA_DISABLED: "true"
+    volumes:
+      - type: bind
+        source: ${DELIVERY_AWS_CONFIG_DIR:?Definir ruta local .aws}
+        target: /aws
+        read_only: true
+        bind:
+          create_host_path: false
