@@ -1048,7 +1048,7 @@ fuentes actualizados. Sin modificar Excel, borrar ramas o iniciar despliegue.
 | T45 | Despliegue y CI/CD | Configurar secretos, permisos mínimos y acceso seguro a la infraestructura | Ruben Vigil | Completada |
 | T46 | Despliegue y CI/CD | Validar despliegue, logs, persistencia y consumo de recursos | Ruben Vigil | Completada |
 | T47 | Frontend y simulación visual | Crear aplicación Next.js con navegación entre las vistas de la demo | Ruben Vigil | Completada |
-| T48 | Frontend y simulación visual | Implementar chat estilo WhatsApp para que el cliente simule un pedido | Ruben Vigil | Pendiente |
+| T48 | Frontend y simulación visual | Implementar chat estilo WhatsApp para que el cliente simule un pedido | Ruben Vigil | Completada |
 | T49 | Frontend y simulación visual | Implementar panel del negocio para ver pedidos y cambiar su estado | Ruben Vigil | Pendiente |
 | T50 | Frontend y simulación visual | Implementar panel del repartidor para consultar rutas y confirmar entregas | Ruben Vigil | Pendiente |
 | T51 | Frontend y simulación visual | Implementar panel de operaciones con tarifas, costos, efectivo y márgenes | Ruben Vigil | Pendiente |
@@ -1334,7 +1334,7 @@ alcance de T47. Verificación: contrato OpenAPI, ruta retirada 404 y pruebas
 focalizadas de API, arranque S3 y cotizaciones.
 
 
-## Bloque activo — T47: layout Next.js
+## Bloque cerrado — T47: layout Next.js
 
 Responsable: Ruben Vigil. Rama feat/T47-layout-nextjs desde origin/main actualizado.
 Alcance confirmado: Operaciones al entrar, menú para Cliente/Negocio/Repartidor,
@@ -1353,3 +1353,31 @@ navegables a 1440 y 390 px sin desborde del documento ni errores JavaScript;
 correcciones materiales para T47. Tokens documentados con Impeccable; publicación
 bajo autorización persistente de Ruben, condicionada a CI aprobada.
 T48–T54 permanecen pendientes; no se despliega la interfaz en AWS.
+
+
+## Bloque activo — T48: dirección, cercanía y menú de comida
+
+Responsable: Ruben Vigil. Rama feat/T48-chat-guiado desde origin/main actualizado.
+Dependencias: T47 y contratos T20/T27/T32. Ruben corrigió explícitamente el flujo:
+primero dirección/ubicación, después negocios por cercanía y un menú de productos
+para elegir con cantidades. También solicitó las capacidades faltantes en la API.
+
+Se añaden GET /businesses/nearby y GET /businesses/{id}/menu y el proxy Next.js
+para consumirlos. Menús de sólo lectura con nueve productos de ejemplo, ligados
+a negocios existentes, sin precios inventados ni disponibilidad real declarada.
+No hay LLM, proveedor de geocodificación, radio de servicio o nueva colección
+MongoDB. Las distancias usan el punto elegido, no se deducen del texto de dirección.
+
+Aceptación: dirección → negocios ordenados desde API → menú desde API → carrito
+con cantidades → revisión/corrección → confirmación local explícitamente simulada.
+La confirmación no registra/envía pedidos ni calcula totales. Escrituras y demás
+integración quedan en T52 y sincronización en T53; T49–T51 no se adelantan.
+
+Comprobaciones locales: siete pruebas backend focalizadas, tres pruebas de
+borrador/carrito y build aprobados. Recorrido real de navegador a 1440/390 px
+consultando la API local y MongoDB: dirección primero, tres negocios, tres
+productos del comedor, cantidades, revisión, corrección y confirmación local.
+Sin errores JS ni desborde. Revisión visual final: ship, seis capturas válidas
+sin correcciones materiales. Wheel verificado con el menú JSON incluido.
+El PR único incorpora todas las correcciones solicitadas por Ruben; cierre
+autorizado persistente condicionado a CI aprobada. Sin despliegue AWS.

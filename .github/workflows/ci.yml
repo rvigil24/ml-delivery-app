@@ -30,6 +30,7 @@ jobs:
           cache-dependency-path: frontend/package-lock.json
       - run: npm ci --no-fund --no-audit
       - run: npm run typecheck
+      - run: npm test
       - run: npm run build
 
   tests:
@@ -52,7 +53,7 @@ jobs:
           uv pip install --system --require-hashes -r "$RUNNER_TEMP/requirements.txt"
           uv pip install --system --no-deps .
       - name: Dominio, contrato HTTP y arranque cloud
-        run: python -m pytest backend/tests/test_domain.py backend/tests/test_api.py backend/tests/test_cloud_start.py -q
+        run: python -m pytest backend/tests/test_domain.py backend/tests/test_api.py backend/tests/test_food_catalog.py backend/tests/test_cloud_start.py -q
 
   terraform:
     runs-on: ubuntu-24.04

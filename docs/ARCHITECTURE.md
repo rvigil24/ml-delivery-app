@@ -10,7 +10,8 @@ Docker Compose reproduce la demo local; Atlas es la alternativa de base en la
 nube ya verificada. La infraestructura ECS/Fargate está creada y el contenedor
 cloud sirve la API con los dos modelos S3 y persistencia Atlas ya verificados.
 Next.js cuenta con un layout local de cuatro vistas (T47), sin conexión HTTP
-al backend todavía; las acciones e integración siguen en T48–T54.
+al backend todavía. Cliente incorpora el chat guiado local T48 para pedir comida;
+los paneles e integración HTTP siguen en T49–T54.
 Los detalles de versiones previas explican compatibilidad,
 no cambian el contrato v2 descrito en esta sección.
 
@@ -1115,3 +1116,37 @@ No se añaden endpoints, despliegues, puertos AWS o recursos a Terraform. Las
 cuatro vistas son perspectivas de una demo, no un sistema de autenticación.
 PRODUCT.md, DESIGN.md y el contexto de Impeccable documentan el diseño; no son
 dependencias de ejecución. Reproducción y comprobaciones en README.
+
+
+## T48 — dirección, cercanía y menú de comida
+
+Por corrección explícita de Ruben, el recorrido comienza con dirección y punto
+de entrega. La ubicación se toma del GPS del navegador, coordenadas manuales o
+el destino de ejemplo. No hay geocodificación del texto ni proveedor de mapas.
+Después se consultan negocios por cercanía, menú, productos y cantidades;
+las indicaciones de preparación son opcionales. El usuario no inventa productos.
+
+| Contrato nuevo | Comportamiento |
+|---|---|
+| `GET /businesses/nearby?latitude=...&longitude=...&limit=20` | Negocios de MongoDB con menú publicado, ordenados por distancia Haversine y desempate por ID; limita después de ordenar. Sin radio, cobertura ni tiempo vial asumidos. |
+| `GET /businesses/{business_id}/menu` | Negocio registrado y productos de su menú de ejemplo. Desconocido: 404; conocido sin menú: lista vacía. Incluye `simulated=true` y precios nulos. |
+| Next.js `GET /api/food` | Proxy de sólo lectura hacia esas dos rutas. Base `DELIVERY_API_URL` sólo del servidor; sin secretos en navegador ni cambios CORS. |
+
+`FoodCatalogService` usa `MongoCatalog.all()` para ordenar el catálogo completo
+antes de limitar, en este catálogo pequeño. El menú es un recurso JSON de sólo
+lectura del paquete backend: `delivery/resources/food_menu.json`, con nueve
+productos ficticios repartidos entre los tres negocios de exposición existentes.
+No cambia validadores MongoDB ni crea colecciones, datos ML, precios o inventario.
+El empaquetador de fuentes incluye el recurso JSON requerido por el runtime.
+
+`GuidedChat` preserva dirección, selección y cantidades al volver. Valida
+coordenadas, negocio, productos del menú y cantidades enteras positivas antes de
+confirmar. El nombre del producto se toma del menú. La confirmación mantiene un
+borrador `demo-chat-...` en memoria con ítems, dirección y notas; recargar borra
+la prueba. No envía el pedido ni genera cotización, cobro o estado logístico.
+
+Las dos consultas HTTP se adelantan dentro de T48 por la solicitud explícita
+de Ruben de que la API tenga estas capacidades. T52 conserva las escrituras y
+el resto de integración; T53, la sincronización. No hay LLM ni WhatsApp real.
+Las nuevas rutas se verificaron localmente en puerto 8001; AWS no se redespliega
+en esta tarea y la IP actual permanece igual.

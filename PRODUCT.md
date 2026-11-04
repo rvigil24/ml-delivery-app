@@ -16,7 +16,7 @@ Cliente, negocio, repartidor aprobado y operador. Ruben usa las cuatro vistas du
 
 ## Product Purpose
 
-Gestionar entregas locales simuladas y explicar el recorrido desde la solicitud hasta la entrega y el registro de efectivo. Dos modelos estiman duración y riesgo de retraso.
+Gestionar pedidos de comida y sus entregas locales simuladas, y explicar el recorrido desde la solicitud hasta la entrega y el registro de efectivo. Dos modelos estiman duración y riesgo de retraso.
 
 ## Operating Context
 
@@ -24,7 +24,7 @@ La pantalla inicial es Operaciones; un menú permite cambiar entre los cuatro ro
 
 ## Capabilities and Constraints
 
-T47 cubre layout, navegación y ejecución local. T48–T54 incorporan acciones e integración HTTP posteriormente. No inventar cotizaciones, métricas, estados consultados, rutas viales ni datos de entrenamiento. Ejemplos claramente identificados; sin credenciales en el frontend.
+T47 cubre layout, navegación y ejecución local. T48 pide primero dirección y punto de entrega, consulta negocios por cercanía y menús en FastAPI, permite elegir productos/cantidades y prepara una confirmación local simulada; sin enviar ni persistir el pedido. El catálogo de productos es de ejemplo, versionado con la API y sin precios inventados. T49–T54 incorporan los paneles y la integración HTTP posteriormente. No inventar cotizaciones, métricas, estados consultados, rutas viales ni datos de entrenamiento. Ejemplos claramente identificados; sin credenciales en el frontend.
 
 ## Brand Commitments
 

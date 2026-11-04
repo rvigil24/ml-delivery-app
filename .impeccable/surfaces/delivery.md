@@ -21,3 +21,18 @@ FINISH: unreviewed and undocumented is unfinished; this build ends with the fini
 Revisión independiente: ship para T47; ocho capturas de escritorio/móvil válidas,
 sin correcciones materiales. Tokens extraídos en DESIGN.md y .impeccable/design.json.
 Sin imágenes de producto ni comp generada; no hay atribuciones de raster pendientes.
+
+
+## Extensión T48 — dirección y menú antes del pedido
+
+La vista Cliente conserva el mundo visual T47. Corrección explícita de Ruben:
+dirección y ubicación → negocios ordenados por cercanía desde API → menú desde
+API con productos/cantidades → revisión → confirmación local simulada.
+El usuario elige productos publicados en el catálogo de ejemplo; texto libre sólo
+para dirección e indicaciones opcionales. El punto se selecciona con GPS,
+coordenadas manuales o ejemplo; no se geocodifica el texto. No hay precios falsos,
+LLM ni envío real. Se añaden estados de consulta/error/vacío, opciones de ubicación
+y controles de cantidad usando la misma paleta, tipografía y componentes.
+
+Cierre revisado tras correcciones: ship; seis capturas full-page válidas de
+dirección, menú y revisión en 1440/390 px. Sin correcciones materiales.

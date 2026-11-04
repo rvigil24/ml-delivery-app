@@ -29,7 +29,14 @@ infraestructura y permisos previamente autorizados.
 
 ## Interfaz local (Next.js)
 
-Con Node.js 22 o superior (CI usa Node 24), desde la raíz:
+Con Node.js 22 o superior (CI usa Node 24), iniciar primero la API local
+con el `.env` privado ya configurado para MongoDB:
+
+```bash
+uv run --locked --env-file .env uvicorn delivery.api.app:app --host 127.0.0.1 --port 8001
+```
+
+En otra terminal, desde la raíz:
 
 ```bash
 cd frontend
@@ -37,18 +44,35 @@ npm ci
 npm run dev -- --port 3001
 ```
 
-Abrir [la interfaz local](http://127.0.0.1:3001). La entrada redirige a
-Operaciones; el menú permite pasar a Cliente, Negocio y Repartidor. Cliente
-representa una **simulación de WhatsApp**, con conversación de muestra y sin
-mensajes reales ni LLM. T47 cubre navegación y layout adaptable; los formularios,
-acciones e integración con FastAPI se incorporan en T48–T54. Los datos visibles
-proceden de `examples/exposicion.json`, no de una consulta en vivo a Atlas.
-No requiere `.env`, claves AWS ni conexión al backend para esta vista previa.
+Abrir [la interfaz local](http://127.0.0.1:3001). Operaciones es el inicio; el
+menú permite pasar a Cliente, Negocio y Repartidor. Cliente representa una
+**simulación de WhatsApp**, sin canal real ni LLM, con este recorrido:
+
+1. Dirección de entrega y ubicación (GPS, coordenadas manuales o destino de ejemplo).
+2. Negocios ordenados por distancia aproximada desde la API.
+3. Menú del negocio consultado en la API, productos y cantidades.
+4. Revisión y confirmación local simulada del pedido.
+
+El texto de la dirección no se geocodifica automáticamente: la cercanía usa
+el punto seleccionado, que debe corresponder a la dirección. La API devuelve
+los negocios registrados con menú de ejemplo publicado; no garantiza cobertura.
+Hay nueve productos ficticios en tres menús, identificados como ejemplos, sin
+precios o disponibilidad real configurados. No se inventan importes ni totales.
+
+Next.js consulta FastAPI mediante `/api/food`, sin exponer credenciales ni
+necesitar CORS. `DELIVERY_API_URL` es configuración exclusiva del servidor y
+por defecto apunta a `http://127.0.0.1:8001`; puede cambiarse con
+`frontend/.env.local` usando `frontend/.env.example` como referencia.
+
+La confirmación aún no envía el pedido al negocio ni lo guarda en Atlas; se
+borra al recargar. Las escrituras y sincronización siguen pendientes en T52–T53.
+Los otros paneles mantienen fixtures de `examples/exposicion.json`.
 
 Comprobación de tipos y compilación de producción:
 
 ```bash
 npm run typecheck
+npm test
 npm run build
 npm run start -- --port 3001
 ```

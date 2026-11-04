@@ -1,0 +1,79 @@
+{
+  "version": "demo-food-v1",
+  "simulated": true,
+  "description": "Productos ficticios para la exposición. Sin precio, inventario ni disponibilidad real validados.",
+  "products": [
+    {
+      "id": "demo-expo-business-1-product-1",
+      "business_id": "demo-expo-business-1",
+      "name": "Almuerzo de pollo",
+      "description": "Pollo acompañado de arroz y ensalada.",
+      "price": null,
+      "currency": null
+    },
+    {
+      "id": "demo-expo-business-1-product-2",
+      "business_id": "demo-expo-business-1",
+      "name": "Almuerzo de res",
+      "description": "Res acompañada de arroz y ensalada.",
+      "price": null,
+      "currency": null
+    },
+    {
+      "id": "demo-expo-business-1-product-3",
+      "business_id": "demo-expo-business-1",
+      "name": "Almuerzo vegetariano",
+      "description": "Vegetales acompañados de arroz y ensalada.",
+      "price": null,
+      "currency": null
+    },
+    {
+      "id": "demo-expo-business-2-product-1",
+      "business_id": "demo-expo-business-2",
+      "name": "Sándwich de pollo",
+      "description": "Pan con pollo y vegetales.",
+      "price": null,
+      "currency": null
+    },
+    {
+      "id": "demo-expo-business-2-product-2",
+      "business_id": "demo-expo-business-2",
+      "name": "Café",
+      "description": "Bebida de café.",
+      "price": null,
+      "currency": null
+    },
+    {
+      "id": "demo-expo-business-2-product-3",
+      "business_id": "demo-expo-business-2",
+      "name": "Jugo de naranja",
+      "description": "Bebida de naranja.",
+      "price": null,
+      "currency": null
+    },
+    {
+      "id": "demo-expo-business-3-product-1",
+      "business_id": "demo-expo-business-3",
+      "name": "Sándwich de vegetales",
+      "description": "Pan con vegetales.",
+      "price": null,
+      "currency": null
+    },
+    {
+      "id": "demo-expo-business-3-product-2",
+      "business_id": "demo-expo-business-3",
+      "name": "Porción de fruta",
+      "description": "Fruta de temporada.",
+      "price": null,
+      "currency": null
+    },
+    {
+      "id": "demo-expo-business-3-product-3",
+      "business_id": "demo-expo-business-3",
+      "name": "Agua",
+      "description": "Agua para acompañar tu comida.",
+      "price": null,
+      "currency": null
+    }
+  ]
+}

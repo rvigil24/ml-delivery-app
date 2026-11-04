@@ -96,6 +96,8 @@ def create_app(model_directory: Optional[Path] = None,
         effective_orders = orders if orders is not None else (storage.orders if storage is not None else None)
         application.state.mongo_storage = storage
         application.state.business_catalog = CatalogService(storage.businesses) if storage is not None else None
+        from delivery.services.food_catalog import FoodCatalogService
+        application.state.food_catalog = FoodCatalogService(storage.businesses) if storage is not None else None
         application.state.courier_catalog = CatalogService(storage.couriers) if storage is not None else None
         application.state.order_service = OrderService(effective_orders, storage.businesses,
             DispatchOrderRequirements(effective_orders)) if storage is not None else None
@@ -229,6 +231,9 @@ def create_app(model_directory: Optional[Path] = None,
                                    for decision in preview.vehicles.decisions),
             limitations=preview.pricing.estimate.limitations)
 
+    # Las rutas fijas preceden a /businesses/{identifier}.
+    from .food import food_router
+    application.include_router(food_router())
     application.include_router(storage_router())
     from .delivery_predictions import delivery_prediction_router
     application.include_router(delivery_prediction_router())

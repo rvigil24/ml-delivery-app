@@ -19,6 +19,7 @@ def main() -> None:
     paths.extend((ROOT / "docs").glob("*.md"))
     paths.extend((ROOT / "scripts").glob("*.py"))
     paths.extend((ROOT / "examples").glob("*.json"))
+    paths.extend((ROOT / "backend" / "src" / "delivery" / "resources").glob("*.json"))
     # Lista explícita: nunca incluir estado, planes, tfvars privados o plugins.
     terraform = ROOT / "infra" / "terraform"
     paths.extend(terraform.glob("*.tf"))
