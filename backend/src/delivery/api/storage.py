@@ -1,6 +1,6 @@
 """T32: CRUD operativo y transiciones controladas, sin acceso directo a MongoDB."""
 
-from typing import Tuple
+from typing import Optional, Tuple
 
 from fastapi import APIRouter, HTTPException, Query, Request, Response
 from pydantic import BaseModel, ConfigDict, Field, StrictBool
@@ -117,8 +117,10 @@ def storage_router():
 
     @router.get("/orders", response_model=Tuple[OrderRecord, ...], tags=["Pedidos"],
                 summary="Listar pedidos", description="Devuelve los pedidos registrados y su estado actual.")
-    def list_orders(request: Request, limit: int = Query(100, ge=1, le=100)):
-        return service(request, "order_service").list(limit)
+    def list_orders(request: Request, limit: int = Query(100, ge=1, le=100),
+                    business_id: Optional[str] = Query(None, min_length=1, description="Filtrar los pedidos de un negocio.")):
+        orders = service(request, "order_service")
+        return orders.list_for_business(business_id, limit) if business_id is not None else orders.list(limit)
 
     @router.get("/orders/{order_id}", response_model=OrderRecord, tags=["Pedidos"],
                 summary="Consultar un pedido", description="Devuelve los datos del pedido y el historial de sus estados.")

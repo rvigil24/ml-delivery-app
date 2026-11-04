@@ -1049,7 +1049,7 @@ fuentes actualizados. Sin modificar Excel, borrar ramas o iniciar despliegue.
 | T46 | Despliegue y CI/CD | Validar despliegue, logs, persistencia y consumo de recursos | Ruben Vigil | Completada |
 | T47 | Frontend y simulación visual | Crear aplicación Next.js con navegación entre las vistas de la demo | Ruben Vigil | Completada |
 | T48 | Frontend y simulación visual | Implementar chat estilo WhatsApp para que el cliente simule un pedido | Ruben Vigil | Completada |
-| T49 | Frontend y simulación visual | Implementar panel del negocio para ver pedidos y cambiar su estado | Ruben Vigil | Pendiente |
+| T49 | Frontend y simulación visual | Implementar panel del negocio para ver pedidos y cambiar su estado | Ruben Vigil | Completada |
 | T50 | Frontend y simulación visual | Implementar panel del repartidor para consultar rutas y confirmar entregas | Ruben Vigil | Pendiente |
 | T51 | Frontend y simulación visual | Implementar panel de operaciones con tarifas, costos, efectivo y márgenes | Ruben Vigil | Pendiente |
 | T52 | Frontend y simulación visual | Conectar las vistas de Next.js con los endpoints reales de FastAPI | Ruben Vigil | Pendiente |
@@ -1355,7 +1355,7 @@ bajo autorización persistente de Ruben, condicionada a CI aprobada.
 T48–T54 permanecen pendientes; no se despliega la interfaz en AWS.
 
 
-## Bloque activo — T48: dirección, cercanía y menú de comida
+## Bloque cerrado — T48: dirección, cercanía y menú de comida
 
 Responsable: Ruben Vigil. Rama feat/T48-chat-guiado desde origin/main actualizado.
 Dependencias: T47 y contratos T20/T27/T32. Ruben corrigió explícitamente el flujo:
@@ -1381,3 +1381,25 @@ Sin errores JS ni desborde. Revisión visual final: ship, seis capturas válidas
 sin correcciones materiales. Wheel verificado con el menú JSON incluido.
 El PR único incorpora todas las correcciones solicitadas por Ruben; cierre
 autorizado persistente condicionado a CI aprobada. Sin despliegue AWS.
+
+
+## Bloque activo — T49: panel de negocio
+
+Responsable: Ruben Vigil. Rama feat/T49-panel-negocio desde origin/main actualizado.
+Dependencias: T47 (layout), T20/T32 (pedidos persistidos/transiciones). Alcance:
+listar pedidos por negocio, detalle e historial, filtro de estado, actualización
+manual y acciones de confirmar/cancelar sin omitir requisitos del backend.
+
+Criterio: vista Negocio conectada a la API; consulta filtrada antes de limitar;
+transición con estado esperado, confirmación explícita de cancelación, errores
+sin éxito falso y actualización tras respuesta persistida. Sin cotizaciones
+inventadas, nuevos estados de preparación, autenticación o sincronización T53.
+Los borradores Cliente aún no se registran hasta T52.
+
+Se amplía GET /orders con business_id opcional y se agrega el proxy /api/business.
+Comprobaciones: seis pruebas backend focalizadas y cuatro frontend, build
+aprobado. Navegador a1440/390 px: lectura real por negocio sin escrituras
+Atlas; fixtures aisladas para409, cancelación condicional, doble clic, vacío
+y recuperación. Sin errores JS ni desborde. Revisión Impeccable ship, seis
+capturas válidas y sin correcciones materiales. Cierre autorizado persistente
+condicionado a CI aprobada; sin despliegue AWS.

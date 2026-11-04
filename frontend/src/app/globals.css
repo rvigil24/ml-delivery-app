@@ -162,6 +162,41 @@ td strong { font-weight: 600; }
 .chat-action-area button:disabled { opacity: .55; }
 .order-items { margin: 0; padding-left: 18px; }
 .order-items li + li { margin-top: 6px; }
+.business-toolbar { display: flex; align-items: flex-end; flex-wrap: wrap; gap: 18px; margin-bottom: 28px; }
+.business-toolbar .form-field { min-width: 180px; flex: 1; }
+.business-toolbar select { min-height: 46px; width: 100%; border: 1px solid #a5bcae; padding: 10px 12px; border-radius: 8px; font: inherit; background: white; color: var(--ink); }
+.business-status { font-size: 13px; color: var(--muted); margin: 20px 0; }
+.business-order-grid { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 24px; align-items: start; }
+.business-orders-table .selected-order { background: #eef6f0; }
+.business-orders-table .order-identifier { overflow-wrap: anywhere; font-size: 12px; font-weight: 500; }
+.business-orders-table td { padding: 16px; }
+.order-detail-body { padding: 0 24px 24px; }
+.order-current-state { margin-top: 10px; }
+.order-detail-body h3 { font-size: 14px; margin: 24px 0 10px; }
+.order-description { font-size: 13px; white-space: pre-wrap; overflow-wrap: anywhere; }
+.order-history { list-style: none; padding: 0; margin: 0 0 12px; }
+.order-history li { padding: 10px 0; border-bottom: 1px solid var(--line); }
+.order-history strong { display: block; font-size: 12px; font-weight: 600; }
+.order-history time { display: block; color: var(--muted); font-size: 11px; margin-top: 4px; }
+.saved-notice { padding: 12px 16px; background: var(--tint); color: var(--primary); font-size: 13px; border-radius: 7px; margin-bottom: 20px; }
+.cancel-check { margin-top: 22px; padding-top: 18px; border-top: 1px solid var(--line); font-size: 13px; }
+.button-danger { color: white; background: #a23a2e; border: 0; white-space: normal; }
+.button-danger:hover { background: #832a21; }
+.business-panel button:disabled { opacity: .55; }
+.business-panel .form-error { margin-bottom: 20px; }
+.business-panel .form-actions { justify-content: flex-start; }
+@media (max-width: 1240px) {
+  .business-order-grid { grid-template-columns: 1fr; }
+}
+@media (max-width: 700px) {
+  .business-toolbar { align-items: stretch; gap: 14px; }
+  .business-toolbar .form-field { flex-basis: 100%; }
+  .business-orders-table { min-width: 0; table-layout: fixed; }
+  .business-orders-table th, .business-orders-table td { padding: 12px 8px; }
+  .business-orders-table th:first-child { width: 38%; }
+  .business-orders-table th:nth-child(2) { width: 30%; }
+  .business-orders-table th:last-child { width: 32%; }
+}
 .chat-context { padding-top: 8px; }
 .chat-context > p { margin-top: 12px; font-size: 13px; color: var(--muted); }
 .simple-steps { margin: 22px 0 0; padding-left: 22px; font-size: 13px; }

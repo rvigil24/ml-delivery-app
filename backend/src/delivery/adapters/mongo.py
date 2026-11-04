@@ -148,6 +148,14 @@ class MongoDispatchRepository:
         return tuple(decode(OrderRecord, doc["data"]) for doc in self.database.orders.find().sort("_id", 1).limit(limit))
 
     @mongo_errors
+    def list_for_business(self, business_id, limit):
+        if isinstance(limit, bool) or not isinstance(limit, int) or not 1 <= limit <= 100:
+            raise ValueError("limit fuera de rango")
+        query = {"data.order.business_id": business_id}
+        return tuple(decode(OrderRecord, doc["data"]) for doc in
+                     self.database.orders.find(query).sort("_id", 1).limit(limit))
+
+    @mongo_errors
     def create(self, order, occurred_at):
         if order.status is not OrderStatus.REQUESTED:
             raise OrderConflict("Un pedido nuevo debe estar solicitado")
