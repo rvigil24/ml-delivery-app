@@ -25,6 +25,7 @@ def main() -> None:
     for name in ("README.md", ".terraform.lock.hcl", "terraform.tfvars.example"):
         if (terraform / name).is_file():
             paths.append(terraform / name)
+    paths.extend((ROOT / ".github" / "workflows").glob("*.yml"))
     files = sorted(set(paths))
     manifest = {
         "created_at_utc": datetime.now(timezone.utc).isoformat(),
