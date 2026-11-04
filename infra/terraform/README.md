@@ -197,3 +197,10 @@ no sirve solicitudes hasta verificar Mongo. Sigue consumiendo la tarea reservada
 El pipeline usa la última revisión de la familia como configuración base,
 incorporando los cambios preparados por Terraform, y reemplaza su imagen por
 la del commit aprobado. Conserva la revisión del servicio anterior para rollback.
+
+El arranque de Fargate puede superar un minuto al reemplazar una tarea. El
+workflow espera hasta tres minutos para obtener la IP. Una entrega correctiva
+agotó el margen anterior de 60 segundos, pero su tarea sí arrancó después:
+verificar ECS antes de reintentar un job, porque reintentar la entrega puede
+reemplazar la tarea y cambiar su IP. La corrección del margen no despliega una
+nueva imagen automáticamente. La tarea de espera 0 continúa ejecutándose.

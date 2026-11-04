@@ -1235,3 +1235,10 @@ sin límite/reintento/exec y cancelación limitada sin imprimir URI. Terraform
 prepara la configuración y el pipeline usa última revisión de familia + imagen
 nueva. Sin ampliar Atlas a 0.0.0.0/0, agregar NAT/EC2 o crear nuevos servidores.
 T45 sigue Pendiente hasta la comprobación real de acceso.
+
+Despliegue de espera 0: run 41892559213 publicó imagen main 17d4a75 y actualizó
+servicio a revisión :5. La tarea arrancó con IP 3.231.221.94 y timeout 0 comprobado;
+el run falló al buscar la IP con margen previo de 60 s. Se amplía a 180 s para
+futuras entregas sin redesplegar esta tarea. Nuevo /32 solicitado al usuario.
+El fallo del indicador no se oculta como run verde: validación de HTTP/modelos/
+persistencia sigue pendiente. No se reintenta el job para evitar otra rotación.

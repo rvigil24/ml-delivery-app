@@ -90,7 +90,7 @@ jobs:
           } >> "$GITHUB_STEP_SUMMARY"
       - name: Mostrar IPv4 de la nueva tarea para la lista Atlas
         run: |
-          for attempt in $(seq 1 30); do
+          for attempt in $(seq 1 90); do
             tasks=$(aws ecs list-tasks --cluster "$ECS_CLUSTER" --service-name "$ECS_SERVICE" --desired-status RUNNING --query taskArns --output text)
             if test -n "$tasks" && test "$tasks" != None; then
               # La CLI devuelve ARNs generados por AWS, separados por espacios.
