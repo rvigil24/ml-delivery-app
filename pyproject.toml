@@ -15,6 +15,7 @@ dependencies = [
     "pandas>=2.2,<3",
     "pyspark>=3.5.7,<3.6",
     "scikit-learn>=1.6,<1.8",
+    "torch>=2.8,<2.9",
 ]
 
 [project.optional-dependencies]
@@ -35,3 +36,11 @@ packages = ["backend/src/delivery", "ml/src/delivery_ml"]
 [tool.pytest.ini_options]
 testpaths = ["backend/tests", "ml/tests"]
 addopts = "--strict-config --strict-markers"
+
+[tool.uv.sources]
+torch = { index = "pytorch-cpu" }
+
+[[tool.uv.index]]
+name = "pytorch-cpu"
+url = "https://download.pytorch.org/whl/cpu"
+explicit = true

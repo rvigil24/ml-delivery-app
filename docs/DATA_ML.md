@@ -1118,6 +1118,148 @@ y [validación de series temporales](https://scikit-learn.org/1.7/modules/cross_
 Se pasan folds propios a GridSearchCV: TimeSeriesSplit por sí solo no controla
 la disponibilidad de `arrive_time` al corte de cada día.
 
+## Red neuronal MLP — T17
+
+Responsable: Ruben Vigil. `delivery_ml.mlp.SmallMLPRegressor` implementa una
+MLP PyTorch CPU; `ml/experiments/train_mlp.py` entrena y registra la evidencia.
+Se añade `torch>=2.8,<2.9`, compatible con Python 3.9, desde el índice oficial
+CPU configurado explícitamente para ese paquete. No se instala CUDA. Las demás
+dependencias conservan sus rangos; versiones y hashes efectivos quedan en uv.lock.
+
+Arquitectura fija: cuatro entradas T13, capa de 16 unidades/ReLU, capa de 8
+unidades/ReLU y salida lineal escalar, **225 parámetros**. No se ajustan tamaños
+de capa con test. StandardScaler para X y para y se aprende solo del train de
+cada fold; se invierte la escala de salida para calcular errores en minutos.
+No se recortan tiempos observados ni predicciones mediante reglas inventadas.
+
+Adam, tasa 0.001, minibatches de 2048, semilla 42, dos hilos CPU, float32 y
+algoritmos deterministas. La pérdida es MSE sobre el target estandarizado;
+el criterio de selección sigue siendo MAE en minutos. Son funciones diferentes.
+La pérdida registrada por época es el promedio ponderado de los minibatches
+durante las actualizaciones, no el error de un único modelo congelado sobre train.
+
+Se reutilizan los tres folds diarios T16 y su purga de etiquetas futuras.
+La misma arquitectura se entrena 30 épocas por fold; se elige la época que
+minimiza la media de MAE de los tres días, con igual peso por día y primera época
+en empate. Se reinicia la red y los escaladores para cada fold y para el reajuste
+completo. Test y purged exteriores solo se verifican por hash; no se cargan.
+
+Resultados reales en Python 3.12.14/PyTorch 2.8.0+cpu:
+
+| Medida | Resultado |
+|---|---:|
+| Épocas elegidas de un máximo de 30 | 7 |
+| MAE medio CV (min) | 9.065874 |
+| RMSE medio CV (min) | 11.792678 |
+| Pedidos en el reajuste completo | 409,083 |
+| MAE train tras reajuste (min) | 8.883646 |
+| RMSE train tras reajuste (min) | 11.545106 |
+
+La CV se usó para elegir épocas: su puntuación no es evaluación independiente.
+El error de entrenamiento tampoco demuestra generalización. La arquitectura
+pequeña se usa para mostrar el proceso académico; no garantiza mejorar un bosque
+ni valida tiempos en El Salvador. Siguen el período corto, las variables solo
+temporales y el EDA global previo. Una semilla y CPU determinista no garantizan
+igualdad entre versiones/plataformas.
+
+Reproducir: `uv run --locked python ml/experiments/train_mlp.py`.
+`data/reports/meituan/<revision>/t17_mlp.json` y `.md` guardan arquitectura,
+configuración, curvas de cada fold, época elegida, reajuste y procedencia con
+hashes de código/entradas/dependencias. El notebook genera el gráfico exportable
+`t17_learning_curves.png` con paneles separados para MSE estandarizado y MAE
+en minutos. Pesos/escaladores se mantienen en memoria; T19 decidirá persistencia.
+
+Comprobaciones: 46 pruebas aprobadas en Python 3.12.14 (un aviso conocido de
+Dask/NumPy); las dos nuevas pasan también en Python 3.9.25. Usan casos
+controlados para verificar 225 parámetros, reproducción local, escaladores
+aprendidos solo con train y pesos inalterados por las etiquetas de validación.
+También rechazan épocas/targets inválidos; no son los datos del experimento.
+El notebook completo ejecutó 19 celdas de código sin errores y exportó las curvas.
+Su fuente sigue sin salidas; la copia ejecutada y gráfico permanecen fuera de Git.
+Google Colab directamente sigue pendiente.
+
+Referencias oficiales: [instalación CPU de PyTorch 2.8](https://pytorch.org/get-started/previous-versions/#v280),
+[capas lineales](https://docs.pytorch.org/docs/2.8/generated/torch.nn.Linear.html),
+[Adam](https://docs.pytorch.org/docs/2.8/generated/torch.optim.Adam.html)
+y [límites de reproducibilidad](https://docs.pytorch.org/docs/2.8/notes/randomness.html).
+
+## Comparación de cinco modelos — T18
+
+Responsable: Ruben Vigil. `delivery_ml.evaluation` separa ajuste y evaluación;
+`ml/experiments/compare_models.py` compara baseline, tres familias ML y MLP.
+
+```bash
+uv run --locked python ml/experiments/compare_models.py
+```
+
+Antes de cargar test se verifican los informes T16/T17 contra hashes de datos,
+implementación y dependencias, versiones y sus criterios de selección. Se fijan
+profundidad 6 del bosque, C=0.1 de LinearSVR y 7 épocas de MLP; los demás
+parámetros permanecen como se documentaron. Se reajustan únicamente con los
+409,083 pedidos train, incluidos sus escaladores. No se reutiliza el bosque
+inicial de profundidad 12 de T15 como si fuera la configuración elegida en T16.
+
+Solo después se carga test: mismos 136,799 pedidos/predictores para todos,
+IDs disjuntos y corte temporal verificados. Evaluar solo llama a predict;
+no ajusta modelos/escaladores ni elige parámetros. Datos/purgas T13 permanecen
+intactos. No se recortan errores ni se filtran pedidos por resultado del modelo.
+
+Resultados reales de test, Python 3.12.14/scikit-learn 1.7.2/PyTorch 2.8.0+cpu:
+
+| Modelo | MAE (min) | RMSE (min) | R² | Sesgo (min) | P95 absoluto (min) |
+|---|---:|---:|---:|---:|---:|
+| Mediana | 9.501230 | 12.562496 | -0.038054 | -2.405294 | 24.450000 |
+| Regresión lineal | 9.509476 | 12.290476 | 0.006414 | -0.440571 | 22.718741 |
+| Random Forest | 9.125362 | 11.855652 | 0.075474 | -0.368747 | 21.841373 |
+| LinearSVR | 9.510380 | 12.290099 | 0.006475 | -0.430062 | 22.709466 |
+| MLP | 9.121785 | 11.917718 | 0.065769 | -0.927799 | 22.187688 |
+
+MAE es el error absoluto medio; RMSE penaliza más los errores grandes. R² es
+adimensional y puede ser negativo: la mediana baseline no optimiza el error
+cuadrático frente a la media observada que usa R² como referencia. No equivale
+a exactitud porcentual. Si un grupo tiene menos de dos pedidos o target constante,
+R² se informa como null, sin asignarle una precisión inventada.
+
+Sesgo usa `predicción - observado`; valores negativos indican subestimación
+media. P95 absoluto es un percentil empírico del error, no un intervalo de
+predicción ni garantía de entrega. El JSON incluye las mismas métricas por
+fecha UTC de creación: 74,710 pedidos el 23 de octubre y 62,089 el 24 (cobertura
+parcial). Son grupos descriptivos de esta cohorte, no muestras independientes
+para inferir confianza estadística ni franjas comerciales locales.
+
+El bosque tiene MAE por día 9.353349/8.851031 min y la MLP 9.344706/8.853550 min
+(23/24 de octubre). La MLP reduce el MAE agregado frente al bosque solo
+0.003577 min; el bosque tiene menor RMSE y menor subestimación media.
+No se afirma superioridad estadística. Los R² bajos y el tamaño de los errores
+impiden presentar estos resultados como una predicción operativa precisa.
+
+El test ya fue observado en T18: no se cambian hiperparámetros, épocas ni
+features usando estas cifras y se vuelve a presentar el mismo conjunto como
+evaluación independiente. Reejecutar una receta fija reproduce resultados,
+no aporta nuevos pedidos ni evidencia independiente. El EDA global previo y
+baseline T14 ya limitaban el carácter ciego de test. Persisten datos chinos,
+cohorte completada/inmediata, período corto y variables solo temporales.
+
+`data/reports/meituan/<revision>/t18_comparison.json` y `.md` registran métricas
+de train/test, agregados por día, parámetros/épocas congelados, hashes de informes
+de selección, particiones, implementación y dependencias. El notebook exporta
+`t18_model_comparison.png` con MAE/RMSE train frente a test. No se guardan pesos
+ni predicciones individuales; no hay nuevas dependencias, API o AWS. T19 decidirá
+selección/persistencia conservando el origen de las decisiones por CV.
+
+Comprobaciones: 48 pruebas aprobadas en Python 3.12.14 (un aviso conocido de
+Dask/NumPy); las dos nuevas también pasan en Python 3.9.25. Usan errores
+calculables a mano y casos controlados para comprobar unidades, signo, R²,
+percentil, grupos diarios, configuraciones congeladas, predictores permitidos y
+predicciones inalteradas al cambiar etiquetas de test. No se usan esos casos
+para las métricas reales de la tabla anterior.
+El notebook completo ejecutó 21 celdas de código sin errores y exportó el
+gráfico. La fuente no guarda resultados; la copia ejecutada y artefactos siguen
+fuera de Git. Google Colab directamente continúa pendiente.
+
+Referencias: [R²](https://scikit-learn.org/1.7/modules/generated/sklearn.metrics.r2_score.html)
+y [prevención de fuga de datos](https://scikit-learn.org/1.7/common_pitfalls.html#data-leakage).
+
 ## Entrenamiento y evaluación — T13 a T19
 
 - **T13:** variables predictoras, pipelines de preprocesamiento, división entrenamiento/prueba sin fuga de datos (temporal si corresponde).
