@@ -15,6 +15,8 @@ y riesgo de retraso**. Next.js y el despliegue AWS están pendientes.
 
 **Propuesta AWS (ECS con Fargate, pendiente de desplegar):** [PDF](reports/Propuesta_Despliegue_AWS.pdf) · [Word editable](reports/Propuesta_Despliegue_AWS.docx).
 
+Configuración de infraestructura y revisión del plan: [Terraform](infra/terraform/README.md). Todavía sin desplegar.
+
 ## Inicio rápido: demo con modelos desde S3
 
 Requisitos: Git, Docker con Compose, Python 3.9+ para el comando de demo y un

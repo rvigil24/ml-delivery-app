@@ -826,8 +826,8 @@ Para el detalle metodológico, ver [`DATA_ML.md`](DATA_ML.md).
 ## Despliegue objetivo — ECS con Fargate (propuesto)
 
 Decisión de Ruben del 2026-11-04: descartar EC2 y usar **ECS con Fargate**.
-Docker Compose queda para ejecución local. Esta arquitectura todavía no está
-implementada; no cambia los contratos de API ni los modelos existentes.
+Docker Compose queda para ejecución local. La configuración Terraform está preparada en `infra/terraform/`, con plan
+revisado y cero tareas; no está desplegada ni cambia los contratos de API o modelos.
 
 ```text
 Build Docker → ECR → Servicio ECS / Fargate → MongoDB Atlas existente
@@ -848,7 +848,10 @@ Terraform: ECR, ECS, red, roles, secreto y logs (pendiente)
   entrada al puerto de la API solo desde la IP del presentador. Sin ALB ni NAT
   Gateway. La IP cambia al reemplazar la tarea: actualizar la lista Atlas con
   su salida /32 y comprobar conectividad antes de afirmar disponibilidad.
-  No ampliar Atlas a todo internet. Endpoint estable y HTTPS quedan pendientes;
+  La API comprueba Mongo solo al iniciar: la ejecución cloud debe esperar
+  conectividad y esquema Atlas antes de iniciar Uvicorn conservando la misma
+  tarea/IP. Ese arranque está pendiente; Terraform restringe el servicio a cero
+  tareas hasta resolverlo. No ampliar Atlas a todo internet. Endpoint estable y HTTPS quedan pendientes;
   esta configuración inicial no es una publicación general del producto.
 - Atlas sigue externo; no ejecutar MongoDB dentro de Fargate. Next.js se añadirá
   después y requerirá revisar acceso, TLS y recursos. No se presume alta disponibilidad.
