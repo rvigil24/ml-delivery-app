@@ -34,8 +34,8 @@ corresponden al reparto previo y deben interpretarse con esta actualización.
 - **T26–T27:** completadas por cierre autorizado, con evidencia abajo; integración verificable en el PR y la guía externa.
 - **T28–T29:** completadas por cierre autorizado, con evidencia abajo; integración verificable en el PR y la guía externa.
 - **T30–T31:** completadas por cierre autorizado con alcance académico, con evidencia abajo; integración verificable en el PR y la guía externa.
-- **T32–T33:** completadas por cierre autorizado con evidencia local, Atlas y S3 indicada abajo; integración verificable en el PR del bloque y la guía externa. T34 completada por cierre autorizado con evidencia abajo. T35 completada por cierre autorizado con evidencia abajo. T36 y la mejora ML con arranque v2 S3 completadas por cierre autorizado, con evidencia abajo. Sin bloque activo; siguiente tarea: T37 (README).
-- **T37–T40:** continuar según dependencias y criterios de aceptación.
+- **T32–T33:** completadas por cierre autorizado con evidencia local, Atlas y S3 indicada abajo; integración verificable en el PR del bloque y la guía externa. T34 completada por cierre autorizado con evidencia abajo. T35 completada por cierre autorizado con evidencia abajo. T36 y la mejora ML con arranque v2 S3 completadas por cierre autorizado, con evidencia abajo. T37 completada por cierre autorizado, con evidencia abajo. Sin bloque activo; siguiente tarea: T38 (documentación técnica).
+- **T38–T40:** continuar según dependencias y criterios de aceptación.
 - **T41–T54:** asignadas a Ruben Vigil; despliegue y gastos siguen requiriendo autorización explícita.
 
 Cada agente trabaja una tarea por iteración, informa resultados y evita hacer
@@ -566,6 +566,30 @@ codificación inferida, riesgo modesto y falta de validación local; aceptación
 y tarifas de demo explícitamente simuladas, sin rollback global del recorrido.
 Sin modificar Excel, borrar ramas, desplegar AWS o iniciar T37 en este cierre.
 
+### Cierre autorizado: T37 — README de instalación, ejecución y ejemplos
+
+Responsable: Ruben Vigil. Rama docs/T37-readme desde origin/main 9ac9a65.
+Dependencias: API/modelos v2, persistencia T32, S3 T33 y demo Docker T34/T36.
+Criterio: instrucciones actuales de instalación/configuración, ejecución demo,
+consulta HTTP, parada/persistencia y errores; datos simulados diferenciados de
+resultados reales y enlaces a reproducción técnica. Conservar recetas previas.
+
+El README prioriza el arranque S3 con configuración explícita, perfil en lectura,
+modelo v2 y recibo de demo; incluye alternativas local/nativa y explicación del
+health v1. El historial original se conserva en una sección desplegable. No se
+cambian código, interfaces o dependencias. El estado local de T37 se actualiza
+como parte del cierre autorizado por Ruben, sin modificar Excel.
+
+Evidencia T37: Compose S3 valida con config --quiet; script de demo acepta los
+argumentos documentados (--help); enlaces locales existentes e historial README
+anterior íntegro comprobados. El ejemplo curl equivale a una petición real que
+respondió 200 con meituan-eta-risk-v2 y model_source=s3. Diff sin errores. No se
+clonó/instaló un entorno nuevo, recrearon contenedores o añadieron datos demo;
+no se ejecutaron suites ni entrenamientos. Cierre autorizado: T37 completada,
+commit/push y PR único con integración normal verificada en origin/main. La guía
+externa registra el resultado efectivo; ZIP actualizado, sin iniciar T38.
+
+
 ## Instrucciones concretas y criterios de aceptación: T01–T33
 
 ### T01 — Crear repositorio Git y estructura modular del proyecto
@@ -938,7 +962,7 @@ Sin modificar Excel, borrar ramas, desplegar AWS o iniciar T37 en este cierre.
 | T34 | API, almacenamiento e infraestructura | Contenerizar los servicios mediante Docker y Docker Compose | Ruben Vigil | Completada |
 | T35 | Pruebas, documentación y entrega | Implementar al menos 10 pruebas unitarias con pytest | Ruben Vigil | Completada |
 | T36 | Pruebas, documentación y entrega | Probar el flujo completo: solicitud → cotización → asignación → entrega → efectivo | Ruben Vigil | Completada |
-| T37 | Pruebas, documentación y entrega | Preparar README con instalación, ejecución y ejemplos | Ruben Vigil | Pendiente |
+| T37 | Pruebas, documentación y entrega | Preparar README con instalación, ejecución y ejemplos | Ruben Vigil | Completada |
 | T38 | Pruebas, documentación y entrega | Documentar arquitectura, resultados, experimentos y limitaciones | Ruben Vigil | Pendiente |
 | T39 | Pruebas, documentación y entrega | Preparar informe técnico y evidencias de los hitos | Ruben Vigil | Pendiente |
 | T40 | Pruebas, documentación y entrega | Preparar presentación y demostración para la defensa | Ruben Vigil | Pendiente |
