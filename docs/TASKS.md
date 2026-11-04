@@ -1280,3 +1280,10 @@ Verificados OpenAPI (3 ejemplos), validación de entradas y conservación de val
 numéricos mediante predictor controlado, sin suites adicionales locales. Integración
 y despliegue de la nueva imagen bajo autorizaciones persistentes; Atlas requiere
 actualizar /32 al reemplazar tarea. El script no sobrescribe datos existentes.
+
+Verificación posterior de la solicitud de exposición: Ruben permitió
+100.54.11.78/32; Swagger HTTP con 3 ejemplos y predicción source S3 con frase
+nueva comprobados. GET de catálogos/pedidos confirma 3 negocios, 2 repartidores y
+3 pedidos SIMULADOS. Recibo privado presentation_verified.json. URL de README
+actualizada; cierre por autorización persistente, sin redespliegue documental.
+T47 sigue pendiente. No se modificaron datasets, pesos o responsables.

@@ -17,7 +17,7 @@ creada; la API cloud ya fue verificada con modelos desde S3 y persistencia Atlas
 **Despliegue AWS verificado (ECS con Fargate):** [PDF](reports/Propuesta_Despliegue_AWS.pdf) · [Word editable](reports/Propuesta_Despliegue_AWS.docx).
 
 Configuración de infraestructura y arranque cloud: [Terraform](infra/terraform/README.md).
-API actual: [Swagger en AWS](http://3.231.221.94:8000/docs). Acceso restringido a
+API actual: [Swagger en AWS](http://100.54.11.78:8000/docs). Acceso restringido a
 la IP configurada del presentador; la IPv4 cambia si se reemplaza la tarea.
 
 CI verifica pruebas básicas, Terraform y build Docker en cada PR. El [despliegue AWS](infra/terraform/README.md) es manual y requiere infraestructura y permisos previamente autorizados.
