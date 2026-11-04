@@ -976,6 +976,148 @@ El código local de Pandas/Dask/PySpark puede descargar primero el objeto desde 
 
 Para comparar las tres herramientas, fijar una lista breve de operaciones equivalentes (lectura, selección de columnas, eliminación/filtrado de nulos, conversión de tipos, agrupación y agregación), comprobar el resultado y medirlas con el mismo equipo. Persistir versiones de datos solo cuando se haya aprobado su procedencia y uso en S3. No subir información personal cruda innecesaria.
 
+## Tres familias entrenadas — T15
+
+Responsable: Ruben Vigil. Se consumen las particiones verificadas de T13 sin
+cambiarlas, y se entrena con los 409,083 pedidos de train, sin muestreo ni recorte
+de duraciones. Las cuatro variables temporales siguen siendo los únicos
+predictores; IDs, llegada y etiqueta no entran en X. No se cargan ni evalúan
+test ni purged: solo se verifican sus hashes para comprobar integridad.
+
+Código reutilizable: `ml/src/delivery_ml/models.py`; ejecución:
+
+```bash
+uv run --locked python ml/experiments/train_models.py
+```
+
+Tres familias y configuraciones fijadas antes de evaluar, sin búsqueda:
+
+- `StandardScaler` + `LinearRegression`: mínimos cuadrados ordinarios.
+- `RandomForestRegressor`: bagging de 50 árboles, profundidad máxima 12,
+  mínimo 20 observaciones por hoja, paralelismo `n_jobs=2` y semilla 42.
+- `StandardScaler` + `LinearSVR`: regresión por vectores de soporte, kernel
+  lineal, C=1, epsilon=0.1, pérdida `squared_epsilon_insensitive`, `dual=False`,
+  tolerancia 1e-4, máximo 10,000 iteraciones y semilla 42.
+
+Los escaladores se ajustan dentro de sus pipelines exclusivamente con train.
+Los límites del bosque son una configuración inicial para ejecución local, no
+un óptimo demostrado. Las advertencias de no convergencia impiden declarar un
+entrenamiento exitoso. No se añaden dependencias ni se persiste un modelo final.
+
+Se usa LinearSVR para entrenar con toda la cohorte sin el costo más que cuadrático
+de SVR con kernel RBF. Es una variante de la familia SVM, no una aproximación RBF.
+Aunque LinearRegression y LinearSVR producen funciones lineales de estas variables,
+usan objetivos diferentes: mínimos cuadrados frente a margen epsilon-insensible.
+La documentación oficial explica [LinearRegression](https://scikit-learn.org/1.7/modules/generated/sklearn.linear_model.LinearRegression.html),
+[RandomForestRegressor](https://scikit-learn.org/1.7/modules/generated/sklearn.ensemble.RandomForestRegressor.html)
+y [LinearSVR frente a SVR](https://scikit-learn.org/1.7/modules/generated/sklearn.svm.LinearSVR.html).
+
+Resultados reales de entrenamiento, Python 3.12.14/scikit-learn 1.7.2:
+
+| Modelo | Pedidos | MAE train (min) | RMSE train (min) |
+|---|---:|---:|---:|
+| LinearRegression | 409,083 | 9.326470 | 12.032238 |
+| RandomForestRegressor | 409,083 | 8.876510 | 11.531344 |
+| LinearSVR | 409,083 | 9.327745 | 12.032244 |
+
+Estos errores se calculan sobre las mismas observaciones usadas para ajustar.
+No miden generalización y no permiten declarar un ganador. Tampoco se deben
+comparar con los errores de **test** del baseline como si fueran el mismo conjunto.
+Que un modelo tenga menor error dentro de train no prueba que mejore en datos
+posteriores. La MLP no se entrena en esta tarea.
+
+El informe `data/reports/meituan/<revision>/t15_models.json` y su Markdown
+registran parámetros efectivos, tamaños, versiones, hashes de las particiones,
+del manifiesto, de implementación/dependencias y tiempos locales de ajuste.
+Cada tiempo incluye validación de X/y y fit; es una sola ejecución, no un benchmark.
+La reproducción vuelve a entrenar en memoria con configuraciones fijas, sin
+elegir alternativas por resultados de test. Las unidades geográficas pendientes,
+el EDA global previo, el período corto y la falta de validación local siguen
+limitando el alcance de este experimento.
+
+Comprobaciones T15: 42 pruebas aprobadas en Python 3.12.14 (un aviso conocido
+de Dask/NumPy); las dos nuevas también pasan en Python 3.9.25. Verifican las
+tres familias, predictores permitidos, escaladores congelados al predecir y
+rechazo de etiquetas inválidas antes de ajustar. Sus casos controlados no son
+registros de entrenamiento reales. El segundo notebook completo ejecutó sus
+13 celdas de código sin errores; conserva salidas solo en la copia ignorada
+de `data/reports/presentation/`. Google Colab directamente sigue pendiente.
+
+## Validación y búsqueda de hiperparámetros — T16
+
+Responsable: Ruben Vigil. `delivery_ml.validation` implementa folds diarios
+crecientes sobre train T13 y GridSearchCV; se ejecuta con:
+
+```bash
+uv run --locked python ml/experiments/tune_models.py
+```
+
+Los últimos tres días UTC presentes en train son validación, sin barajar filas
+ni elegir fronteras por métricas. Un pedido puede entrar en entrenamiento solo
+si su creación **y llegada** preceden estrictamente al inicio del día validado.
+Las entregas exactamente en el corte se purgan también; pueden entrar en un
+fold posterior cuando su etiqueta ya está disponible. Los pedidos del mismo
+instante/día no se reparten aleatoriamente entre entrenamiento y validación.
+
+| Día validado (UTC, 2022) | Train disponible | Validación | Purgados de train |
+|---|---:|---:|---:|
+| 20 de octubre | 198,713 | 66,150 | 321 |
+| 21 de octubre | 264,858 | 69,385 | 326 |
+| 22 de octubre | 334,087 | 74,514 | 482 |
+
+Todos proceden de la cohorte T13; no se reincorporan los 399 purgados del corte
+exterior. Las etiquetas de validación se usan para medir errores, nunca para
+ajustar ese fold. Los IDs se verifican únicos y los índices son posiciones de
+fila reproducibles. No se leen test/purged: sus archivos solo se verifican por hash.
+
+Búsqueda fijada antes de ejecutarla: bosque con profundidad máxima 6 o 12;
+LinearSVR con C=0.1 o 1. Los demás parámetros de T15 permanecen fijos.
+Regresión lineal y baseline mediana tienen un único candidato como controles.
+Son seis candidatos contando los controles, tres folds por candidato y reajuste
+del elegido por familia sobre los 409,083 pedidos de train. El refit ocurre en
+memoria; no persiste el modelo final ni lo sirve. La búsqueda usa un proceso
+a la vez, con el paralelismo del bosque limitado a `n_jobs=2`.
+
+Los pipelines completos se clonan/ajustan dentro de cada fold; ningún escalador
+se aprende con validación. MAE es el criterio primario, fijado desde T14; se
+minimiza la media aritmética de los tres días, con igual peso por día. RMSE
+es diagnóstico. En empate exacto se conserva el primer candidato del orden
+fijo. Las medias no son errores agrupados por pedido. Reporte real:
+
+| Modelo/configuración elegida | MAE CV (min) | RMSE CV (min) |
+|---|---:|---:|
+| Mediana, ajustada por fold | 9.335848 | 12.350835 |
+| Regresión lineal | 9.337751 | 12.115916 |
+| Random Forest, profundidad 6 | 8.955647 | 11.658948 |
+| LinearSVR, C=0.1 | 9.338523 | 12.115426 |
+
+El bosque obtiene menor MAE interno que el baseline, pero los mismos folds
+sirvieron para elegir parámetros: estas cifras no constituyen una evaluación
+independiente ni seleccionan el modelo final de T19. Tres días y una rejilla
+pequeña no prueban un óptimo global. Siguen los límites del EDA previo global,
+cohorte completada/inmediata, país extranjero y variables únicamente temporales.
+
+`data/reports/meituan/<revision>/t16_validation.json` y `.md` guardan candidatos,
+errores por fold, media/desviación de MAE, RMSE, parámetros efectivos, reajuste,
+conteos/cortes/purgas, versiones y hashes de entradas/código/dependencias. Los
+tiempos medios de ajuste son auxiliares de una búsqueda local, no un benchmark.
+No se añaden dependencias, API ni AWS. T17–T19 siguen pendientes.
+
+Comprobaciones T16: 44 pruebas aprobadas en Python 3.12.14 (un aviso conocido
+de Dask/NumPy); las dos nuevas también pasan en Python 3.9.25. Los casos
+controlados verifican purga al corte exacto, disponibilidad en un fold posterior,
+rechazo de IDs duplicados/días insuficientes, selección por MAE y medias de
+escaladores aprendidas solo con cada fold y con train completo al reajustar.
+Estos casos no forman parte de las métricas reales anteriores.
+El segundo notebook completo ejecutó 16 celdas de código sin errores; las
+salidas se guardan solo en la copia ignorada de `data/reports/presentation/`.
+La ejecución directamente en Google Colab sigue pendiente.
+
+Referencias del protocolo: [GridSearchCV](https://scikit-learn.org/1.7/modules/generated/sklearn.model_selection.GridSearchCV.html)
+y [validación de series temporales](https://scikit-learn.org/1.7/modules/cross_validation.html#time-series-split).
+Se pasan folds propios a GridSearchCV: TimeSeriesSplit por sí solo no controla
+la disponibilidad de `arrive_time` al corte de cada día.
+
 ## Entrenamiento y evaluación — T13 a T19
 
 - **T13:** variables predictoras, pipelines de preprocesamiento, división entrenamiento/prueba sin fuga de datos (temporal si corresponde).
