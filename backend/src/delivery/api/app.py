@@ -28,7 +28,7 @@ from delivery.services.orders import OrderService
 from delivery.services.assignments import DispatchOrderRequirements
 from delivery.services.quote_previews import QuoteConfigurationMissing, QuotePreviewService
 from .schemas import (
-    ErrorResponse, HealthResponse, PredictRequest, PredictResponse, QuoteAmountsResponse,
+    ErrorResponse, HealthResponse, PredictResponse, QuoteAmountsResponse,
     QuotePreviewRequest, QuotePreviewResponse, VehicleDecisionResponse,
 )
 from .storage import storage_router
@@ -131,7 +131,7 @@ def create_app(model_directory: Optional[Path] = None,
         application.state.predictions = PredictionService(predictor)
         application.state.quote_previews = QuotePreviewService(effective_orders, application.state.predictions,
                                                                pricing_policy, vehicle_policy)
-        application.state.model_available = predictor is not None
+        application.state.model_available = delivery_model is not None
         try:
             yield
         finally:
@@ -143,7 +143,15 @@ def create_app(model_directory: Optional[Path] = None,
                 delivery_cache.cleanup()
 
     application = FastAPI(title="Asistente de Delivery Económico", version="0.1.0",
-        description="Inferencia académica de duración; sin cotización comercial o validación local.", lifespan=lifespan)
+        description="Gestiona negocios, repartidores y pedidos. Estima la duración de las entregas y su riesgo de retraso.",
+        openapi_tags=[
+            {"name": "Estado", "description": "Disponibilidad de la API y sus modelos."},
+            {"name": "Predicciones", "description": "Duración estimada y riesgo de retraso."},
+            {"name": "Negocios", "description": "Registro y consulta de negocios."},
+            {"name": "Repartidores", "description": "Vehículos, aprobación y disponibilidad."},
+            {"name": "Pedidos", "description": "Registro y seguimiento de entregas."},
+            {"name": "Cotizaciones", "description": "Costos estimados y opciones de vehículo."},
+        ], lifespan=lifespan)
 
     @application.exception_handler(RequestValidationError)
     async def invalid_request(request: Request, error: RequestValidationError):
@@ -155,7 +163,7 @@ def create_app(model_directory: Optional[Path] = None,
 
     @application.exception_handler(QuoteConfigurationMissing)
     async def quote_configuration_missing(request: Request, error: QuoteConfigurationMissing):
-        return error_response(503, "quote_configuration_missing", "Falta configuración de cotizaciones académicas.")
+        return error_response(503, "quote_configuration_missing", "Configura las tarifas y los límites de vehículos para calcular una cotización.")
 
     @application.exception_handler(OrderNotFound)
     async def order_not_found(request: Request, error: OrderNotFound):
@@ -167,7 +175,7 @@ def create_app(model_directory: Optional[Path] = None,
 
     @application.exception_handler(StorageUnavailable)
     async def storage_unavailable(request: Request, error: StorageUnavailable):
-        return error_response(503, "storage_unavailable", "La persistencia no está disponible.")
+        return error_response(503, "storage_unavailable", "La base de datos no está disponible.")
 
     @application.exception_handler(CatalogNotFound)
     @application.exception_handler(BusinessNotFound)
@@ -175,39 +183,29 @@ def create_app(model_directory: Optional[Path] = None,
     @application.exception_handler(CourierNotFound)
     @application.exception_handler(CashNotFound)
     async def catalog_not_found(request: Request, error: Exception):
-        return error_response(404, "entity_not_found", "Entidad inexistente.")
+        return error_response(404, "entity_not_found", "No se encontró el registro solicitado.")
 
     @application.exception_handler(CatalogConflict)
     @application.exception_handler(MissingPrerequisite)
     @application.exception_handler(AssignmentConflict)
     @application.exception_handler(CashConflict)
     async def operation_conflict(request: Request, error: Exception):
-        return error_response(409, "operation_conflict", "Operación incompatible o sin requisitos validados.")
+        return error_response(409, "operation_conflict", "El registro no cumple los requisitos para realizar este cambio.")
 
     @application.exception_handler(Exception)
     async def unexpected(request: Request, error: Exception):
         logger.error("Fallo interno de la API", exc_info=(type(error), error, error.__traceback__))
         return error_response(500, "internal_error", "Error interno del servidor.")
 
-    @application.get("/health", response_model=HealthResponse, tags=["Proceso"],
-                     summary="Comprobar proceso y carga inicial del modelo")
+    @application.get("/health", response_model=HealthResponse, tags=["Estado"],
+                     summary="Consultar el estado del servicio",
+                     description="Comprueba que la API responde e indica si los modelos de predicción están cargados.")
     def health(request: Request) -> HealthResponse:
         return HealthResponse(model_available=request.app.state.model_available)
 
-    @application.post("/predict", response_model=PredictResponse, tags=["Inferencia académica"],
-        summary="Estimar duración creación–entrega usando calendario UTC",
-        responses={422: {"model": ErrorResponse, "description": "Entrada inválida"},
-                   503: {"model": ErrorResponse, "description": "Modelo o predicción no disponibles"},
-                   500: {"model": ErrorResponse, "description": "Error interno"}})
-    def predict(payload: PredictRequest, request: Request) -> PredictResponse:
-        stamp = payload.requested_at.astimezone(timezone.utc)
-        duration = request.app.state.predictions.predict(stamp)
-        return PredictResponse(requested_at_utc=stamp, duration_minutes=duration.minutes,
-            duration_source=duration.source.value, interval_definition=duration.interval_definition,
-            model_version=duration.model_version)
-
     @application.post("/orders/{order_id}/quotes", response_model=QuotePreviewResponse,
-        tags=["Cotización académica"], summary="Previsualizar duración, importes y vehículos sin emitir cotización",
+        tags=["Cotizaciones"], summary="Estimar el costo de un pedido",
+        description="Muestra el costo estimado y los tipos de vehículo permitidos para el pedido.",
         responses={status: {"model": ErrorResponse} for status in (404, 409, 422, 503, 500)})
     def quote_preview(order_id: str, payload: QuotePreviewRequest, request: Request):
         try:

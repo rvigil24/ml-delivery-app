@@ -139,6 +139,7 @@ def test_api_downloads_pinned_bundle_once_and_cleans_private_cache(monkeypatch):
     monkeypatch.setenv("DELIVERY_MODEL_MANIFEST_SHA256", hashlib.sha256(manifest_bytes).hexdigest())
     with TestClient(create_app(predictor_factory=factory)) as client:
         for _ in range(2):
-            assert client.post("/predict", json={"requested_at": "2022-01-01T00:00:00Z"}).status_code == 200
+            from datetime import datetime, timezone
+            assert client.app.state.predictions.predict(datetime(2022, 1, 1, tzinfo=timezone.utc)).minutes >= 0
         assert len(calls) == 7 and calls.count("closed") == 1 and len(cache) == 1
     assert not cache[0].exists()

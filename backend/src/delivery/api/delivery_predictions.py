@@ -1,4 +1,4 @@
-"""Entrada geográfica de la revisión ML, sin romper /predict temporal v1."""
+"""Predicción de duración y riesgo de retraso a partir de un recorrido."""
 
 from fastapi import APIRouter, Body, Request
 from pydantic import Field
@@ -11,7 +11,8 @@ from .storage import LocationInput, valid
 class DeliveryPredictionRequest(PredictRequest):
     origin: LocationInput
     destination: LocationInput
-    promised_minutes: float = Field(gt=0, allow_inf_nan=False, strict=True)
+    promised_minutes: float = Field(gt=0, allow_inf_nan=False, strict=True,
+                                    description="Tiempo previsto para completar la entrega, en minutos.")
 
 
 PRESENTATION_EXAMPLES = {
@@ -49,9 +50,10 @@ PRESENTATION_EXAMPLES = {
 
 
 def delivery_prediction_router():
-    router = APIRouter(tags=["ML: duración del envío y riesgo de retraso"])
+    router = APIRouter(tags=["Predicciones"])
 
-    @router.post("/predict/delivery", summary="Estimar duración y probabilidad de superar el plazo indicado",
+    @router.post("/predict/delivery", summary="Estimar la duración de una entrega",
+                 description="Usa origen, destino, fecha y plazo previsto para estimar la duración y la probabilidad de retraso.",
                  responses={code: {"model": ErrorResponse} for code in (422, 503, 500)})
     def predict_delivery(request: Request,
                          body: DeliveryPredictionRequest = Body(..., openapi_examples=PRESENTATION_EXAMPLES)):

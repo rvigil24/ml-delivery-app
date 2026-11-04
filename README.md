@@ -146,11 +146,12 @@ reglas configurables, no mediante estos modelos.
 | Recorrido completo simulado | `POST /demo/deliveries` |
 | Consultar pedidos e historial | `GET /orders`, `GET /orders/{order_id}` |
 | Documentación HTTP | `GET /docs` |
-| Proceso y disponibilidad del predictor antiguo v1 | `GET /health` |
-| Experimento temporal v1, conservado por compatibilidad | `POST /predict` |
+| Estado del servicio y disponibilidad de los modelos | `GET /health` |
 
-`model_available` de `/health` describe v1: puede ser falso en un clon sin ese
-bundle local aunque v2 funcione desde S3. Comprobá v2 con `/predict/delivery`.
+`model_available` de `/health` indica si están cargados los modelos de duración
+y riesgo. La única ruta de predicción es `/predict/delivery`; `/predict` se retiró.
+Las respuestas HTTP usan `experimental=true` para identificar estimaciones
+pendientes de validación local.
 Los endpoints generales conservan sus requisitos de cotización; la aceptación
 de `/demo/deliveries` corresponde únicamente al recorrido simulado.
 
