@@ -34,7 +34,7 @@ corresponden al reparto previo y deben interpretarse con esta actualización.
 - **T26–T27:** completadas por cierre autorizado, con evidencia abajo; integración verificable en el PR y la guía externa.
 - **T28–T29:** completadas por cierre autorizado, con evidencia abajo; integración verificable en el PR y la guía externa.
 - **T30–T31:** completadas por cierre autorizado con alcance académico, con evidencia abajo; integración verificable en el PR y la guía externa.
-- **T32–T33:** completadas por cierre autorizado con evidencia local, Atlas y S3 indicada abajo; integración verificable en el PR del bloque y la guía externa. T34 completada por cierre autorizado con evidencia abajo. T35 completada por cierre autorizado con evidencia abajo. T36 y la mejora ML con arranque v2 S3 completadas por cierre autorizado, con evidencia abajo. T37 completada por cierre autorizado, con evidencia abajo. T38 completada por cierre autorizado, con reporte Word/PDF y evidencia abajo. Sin bloque activo; siguiente tarea: T39 (informe y evidencias).
+- **T32–T33:** completadas por cierre autorizado con evidencia local, Atlas y S3 indicada abajo; integración verificable en el PR del bloque y la guía externa. T34 completada por cierre autorizado con evidencia abajo. T35 completada por cierre autorizado con evidencia abajo. T36 y la mejora ML con arranque v2 S3 completadas por cierre autorizado, con evidencia abajo. T37 completada por cierre autorizado, con evidencia abajo. T38 completada por cierre autorizado, con reporte Word/PDF y evidencia abajo. Bloque activo: T39 (informe existente y paquete de evidencias).
 - **T39–T40:** continuar según dependencias y criterios de aceptación.
 - **T41–T54:** asignadas a Ruben Vigil; despliegue y gastos siguen requiriendo autorización explícita.
 
@@ -619,6 +619,27 @@ ambos documentos. Cierre autorizado por Ruben: commit/push y un PR con integraci
 normal, verificando el commit en origin/main. La guía externa registra el resultado
 efectivo y el ZIP se actualiza. Sin modificar Excel o iniciar/cerrar T39.
 
+
+### Bloque activo: T39 — informe y evidencias de los hitos
+
+Responsable Ruben Vigil. Rama docs/T39-evidencias desde origin/main 3f6f705.
+Dependencias: informe/documentación T38 y registros reales de procesamiento,
+ML/MLP, pruebas e integración. Se reutiliza el reporte técnico de ocho páginas.
+Criterio: entregar informe y evidencias legibles, trazables y agrupadas para
+revisión académica, sin inventar resultados o exponer datos/secretos.
+
+Anexo de cuatro páginas Word/PDF: calidad/equivalencia, tiempos locales,
+comparación temporal y curva MLP, integración/registro unitario previo. Paquete
+reports/Entrega_Asistente_Delivery.zip con reporte/anexo editables, gráficas,
+notebooks fuente sin outputs, evidencia agregada, licencia y manifiesto SHA-256.
+No incluye CSV, pesos, credenciales o registros reales. README enlaza entregables.
+
+Evidencia: cifras contra JSON conservados, Word/XML y cuatro páginas PDF,
+render visual de procesamiento/MLP sin recortes; ZIP con 17 archivos y hashes
+verificados. Las 14 pruebas unitarias se citan mediante PR #19; no se simula
+un log nuevo o se afirma haberlas reejecutado. Sin suites, entrenamiento,
+mediciones nuevas, dependencias, cloud o cambios de código del producto.
+Estado formal pendiente del cierre autorizado; sin commit/push ni inicio T40.
 
 ## Instrucciones concretas y criterios de aceptación: T01–T33
 
