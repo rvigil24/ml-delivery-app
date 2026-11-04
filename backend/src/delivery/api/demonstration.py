@@ -31,16 +31,25 @@ class DemonstrationRequest(BaseModel):
 
 
 def demonstration_router():
-    router = APIRouter(tags=["Demostración completa simulada"])
+    router = APIRouter(tags=["Demostración"])
 
     @router.post("/demo/deliveries", status_code=201,
-                 summary="Ejecutar un envío completo simulado y devolver su recibo")
+                 summary="Probar un envío completo",
+                 description="Ejecuta un recorrido de prueba desde la solicitud hasta el registro del efectivo, usando datos simulados.")
     def demonstrate(body: DemonstrationRequest, request: Request):
         storage = request.app.state.mongo_storage
         if storage is None:
             raise StorageUnavailable("La demostración requiere MongoDB preparado")
         values = {name: getattr(body, name) for name in DemonstrationRequest.model_fields if name != "simulated"}
         result = valid(lambda: run_demonstration(storage, request.app.state.delivery_estimates, **values))
-        return jsonable_encoder(result, custom_encoder={Decimal: str})
+        def public_receipt(value):
+            if isinstance(value, dict):
+                return {("experimental" if key == "academic_only" else key): public_receipt(item)
+                        for key, item in value.items()}
+            if isinstance(value, list):
+                return [public_receipt(item) for item in value]
+            return value
+
+        return public_receipt(jsonable_encoder(result, custom_encoder={Decimal: str}))
 
     return router

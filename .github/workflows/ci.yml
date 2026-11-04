@@ -32,8 +32,8 @@ jobs:
           uv export --locked --no-emit-project --prune torch --prune pyspark --prune dask --prune matplotlib --output-file "$RUNNER_TEMP/requirements.txt"
           uv pip install --system --require-hashes -r "$RUNNER_TEMP/requirements.txt"
           uv pip install --system --no-deps .
-      - name: Dominio y arranque cloud
-        run: python -m pytest backend/tests/test_domain.py backend/tests/test_cloud_start.py -q
+      - name: Dominio, contrato HTTP y arranque cloud
+        run: python -m pytest backend/tests/test_domain.py backend/tests/test_api.py backend/tests/test_cloud_start.py -q
 
   terraform:
     runs-on: ubuntu-24.04

@@ -104,7 +104,7 @@ def test_http_quote_and_predict_share_one_loaded_model_and_quote_uses_stored_cre
         return predictor
 
     with TestClient(create_app(tmp_path, factory, orders=repository, pricing_policy=PRICES, vehicle_policy=VEHICLES)) as client:
-        assert client.post("/predict", json={"requested_at": "2022-10-22T12:00:00-06:00"}).status_code == 200
+        assert client.app.state.predictions.predict(datetime(2022, 10, 22, 18, tzinfo=timezone.utc)).minutes >= 0
         for _ in range(2):
             response = client.post(f"/orders/{ORDER.id}/quotes", json=BODY)
             assert response.status_code == 200
@@ -115,7 +115,7 @@ def test_http_quote_and_predict_share_one_loaded_model_and_quote_uses_stored_cre
             assert body["amounts"]["delivery_fee"] == "5.22" and body["amounts"]["margin"] == "3.36"
             assert body["pricing_policy_version"] == PRICES.version and body["vehicle_policy_version"] == VEHICLES.version
             assert len(body["eligible_vehicles"]) == 2 and body["limitations"]
-            assert body["academic_only"] and not body["commercial_quote_validated"] and not body["coverage_validated"]
+            assert body["experimental"] and not body["commercial_quote_validated"] and not body["coverage_validated"]
         assert loaded == [tmp_path] and predictor.calls == [NOW, NOW, NOW]
         schema = client.get("/openapi.json").json()
         assert set(schema["paths"]["/orders/{order_id}/quotes"]["post"]["responses"]) == {"200", "404", "409", "422", "503", "500"}

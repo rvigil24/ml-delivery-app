@@ -1321,3 +1321,14 @@ anidados y conectores ortogonales. Activos embebidos en SVG para uso offline;
 atribución AWS incluida. Se corrigen puertos de conexión para no cruzar etiquetas.
 No se añaden servicios inexistentes ni se modifica infraestructura. PNG 4K y
 SVG sustituidos en el mismo PR/paquete, con nueva revisión visual y hashes.
+
+
+## Solicitud explícita — lenguaje y rutas de Swagger
+
+Se retira POST /predict; se conserva POST /predict/delivery con los mismos
+modelos y resultados numéricos. Swagger agrupa las operaciones por función, con
+títulos y descripciones breves en español. Los DTO HTTP usan experimental en
+lugar de academic_only; se mantienen las limitaciones y validaciones existentes.
+Health informa la carga de los modelos v2. Sin cambios de responsables ni de
+alcance de T47. Verificación: contrato OpenAPI, ruta retirada 404 y pruebas
+focalizadas de API, arranque S3 y cotizaciones.

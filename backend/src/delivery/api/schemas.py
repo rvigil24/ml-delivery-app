@@ -11,7 +11,7 @@ from delivery.domain.vehicle_rules import VehicleRejection
 
 class PredictRequest(BaseModel):
     model_config = ConfigDict(extra="forbid")
-    requested_at: AwareDatetime = Field(description="Creación del pedido en ISO 8601 con zona horaria")
+    requested_at: AwareDatetime = Field(description="Fecha y hora del pedido, con zona horaria.")
 
     @field_validator("requested_at", mode="before")
     @classmethod
@@ -27,10 +27,10 @@ class PredictResponse(BaseModel):
     duration_source: Literal["prediccion"]
     interval_definition: str = Field(min_length=1)
     model_version: str = Field(min_length=1)
-    academic_only: Literal[True] = True
+    experimental: Literal[True] = True
     coverage_validated: Literal[False] = False
     limitations: Tuple[str, ...] = (
-        "Modelo experimental entrenado con datos chinos y solo hora/día UTC",
+        "Estimación experimental; validación local pendiente.",
         "Duración creación–entrega; no es tiempo de conducción ni incluye intervalo predictivo",
         "Sin validación para El Salvador, distancias o diferencias entre vehículos",
         "Sin tarifa, cobertura comercial o cambios de estado",
@@ -39,7 +39,7 @@ class PredictResponse(BaseModel):
 
 class HealthResponse(BaseModel):
     status: Literal["ok"] = "ok"
-    model_available: bool
+    model_available: bool = Field(description="Indica si los modelos de duración y retraso están cargados.")
 
 
 class ErrorDetail(BaseModel):
@@ -93,7 +93,7 @@ class QuotePreviewResponse(BaseModel):
     within_configured_area: bool
     eligible_vehicles: Tuple[VehicleType, ...]
     vehicle_decisions: Tuple[VehicleDecisionResponse, ...]
-    academic_only: Literal[True] = True
+    experimental: Literal[True] = True
     coverage_validated: Literal[False] = False
     commercial_quote_validated: Literal[False] = False
     limitations: Tuple[str, ...]

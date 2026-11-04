@@ -57,13 +57,15 @@ bases a la vez. Se prepara/verifica el esquema antes de habilitar la persistenci
 | `GET /orders`, `GET /orders/{order_id}` | Consulta de registros e historial persistidos. |
 | `/businesses`, `/couriers` | CRUD de catálogos, referencias y disponibilidad protegidas. |
 | `POST /orders/{order_id}/transitions` | Estado esperado/destino; no admite omitir validaciones de cotización o asignación. |
-| `GET /health`, `POST /predict` | Compatibilidad v1: proceso/disponibilidad y predicción solo temporal, respectivamente. |
+| `GET /health` | Estado del proceso y disponibilidad inicial de los modelos de duración/riesgo. |
 
 El esquema completo se publica en `/openapi.json` y `/docs`. Una entrada
 inválida produce 422, una referencia ausente 404, un conflicto 409 y un modelo
 no disponible 503. Los errores no devuelven credenciales o detalles internos.
-El campo `model_available` de health describe v1; la respuesta de inferencia
-v2 muestra `model_source=s3` o `local`.
+El campo `model_available` de health indica la carga de los modelos v2; la
+respuesta de inferencia muestra `model_source=s3` o `local`. `/predict` se retiró
+y devuelve 404. Los DTO HTTP usan `experimental=true` en lugar de
+`academic_only=true`; se conservan las restricciones y los cálculos del dominio.
 
 ### Arranque e inferencia
 
@@ -106,7 +108,7 @@ experimental; el [README](../README.md) contiene los comandos de ejecución.
 | Capa | Tecnología | Función |
 |---|---|---|
 | Dominio y servicios | Python 3.9+ | Entidades, casos de uso, validación |
-| API | FastAPI + Pydantic | `/health`, `/predict`, OpenAPI; otros contratos a acordar |
+| API | FastAPI + Pydantic | `/health`, `/predict/delivery`, catálogos, pedidos, cotizaciones y OpenAPI |
 | BD operacional | MongoDB | Pedidos, negocios, repartidores, estados, eventos, índices/validaciones |
 | Objetos | AWS S3 con `boto3` | Datasets, modelos, documentos |
 | ETL | Pandas, Dask, PySpark local | Transformaciones comparables y benchmarks |
@@ -238,6 +240,10 @@ escenario ilustrativo se identifica como tal y permanece fuera del dataset ML.
 Los eventos y mensajes del simulador no son observaciones reales de entregas.
 
 ## Contratos API
+
+Nota de actualización: las secciones T03/T30 siguientes conservan el diseño
+histórico. El contrato vigente es la tabla «Contratos usados por la demo actual»:
+la inferencia HTTP se ofrece únicamente en `/predict/delivery`.
 
 - **Obligatorios por guía:** `GET /health`, `POST /predict`, documentación OpenAPI.
 - El payload de `/predict` dependerá del **dataset real y sus features disponibles al momento de cotizar**. No congelar un contrato con features inventadas. T03 documenta el borrador; T13/T19 lo hacen viable; T30/T31 lo integran.
