@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { useLiveRefresh } from "@/lib/use-live-refresh";
 import { type BusinessChoice } from "@/lib/request-draft";
 import { businessActions, statusLabels, type BusinessTarget, type OrderRecord, type OrderStatus } from "@/lib/business-orders";
 import { coordinates } from "@/lib/demo-data";
@@ -9,7 +10,7 @@ const name = (value: string) => value.replace(" · SIMULADO", "");
 const date = (value: string) => new Intl.DateTimeFormat("es-SV", { dateStyle: "medium", timeStyle: "short", timeZone: "America/El_Salvador" }).format(new Date(value));
 
 async function query(params: Record<string, string>, signal: AbortSignal) {
-  const response = await fetch(`/api/business?${new URLSearchParams(params)}`, { signal });
+  const response = await fetch(`/api/business?${new URLSearchParams(params)}`, { signal: AbortSignal.any([signal, AbortSignal.timeout(20000)]), cache: "no-store" });
   if (!response.ok) throw new Error("No pudimos consultar los pedidos. Intentá actualizar de nuevo.");
   return response.json();
 }
@@ -58,6 +59,15 @@ export function BusinessPanel() {
     return () => controller.abort();
   }, [businessId, revision]);
 
+  const sync = useCallback(async (signal: AbortSignal) => {
+    try {
+      const rows = await query({ operation: "orders", business_id: businessId }, signal);
+      if (!Array.isArray(rows)) throw new Error("Pedidos inválidos");
+      if (!signal.aborted && !actionLock.current) { setRecords(rows); setDataError(""); }
+    } catch { if (!signal.aborted) setDataError("No pudimos actualizar los pedidos. Se conserva el último estado; volveremos a intentar."); }
+  }, [businessId]);
+  useLiveRefresh(sync, !!businessId && !loading && !saving && !catalogError);
+
   const visible = records.filter((record) => record.order.business_id === businessId && (!filter || record.order.status === filter));
   const selected = visible.find((record) => record.order.id === selectedId) || visible[0];
   const targets = selected ? businessActions(selected.order.status) : [];
@@ -92,6 +102,7 @@ export function BusinessPanel() {
       <div className="form-field"><label htmlFor="order-filter">Estado</label><select id="order-filter" value={filter} disabled={saving} onChange={(event) => { setFilter(event.target.value as OrderStatus | ""); setSelectedId(""); resetFeedback(); }}><option value="">Todos los estados</option>{Object.entries(statusLabels).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></div>
       <button type="button" className="button button-secondary" disabled={saving || loading} onClick={refresh}>Actualizar</button>
     </section>
+    <p className="form-help">Estados con actualización automática cada 5 segundos.</p>
     {loading && <p className="business-status" role="status">Consultando pedidos…</p>}
     {(catalogError || dataError) && <p className="form-error" role="alert">{catalogError || dataError}</p>}
     {actionError && <p className="form-error" role="alert">{actionError}</p>}
@@ -111,7 +122,7 @@ export function BusinessPanel() {
           {selected.order.status === "asignado" && <p className="form-help">El repartidor tiene la entrega asignada.</p>}
           {selected.order.status === "recogido" && <p className="form-help">El pedido está en camino.</p>}
           {!!targets.length && !pendingCancel && <div className="form-actions">{targets.includes("confirmado") && <button type="button" className="button button-primary" disabled={disabled} onClick={() => changeStatus("confirmado")}>Confirmar pedido</button>}{targets.includes("cancelado") && <button type="button" className="button button-secondary" disabled={disabled} onClick={() => setPendingCancel(true)}>Cancelar pedido</button>}</div>}
-          {pendingCancel && <div className="cancel-check" role="group" aria-label="Confirmar cancelación"><p>¿Querés cancelar este pedido? El cambio se guardará en el sistema.</p><div className="form-actions"><button type="button" className="button button-secondary" disabled={disabled} onClick={() => setPendingCancel(false)}>Volver</button><button type="button" className="button button-danger" disabled={disabled} onClick={() => changeStatus("cancelado")}>Sí, cancelar pedido</button></div></div>}
+          {pendingCancel && targets.includes("cancelado") && <div className="cancel-check" role="group" aria-label="Confirmar cancelación"><p>¿Querés cancelar este pedido? El cambio se guardará en el sistema.</p><div className="form-actions"><button type="button" className="button button-secondary" disabled={disabled} onClick={() => setPendingCancel(false)}>Volver</button><button type="button" className="button button-danger" disabled={disabled} onClick={() => changeStatus("cancelado")}>Sí, cancelar pedido</button></div></div>}
           {saving && <p className="form-help" role="status">Guardando cambio…</p>}
         </div> : <p className="panel-footnote">Elegí un pedido para consultar su detalle.</p>}
       </section>

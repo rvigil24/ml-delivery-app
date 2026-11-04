@@ -5,7 +5,7 @@ Machine Learning entrenados con datos reales de Meituan. La demo actual permite
 recorrer un pedido hasta la entrega del efectivo y consultar **duración estimada
 y riesgo de retraso**. Next.js ofrece el chat de comida y los paneles locales de
 Cliente, Negocio, Repartidor y Operaciones conectados a la API. El pedido del
-cliente ya se guarda en Atlas; la sincronización automática sigue pendiente. La infraestructura AWS ya está
+cliente ya se guarda en Atlas y los estados se consultan automáticamente. La infraestructura AWS ya está
 creada; la API cloud ya fue verificada con modelos desde S3 y persistencia Atlas.
 
 **Reporte para lectura y entrega:** [PDF](reports/Reporte_Tecnico_Asistente_Delivery.pdf) · [Word editable](reports/Reporte_Tecnico_Asistente_Delivery.docx).
@@ -74,17 +74,18 @@ por defecto apunta a `http://127.0.0.1:8001`; puede cambiarse con
 
 La confirmación guarda la solicitud y devuelve su referencia. FastAPI valida
 productos y cantidades contra su menú y obtiene el origen del negocio. El pedido
-aparece en Negocio y Operaciones al consultar/actualizar. Un reintento con la
+aparece en Negocio y Operaciones al actualizarse las consultas. Un reintento con la
 misma referencia y contenido devuelve el registro existente; contenido distinto
 se rechaza. La conversación se reinicia al recargar, pero el pedido permanece
-guardado. No envía WhatsApp, calcula un total ni inicia un cobro. La sincronización
-automática sigue pendiente.
+guardado. No envía WhatsApp, calcula un total ni inicia un cobro. Los estados se consultan cada cinco segundos mientras la pestaña está visible
+y al volver a ella, sin repetir los modelos ni las escrituras. Cliente muestra
+el estado del pedido guardado durante esa conversación.
 Negocio consulta pedidos e historial de la API, permite filtrar por estado y
 actualizar la consulta. Confirma pedidos cotizados o cancela antes de asignación,
 siempre sujeto a las validaciones del backend. Cancelar pide confirmación; los
 estados y el historial se actualizan solo después de guardar correctamente.
-El panel consulta hasta 100 pedidos del negocio elegido; aún no hay actualización
-en tiempo real. Repartidor consulta sus asignaciones, paradas y estados actuales,
+El panel consulta hasta 100 pedidos del negocio elegido; conserva selección y
+filtros durante las actualizaciones. Repartidor consulta sus asignaciones, paradas y estados actuales,
 registra recogidas/entregas en orden y finaliza la ruta cuando todos los pedidos
 están entregados. No crea asignaciones ni simula GPS en vivo. Sin asignaciones
 existentes muestra el estado vacío, sin fabricar rutas. Operaciones consulta pedidos y efectivo guardados y permite previsualizar tarifa,

@@ -1053,7 +1053,7 @@ fuentes actualizados. Sin modificar Excel, borrar ramas o iniciar despliegue.
 | T50 | Frontend y simulación visual | Implementar panel del repartidor para consultar rutas y confirmar entregas | Ruben Vigil | Completada |
 | T51 | Frontend y simulación visual | Implementar panel de operaciones con tarifas, costos, efectivo y márgenes | Ruben Vigil | Completada |
 | T52 | Frontend y simulación visual | Conectar las vistas de Next.js con los endpoints reales de FastAPI | Ruben Vigil | Completada |
-| T53 | Frontend y simulación visual | Sincronizar actualizaciones de estados entre las vistas sin WhatsApp real | Ruben Vigil | Pendiente |
+| T53 | Frontend y simulación visual | Sincronizar actualizaciones de estados entre las vistas sin WhatsApp real | Ruben Vigil | Completada |
 | T54 | Frontend y simulación visual | Preparar demo end-to-end de entrega individual, agrupada y pago en efectivo | Ruben Vigil | Pendiente |
 
 ## Orden sugerido para integración
@@ -1454,7 +1454,7 @@ El cálculo real devolvió503 por configuración ausente; el desglose visual se
 verificó con fixture aislada, sin afirmar tarifas configuradas.
 
 
-## Bloque activo — T52: vistas conectadas con FastAPI
+## Bloque cerrado — T52: vistas conectadas con FastAPI
 
 Responsable: Ruben Vigil. Rama feat/T52-pedidos-conectados desde origin/main.
 Dependencias: T48–T51 integradas, repositorios T32 y contratos de pedidos T20.
@@ -1488,3 +1488,19 @@ visible. Sin nuevas escrituras Atlas. Detector sin hallazgos. Revisión visual
 independiente ship: seis capturas válidas, sin correcciones materiales; permanencia
 en confirmación verificada en código. Cierre condicionado a CI e integración
 normal. Sin despliegue AWS.
+
+
+## Bloque activo — T53: sincronización de estados
+
+Responsable: Ruben Vigil. Rama feat/T53-sincronizacion desde origin/main.
+Dependencias:T48–T52 integradas, contratos de consulta y actualización condicional.
+Criterio: las cuatro vistas reflejan estados persistidos sin recargar; consultas
+periódicas visibles, pausa/limpieza, preservación de formularios, error/recuperación.
+Se reutiliza API; proxy de Cliente consulta su pedido y termina al estado terminal.
+Sin nuevas escrituras automáticas, ML repetido, sockets, dependencias o WhatsApp.
+Tipos, build y cinco pruebas Node aprobados. Navegador con fixtures aisladas en
+cuatro vistas: cambios de estado/efectivo, recuperación503, preservación de
+formulario, pausa oculta y ninguna inferencia nueva por polling. Sin escrituras
+Atlas. Revisión visual independiente ship: seis capturas desktop/móvil válidas.
+Cierre autorizado condicionado a CI e integración normal. No se despliega AWS
+ni inicia T54.

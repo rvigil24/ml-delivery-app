@@ -13,7 +13,7 @@ Next.js ofrece cuatro vistas locales. Cliente consulta negocios por cercanía y
 menús; Negocio consulta y actualiza pedidos; Repartidor consulta sus asignaciones
 y registra recogidas/entregas. Operaciones consulta pedidos y efectivo y solicita
 desgloses al backend. Cliente registra solicitudes del menú en MongoDB. La
-sincronización automática sigue pendiente.
+sincronización usa consultas periódicas mientras la pestaña está visible.
 Los detalles de versiones previas explican compatibilidad,
 no cambian el contrato v2 descrito en esta sección.
 
@@ -1265,3 +1265,24 @@ al plazo ingresado explícitamente. Conserva la estimación al confirmar; no la
 guarda como cotización ni la presenta como garantía. Cambiar negocio/destino y
 volver a revisar recalcula; solicitudes obsoletas se abortan. Estado de error y
 reintento sin cifras ficticias. API local actualizada, sin despliegue AWS.
+
+
+### T53 — sincronización visual por consulta periódica
+
+`useLiveRefresh` consulta cada5000ms, sin solapar sus propias peticiones, pausa
+con documento oculto y consulta al volver/foco. Limpia timer/listeners y aborta
+al desmontar, cambiar selección o guardar. Peticiones de lectura con no-store y
+timeout20s; no reintenta escrituras ni ejecuta ML. FastAPI/MongoDB siguen siendo
+la autoridad; no requiere WebSocket, eventos locales ni WhatsApp.
+
+Negocio refresca sus pedidos; Repartidor, asignaciones y disponibilidad;
+Operaciones, pedidos/efectivo sin borrar el formulario ni el desglose. Cliente
+consulta GET `/orders/{id}` mediante GET `/api/food?operation=order&order_id=...`,
+muestra estado actual y detiene polling al entregar/cancelar. Sólo la conversación
+actual conserva la referencia; no añade restauración de sesión al recargar.
+
+Errores conservan últimos datos y muestran aviso; lecturas posteriores recuperan
+la vista. Acciones logísticas mantienen estado esperado y validación del backend;
+no se habilitan con datos cuya actualización falló. Se mantienen límites de100
+registros y actualización manual. No es notificación instantánea ni snapshot
+transaccional entre vistas. Estimación ML permanece independiente del polling.
