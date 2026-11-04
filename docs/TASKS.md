@@ -1206,3 +1206,21 @@ terraform/t45*. No se leyó/escribió la URI ni se ejecutó apply. El valor Atla
 se declara en Terraform. Código preparado se puede integrar bajo autorización
 persistente manteniendo la tarea Pendiente; activación/prueba AWS requieren orden
 explícita. No se afirman permisos efectivos o despliegue funcional sin esa prueba.
+
+### Activación T45 autorizada — 2026-11-04
+
+Ruben aprobó explícitamente aplicar el plan, cargar URI desde .env, configurar
+variables GitHub y desplegar una tarea. Apply real: 19 altas, cero cambios/bajas,
+secreto cargado fuera de Terraform/GitHub, variables no secretas configuradas.
+Workflow https://github.com/rvigil24/ml-delivery-app/actions/runs/41888010231:
+OIDC/ECR aprobados; primer intento falló por DescribeTaskDefinition Resource '*'.
+Corrección de lectura regional aplicada mediante plan de una actualización IAM,
+cero altas/bajas. Reintento registró :2 y actualizó servicio a una tarea.
+
+Se define ownership de revisión ECS por pipeline (ignore_changes), sincroniza
+cantidad en tfvars privado y verifica plan sin cambios. Contenedor vivo y secreto
+inyectado; espera Atlas. Requiere permitir 18.214.26.83/32 en Atlas (paso solicitado
+al usuario, sin API administrativa disponible). T45 sigue Pendiente hasta validar
+acceso/secretos; T46 no se declara terminada ni se afirma inferencia/persistencia
+cloud. Corrección de código/documentos se integra bajo autorización persistente.
+Evidencia en data/reports/presentation/terraform/; sin suites locales nuevas.
