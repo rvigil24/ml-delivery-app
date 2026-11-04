@@ -75,7 +75,7 @@ docs/                # Especificación, arquitectura, datos y tareas compartidas
 En T01 los directorios se reservaron con `.gitkeep` para conservarlos en Git.
 T02 incorpora el paquete Python y las primeras pruebas del entorno.
 Las capas internas del backend se describen en `docs/ARCHITECTURE.md` y se
-crearán al abordar sus tareas. FastAPI, MongoDB y S3 se integrarán posteriormente;
+crearán al abordar sus tareas. T30 incorpora FastAPI; MongoDB y S3 se integrarán posteriormente;
 Docker/Compose se incorporarán en T34 y Terraform en T42.
 
 T01 no incluye una aplicación ejecutable, dependencias instaladas, endpoints,
@@ -119,10 +119,11 @@ actualizar el archivo de bloqueo automáticamente; ver la
 Cuando una tarea requiera cambiar dependencias, se actualizarán deliberadamente
 `pyproject.toml` y `uv.lock` juntos.
 
-Dependencias directas actuales: **boto3**, **Pandas**, **Matplotlib**, **Dask DataFrame**, **PySpark**, **scikit-learn** y **pytest** (grupo `dev`). Hatchling se
-usa únicamente para construir/instalar el paquete. FastAPI, el driver MongoDB,
-las demás bibliotecas de datos/ML y las herramientas de frontend se incorporarán cuando
-se implementen sus tareas.
+Dependencias directas actuales: **boto3**, **Pandas**, **Matplotlib**, **Dask DataFrame**,
+**PySpark**, **scikit-learn**, **PyTorch**, **FastAPI**, **Pydantic** y **Uvicorn**.
+El grupo `dev` incluye pytest y el cliente de pruebas HTTP compatible con Python
+(HTTPX en 3.9/3.10, HTTPX2 desde 3.11). Hatchling construye/instala el paquete.
+El driver MongoDB y las herramientas de frontend se incorporarán en sus tareas.
 
 Las pruebas de `backend/tests/test_environment.py` comprueban la instalación del
 paquete y la preparación local del cliente S3. La segunda prueba bloquea la
@@ -676,6 +677,96 @@ adicional ni altera pedidos. Todo resultado lleva `academic_only=True` y
 `demand_validated=False`: no es rentabilidad observada ni garantía de negocio.
 Verificación T29: **69 pruebas del backend aprobadas en Python 3.12**, incluidas
 cinco nuevas, también aprobadas en Python 3.9. Sin dependencias nuevas.
+
+## API local de inferencia — T30
+
+Desde la raíz, con el bundle T19 propio disponible en su entorno versionado:
+
+```bash
+uv sync --locked
+export DELIVERY_MODEL_DIR="$PWD/models/delivery-duration/meituan-temporal-rf-v1"
+uv run --locked uvicorn delivery.api.app:app --host 127.0.0.1 --port 8000
+```
+
+La API no carga `.env` automáticamente: usa la variable exportada. El bundle
+no está versionado en Git; sin él, sin configuración o con entorno incompatible,
+la API arranca con `model_available=false` y `/predict` devuelve 503. No descarga
+ni entrena modelos. La carga se realiza una vez al arrancar mediante
+[lifespan de FastAPI](https://fastapi.tiangolo.com/advanced/events/).
+
+En otra terminal, ejemplo de entrada **ilustrativa**, no una entrega observada:
+
+```bash
+curl http://127.0.0.1:8000/health
+curl -X POST http://127.0.0.1:8000/predict -H 'Content-Type: application/json' -d '{"requested_at":"2022-10-22T12:00:00-06:00"}'
+```
+
+`GET /health` comprueba proceso y carga inicial, sin certificar MongoDB/S3.
+`POST /predict` solo acepta fecha de creación ISO 8601 con zona horaria; rechaza
+campos adicionales. Devuelve fecha UTC, duración en minutos, fuente, intervalo
+creación–entrega, versión y limitaciones académicas. El modelo usa hora/día UTC;
+no distancia, vehículo, tarifa o tiempo de conducción. No está validado para
+El Salvador y no emite una cotización comercial. T31 integra cotizaciones.
+
+Documentación interactiva: `http://127.0.0.1:8000/docs`; esquema:
+`http://127.0.0.1:8000/openapi.json`. Errores JSON con `detail.code/message`:
+422 entrada inválida, 503 inferencia no disponible y 500 fallo inesperado,
+sin exponer entradas o excepciones internas. Reiniciar tras corregir modelo/
+configuración; no hay reintentos de carga por petición. Detener con Ctrl+C.
+
+```bash
+uv run --locked --extra notebooks pytest backend/tests -q
+```
+
+Verificación T30: **75 pruebas del backend aprobadas**, seis nuevas también
+en Python 3.9. HTTP local con Uvicorn y bundle real comprobado; evidencia local
+en `data/reports/presentation/t30_api_smoke.json`, sin registros del dataset.
+El bundle actual conserva su requisito de entorno Python 3.12; probar el código
+HTTP en Python 3.9 no acredita compatibilidad de ese artefacto. Sin MongoDB/S3,
+despliegue o endpoints de negocio adicionales.
+
+## Modelo y motor de cotizaciones — T31
+
+`QuotePreviewService.preview(order_id, quote_id, load_kg, costs)` combina T21,
+T22 y T23 sobre **un único snapshot** del pedido solicitado: duración desde su
+creación guardada, distancia Haversine, desglose monetario y opciones de vehículo.
+Conserva políticas/entradas y devuelve un resultado inmutable. No modifica el
+pedido, registra cotizaciones, reserva IDs o autoriza cobros/asignaciones.
+
+La API añade `POST /orders/{order_id}/quotes`. Para habilitarlo, componer
+`create_app(..., orders=repository, pricing_policy=prices, vehicle_policy=rules)`
+con un repositorio que contenga pedidos y políticas completas explícitas.
+Se reutiliza el mismo modelo cargado para `/predict`, sin HTTP interno o
+reentrenamiento. La aplicación predeterminada no carga datos/tarifas de ejemplo;
+sin esas dependencias el endpoint devuelve 503 `quote_configuration_missing`.
+
+Con aplicación compuesta y pedido existente, cuerpo de ejemplo **ilustrativo**:
+
+```json
+{"quote_id":"ejemplo","load_kg":"1","costs":{"currency":"USD","variable_cost":"0.10","attributable_cost":"0.20"}}
+```
+
+Los costos son ejemplos, no valores predeterminados o comerciales. El cliente
+no puede cambiar fecha de creación, tarifas o políticas mediante este cuerpo.
+La respuesta ofrece importes Decimal como strings, duración/versiones, zona,
+carga y razones de aceptación/rechazo de ambos vehículos, sin elegir uno.
+Puede mostrar un escenario con ningún vehículo admisible; no habilita la entrega.
+Siempre lleva `academic_only=true`, `coverage_validated=false` y
+`commercial_quote_validated=false`. Cumplir una zona configurada no valida
+cobertura real. Los requisitos de cotización comercial T20/T26/T28 siguen vigentes.
+
+Errores: 404 pedido inexistente, 409 estado incompatible, 422 entrada/moneda
+inválida y 503 configuración/modelo ausentes, con el formato T30. DTOs en
+OpenAPI y `/docs`; MongoDB/CRUD y fuentes comerciales siguen pendientes.
+
+```bash
+uv run --locked pytest backend/tests/test_quote_previews.py -q
+```
+
+Verificación T31: **80 pruebas del backend aprobadas en Python 3.12**; las once
+nuevas de T30–T31 también pasan en Python 3.9. Previsualización HTTP con bundle
+real y reglas/coordenadas de fixture verificada, sin mutación: evidencia local
+en `data/reports/presentation/t31_quote_smoke.json`. Sin nuevas dependencias.
 
 ## Notebooks para estudiar y exponer
 

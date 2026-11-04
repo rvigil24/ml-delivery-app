@@ -33,8 +33,9 @@ corresponden al reparto previo y deben interpretarse con esta actualización.
 - **T24–T25:** completadas con la evidencia de cierre indicada abajo; integración verificable en su PR y la guía externa.
 - **T26–T27:** completadas por cierre autorizado, con evidencia abajo; integración verificable en el PR y la guía externa.
 - **T28–T29:** completadas por cierre autorizado, con evidencia abajo; integración verificable en el PR y la guía externa.
-- **Siguiente tarea:** T30, pendiente; el próximo bloque aún no se ha iniciado.
-- **T30–T40:** continuar según dependencias y criterios de aceptación.
+- **T30–T31:** completadas por cierre autorizado con alcance académico, con evidencia abajo; integración verificable en el PR y la guía externa.
+- **Siguiente tarea:** T32, pendiente; el próximo bloque aún no se ha iniciado.
+- **T32–T40:** continuar según dependencias y criterios de aceptación.
 - **T41–T54:** asignadas a Ruben Vigil; despliegue y gastos siguen requiriendo autorización explícita.
 
 Cada agente trabaja una tarea por iteración, informa resultados y evita hacer
@@ -347,7 +348,36 @@ externa. Se regenera el ZIP de fuentes desde `main` limpio. La fuente comercial
 de cotización y los valores reales del escenario financiero siguen pendientes;
 T30 no se inicia en este cierre.
 
-## Instrucciones concretas y criterios de aceptación: T01–T29
+### Cierre autorizado: T30–T31 — API e integración predictiva
+
+Rama `backend/T30-T31-api-prediccion`, creada desde `origin/main` actualizado
+en `468a3af` (PR #15 integrado). Responsable: Ruben Vigil.
+
+- T30: completada. FastAPI/Pydantic, Uvicorn y cliente de pruebas compatible por versión de Python; lock actualizado. GET health, POST predict con creación ISO 8601 y zona horaria, normalización UTC, OpenAPI/docs. PredictionService reutiliza puerto/modelo T19/T21 cargado una vez por inicio; 422/503/500 sin detalles privados o fallback ficticio. Seis pruebas nuevas; 75 del backend aprobadas en Python 3.12 sin avisos y las seis nuevas también en Python 3.9. Uvicorn por HTTP local con bundle real comprobado; evidencia ilustrativa en data/reports/presentation/t30_api_smoke.json, servidor detenido. Documentación, guía y fuentes Colab actualizadas.
+- T31: completada con alcance académico. QuotePreviewService combina estimación/precios/vehículos T21–T23 sobre un único snapshot solicitado y la fecha de creación guardada, usando el mismo PredictionService/modelo de T30. POST /orders/{order_id}/quotes exige configuración explícita; devuelve duración/importes/políticas/opciones y marcas de cobertura/cotización comercial sin validar, sin reservar/persistir o cambiar estados. Cinco pruebas nuevas; 80 del backend aprobadas en Python 3.12 y las once nuevas del bloque también en Python 3.9. HTTP con bundle real y reglas/ubicaciones de fixture verificado sin mutación; evidencia en data/reports/presentation/t31_quote_smoke.json. Documentación, guía y fuentes Colab actualizadas. Sin dependencias nuevas.
+
+Sin modelo configurado/compatible, health informa model_available=false y
+predict falla con 503. El artefacto actual requiere su entorno Python 3.12;
+las pruebas HTTP en 3.9 no relajan ese contrato. Sin reentrenamiento, MongoDB,
+S3, canales reales o despliegue.
+
+Por orden explícita de Ruben se registran T30 y T31 como completadas en el
+backlog local. Dependencias y criterios contrastados con implementación y
+contratos; 80 pruebas del backend aprobadas en Python 3.12 sin avisos y las once
+nuevas del bloque también en Python 3.9. Las 100 fuentes coinciden con el
+paquete verificado, los hashes del artefacto/evidencia T19 permanecen intactos
+y las pruebas HTTP locales con modelo real están documentadas. Pasaron
+`uv lock --check`, `uv pip check` y `git diff --check`; no se repiten pruebas,
+entrenamientos o notebooks ML sin cambios. No se modifica el Excel ni se
+atribuye revisión independiente.
+
+El cierre publica un único PR, verifica la inclusión del commit en `origin/main`
+y sincroniza `main` local; resultado/PR/commit se registran en GitHub y la guía
+externa. Se regenera el ZIP de fuentes desde `main` limpio. La previsualización
+no sustituye los requisitos comerciales T20/T26/T28; cobertura/cotización
+comercial y sus valores reales siguen pendientes. T32 no se inicia en este cierre.
+
+## Instrucciones concretas y criterios de aceptación: T01–T31
 
 ### T01 — Crear repositorio Git y estructura modular del proyecto
 
@@ -639,6 +669,26 @@ T30 no se inicia en este cierre.
 
 **Terminado cuando:** moneda/unidad/margen conciliados; costos fijos adicionales sin doble conteo declarado; pérdidas visibles y ceros/margen no positivo/inversión cero resueltos. Equilibrio calculado con techo exacto y aproximación solo en ROI, sin pérdida monetaria silenciosa. Proyección inmutable y académica sin demanda validada, pruebas/contratos/guía; sin valores predeterminados, rentabilidad observada atribuida, cambios de pedidos o infraestructura.
 
+### T30 — Implementar API FastAPI con /health, /predict y documentación OpenAPI
+
+**Responsable:** Ruben Vigil
+
+**Dependencias:** artefacto T19 y puerto/adaptador de inferencia T21; contrato temporal y limitaciones validados en DATA_ML/ARCHITECTURE.
+
+**Implementar:** API local mínima con DTOs HTTP, health, inferencia, OpenAPI y carga única del bundle propio al inicio, sin funciones de T31 o almacenamiento.
+
+**Terminado cuando:** entrada con fecha/zona UTC y sin features extra, salida académica trazable, health distinto de inferencia disponible, errores 422/503/500 sin detalles privados, modelo no cargado por request ni fallback ficticio. Pruebas HTTP/compatibilidad 3.9+, integración local real sin reentrenar, dependencias/lock, ejecución/contratos/guía actualizados. Sin MongoDB/S3, canales, cotización comercial o despliegue anticipados.
+
+### T31 — Integrar el modelo predictivo con el motor de cotizaciones
+
+**Responsable:** Ruben Vigil
+
+**Dependencias:** inferencia/API T19/T21/T30, precios T22 y vehículos T23 con bases académicas aprobadas; políticas, costos y pedido explícitos.
+
+**Implementar:** previsualización académica que combine modelo, distancia, importes y reglas en un único snapshot; exponer por el endpoint de cotizaciones propuesto sin emitir cotización comercial ni anticipar persistencia.
+
+**Terminado cuando:** se reutiliza el modelo de T30 y la creación guardada, una lectura por pedido, importes/opciones trazables e historial intacto. Configuración/entrada/estado/modelo ausentes o inválidos producen errores documentados, sin defaults o tiempos ficticios; ningún vehículo admisible no se presenta como cobertura validada. Pruebas HTTP/3.9+, integración real ilustrativa, contratos y guía actualizados. Los requisitos comerciales T20/T26/T28 siguen bloqueados sin fuente autoritativa; no hay selección automática, almacenamiento o despliegue anticipados.
+
 ## Backlog completo y asignaciones
 
 | ID | Área | Tarea | Responsable | Estado de referencia / actualización autorizada |
@@ -672,8 +722,8 @@ T30 no se inicia en este cierre.
 | T27 | Lógica del negocio y simulación | Implementar simulación de mensajes y solicitudes por WhatsApp | Ruben Vigil | Completada |
 | T28 | Lógica del negocio y simulación | Simular pagos en efectivo y estados contables | Ruben Vigil | Completada |
 | T29 | Lógica del negocio y simulación | Elaborar análisis financiero: márgenes, costos fijos, punto de equilibrio y ROI estimado | Ruben Vigil | Completada |
-| T30 | API, almacenamiento e infraestructura | Implementar API FastAPI con /health, /predict y documentación OpenAPI | Ruben Vigil | Pendiente |
-| T31 | API, almacenamiento e infraestructura | Integrar el modelo predictivo con el motor de cotizaciones | Ruben Vigil | Pendiente |
+| T30 | API, almacenamiento e infraestructura | Implementar API FastAPI con /health, /predict y documentación OpenAPI | Ruben Vigil | Completada |
+| T31 | API, almacenamiento e infraestructura | Integrar el modelo predictivo con el motor de cotizaciones | Ruben Vigil | Completada |
 | T32 | API, almacenamiento e infraestructura | Configurar MongoDB con CRUD, índices y validaciones | Ruben Vigil | Pendiente |
 | T33 | API, almacenamiento e infraestructura | Integrar almacenamiento de objetos con S3 o MinIO | Ruben Vigil | Pendiente |
 | T34 | API, almacenamiento e infraestructura | Contenerizar los servicios mediante Docker y Docker Compose | Ruben Vigil | Pendiente |
