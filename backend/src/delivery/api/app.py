@@ -15,6 +15,8 @@ from fastapi.responses import JSONResponse
 from delivery.adapters.local_model import LocalDurationPredictor
 from delivery.domain.estimation import PredictionUnavailable
 from delivery.domain.catalogs import CatalogConflict, CatalogNotFound, StorageUnavailable
+from delivery.domain.assignments import AssignmentConflict, AssignmentNotFound, CourierNotFound
+from delivery.domain.cash import CashConflict, CashNotFound
 from delivery.domain.order_lifecycle import BusinessNotFound, MissingPrerequisite, OrderConflict, OrderNotFound
 from delivery.domain.pricing import OperatorCosts, PricingPolicy
 from delivery.domain.vehicle_rules import VehiclePolicy
@@ -46,6 +48,15 @@ def create_app(model_directory: Optional[Path] = None,
     @asynccontextmanager
     async def lifespan(application: FastAPI):
         model_cache = None
+        from delivery.services.delivery_predictions import DeliveryEstimationService
+        delivery_model = None
+        if os.environ.get("DELIVERY_MODEL_V2_DIR"):
+            try:
+                from delivery.adapters.delivery_model_v2 import LocalDeliveryModelV2
+                delivery_model = LocalDeliveryModelV2(Path(os.environ["DELIVERY_MODEL_V2_DIR"]))
+            except Exception:
+                logger.warning("Modelo ETA/riesgo no disponible; revisar bundle y entorno")
+        application.state.delivery_estimates = DeliveryEstimationService(delivery_model)
         storage, owned_storage = mongo_storage, False
         if storage is None and (os.environ.get("MONGODB_URI") or os.environ.get("MONGODB_DATABASE")):
             from delivery.adapters.mongo import MongoStorage
@@ -59,6 +70,7 @@ def create_app(model_directory: Optional[Path] = None,
                     storage = None
                 logger.warning("Persistencia MongoDB no disponible; no se usará un reemplazo en memoria")
         effective_orders = orders if orders is not None else (storage.orders if storage is not None else None)
+        application.state.mongo_storage = storage
         application.state.business_catalog = CatalogService(storage.businesses) if storage is not None else None
         application.state.courier_catalog = CatalogService(storage.couriers) if storage is not None else None
         application.state.order_service = OrderService(effective_orders, storage.businesses,
@@ -133,11 +145,16 @@ def create_app(model_directory: Optional[Path] = None,
 
     @application.exception_handler(CatalogNotFound)
     @application.exception_handler(BusinessNotFound)
+    @application.exception_handler(AssignmentNotFound)
+    @application.exception_handler(CourierNotFound)
+    @application.exception_handler(CashNotFound)
     async def catalog_not_found(request: Request, error: Exception):
         return error_response(404, "entity_not_found", "Entidad inexistente.")
 
     @application.exception_handler(CatalogConflict)
     @application.exception_handler(MissingPrerequisite)
+    @application.exception_handler(AssignmentConflict)
+    @application.exception_handler(CashConflict)
     async def operation_conflict(request: Request, error: Exception):
         return error_response(409, "operation_conflict", "Operación incompatible o sin requisitos validados.")
 
@@ -189,6 +206,11 @@ def create_app(model_directory: Optional[Path] = None,
             limitations=preview.pricing.estimate.limitations)
 
     application.include_router(storage_router())
+    from .delivery_predictions import delivery_prediction_router
+    application.include_router(delivery_prediction_router())
+    if os.environ.get("DELIVERY_DEMO_ENABLED") == "1":
+        from .demonstration import demonstration_router
+        application.include_router(demonstration_router())
     return application
 
 

@@ -35,6 +35,8 @@ services:
       MONGODB_URI: mongodb://mongo:27017/?replicaSet=delivery-local
       MONGODB_DATABASE: delivery
       DELIVERY_MODEL_DIR: ${DELIVERY_LOCAL_MODEL_DIR:-/models/delivery-duration/meituan-temporal-rf-v1}
+      DELIVERY_DEMO_ENABLED: ${DELIVERY_DEMO_ENABLED:-0}
+      DELIVERY_MODEL_V2_DIR: ${DELIVERY_LOCAL_MODEL_V2_DIR:-/models/delivery-duration/meituan-eta-risk-v2}
     volumes:
       - type: bind
         source: ./models

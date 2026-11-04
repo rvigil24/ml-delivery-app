@@ -34,7 +34,7 @@ corresponden al reparto previo y deben interpretarse con esta actualización.
 - **T26–T27:** completadas por cierre autorizado, con evidencia abajo; integración verificable en el PR y la guía externa.
 - **T28–T29:** completadas por cierre autorizado, con evidencia abajo; integración verificable en el PR y la guía externa.
 - **T30–T31:** completadas por cierre autorizado con alcance académico, con evidencia abajo; integración verificable en el PR y la guía externa.
-- **T32–T33:** completadas por cierre autorizado con evidencia local, Atlas y S3 indicada abajo; integración verificable en el PR del bloque y la guía externa. T34 completada por cierre autorizado con evidencia abajo. T35 completada por cierre autorizado con evidencia abajo. Sin bloque activo; siguiente tarea: T36 (flujo integrado simulado).
+- **T32–T33:** completadas por cierre autorizado con evidencia local, Atlas y S3 indicada abajo; integración verificable en el PR del bloque y la guía externa. T34 completada por cierre autorizado con evidencia abajo. T35 completada por cierre autorizado con evidencia abajo. Bloque activo: corrección ML T13–T19 y conexión T36, por petición explícita de Ruben para la exposición.
 - **T36–T40:** continuar según dependencias y criterios de aceptación.
 - **T41–T54:** asignadas a Ruben Vigil; despliegue y gastos siguen requiriendo autorización explícita.
 
@@ -454,6 +454,75 @@ T35 satisface el mínimo; no fue necesario modificar código o añadir pruebas.
 README y guía externa actualizados. Cierre autorizado por Ruben: se marca T35
 completada y se publica un PR, verificando su integración en origin/main.
 Sin modificar Excel ni iniciar T36; no se repiten pruebas sin cambios de código.
+
+### Bloque activo: T36 — flujo integrado simulado
+
+**Responsable:** Ruben Vigil. Rama `test/T36-flujo-simulado`, creada desde
+origin/main `2eca136` (T35 integrada). **Dependencias:** servicios de pedidos,
+estimación/precios, asignación, WhatsApp simulado y efectivo (T20–T28).
+
+**Criterio:** una prueba integrada de solicitud → cotización → confirmación →
+asignación → recogida → entrega → cobro → entrega de efectivo, con historial
+conservado y liberación del repartidor. Se prueba la composición de servicios
+en memoria, sin API/cloud ni validación comercial real.
+
+**Evidencia — 2026-11-04:**
+`uv run --locked pytest backend/tests/test_delivery_flow.py -q`:
+**1 passed in 0.04s**. Comprueba también el bloqueo sin cotización fixture y
+sin entrega para cobrar. Reutiliza servicios y repositorios existentes;
+único archivo de prueba nuevo. Predictor, cotización, tarifas, zona y carga
+son fixtures explícitos, exclusivos del test; ningún validador se añade a la
+API. Un primer intento detectó que el doble predictivo debía respetar el
+contrato PREDICTION; se corrigió el fixture sin modificar código del producto.
+No se repitió la suite completa. README/guía/ZIP actualizados; pendiente del
+cierre autorizado, sin commits/push ni inicio de T37.
+
+**Ampliación solicitada por Ruben para exponer — 2026-11-04:** se conectó el
+flujo completo mediante POST /demo/deliveries, optativo con DELIVERY_DEMO_ENABLED=1.
+Usa predictor entrenado y MongoDB reales; políticas, zona, carga y ubicaciones del
+archivo examples/demo_delivery.json son explícitamente simuladas. scripts/demo_delivery.py
+genera IDs demo- nuevos y guarda entrada/recibo en data/reports/presentation/demo_result.json.
+El recibo conserva la cotización completa; MongoDB guarda el recorrido operativo.
+Aceptación exclusiva de la simulación, sin cambiar validadores generales ni
+pretender reanudación por pasos o una transacción global del recorrido.
+
+**Comprobación real:** Docker build/up --wait y POST completo verificados.
+Modelo meituan-temporal-rf-v1 produjo 32.57790982477246 minutos para el calendario
+del pedido demo; no es duración observada ni validación local. Tarifa simulada
+3.22 USD, pedido entregado, seis eventos logísticos y tres de efectivo hasta
+entregado_al_operador; importe conciliado y repartidor liberado. GET del pedido
+persistido confirmado. Se corrigió la presentación CLI del estado de efectivo
+(derivado del último evento); dos recorridos de demo permanecen en MongoDB local.
+Sin suite adicional. Contenedores delivery-local e información conservados para
+la presentación; no se modificó Atlas/S3. Contrato, README, guía y ZIP actualizados.
+
+
+### Corrección ML y conexión T36 solicitadas por Ruben — 2026-11-04
+
+Responsable Ruben Vigil. Rama activa `ml/eta-riesgo-presentacion`, desde el HEAD
+main 2eca136; se conservó el trabajo no publicado de T36. Se revisa T13–T19 por
+solicitud expresa: el modelo temporal era insuficiente. Los estados históricos
+no se reescriben ni se declara cierre de esta ampliación automáticamente.
+
+Informe oficial Meituan 2024, sección 2.1, y artículo 2025, sección 3.1, resuelven
+la duda de preservación de distancias relativas. Divisor 1e6 registrado como
+inferencia de codificación, sin atribuir confirmación textual al editor.
+Protocolo fijado antes de entrenar: misma cohorte/frontera, tres folds temporales,
+ETA seleccionada por MAE CV, riesgo por log-loss CV; test ya observado y revisión
+exploratoria. Bundle nuevo v2 con dos predictores, sin sobrescribir v1.
+
+Evidencia: ETA test MAE 7.369698, RMSE 9.878996, R² 0.358061; error MAE ~19.2%
+menor que v1. Riesgo ROC AUC 0.647745, Brier 0.122650 y log-loss 0.403900 frente
+a 0.422204 de referencia. Clasificación útil pero modesta; sin validación local.
+Endpoint POST /predict/delivery y demo T36 usan el bundle real. Escenarios HTTP
+con la misma fecha: 1.11 km/plazo 30 → ETA 23.10, riesgo 17.67%; 5.56 km/plazo 30 →
+ETA 45.38, riesgo 70.60%; mismo recorrido/plazo 45 → riesgo 32.89%. Son inferencias
+sobre entradas ilustrativas, no viajes observados. Recibo demo v2 confirma pedido
+entregado y efectivo entregado_al_operador en MongoDB local.
+
+Una prueba nueva de variables y una existente de OpenAPI aprobadas; sin otras
+suites. Notebook 03, informe, guía y ZIP actualizados. API local conservada para
+exponer. V2 no publicado en S3, sin cloud nuevo, commits/push o cierre formal.
 
 ## Instrucciones concretas y criterios de aceptación: T01–T33
 

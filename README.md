@@ -2,6 +2,70 @@
 
 Proyecto integrador de Python, Ciencia de Datos y Machine Learning. Equipo de dos integrantes. El repositorio comienza con **documentación operativa**, no con una aplicación previamente implementada: los agentes crearán el código al ejecutar cada tarea.
 
+## Modelos actuales: duración y riesgo de retraso
+
+La revisión `meituan-eta-risk-v2` ejecuta **dos modelos entrenados**:
+
+- ETA: usa distancia origen–destino y hora/día UTC para estimar minutos creación–entrega.
+- Riesgo: añade el plazo prometido para estimar la probabilidad de entregarlo tarde.
+
+Selección mediante tres folds temporales. En los 136,799 pedidos de test, la ETA
+obtuvo **MAE 7.37 min y R² 0.358**, frente a MAE 9.13 de la versión solo temporal.
+Riesgo: ROC AUC **0.648**; mejora sobre la referencia, con discriminación modesta.
+La revisión reutiliza un test ya observado y sigue sin validación para El Salvador.
+No aprende tráfico o diferencias por vehículo. Distancias aproximadas basadas en
+la aclaración oficial de Meituan; la codificación 1e6 se documenta como inferencia.
+
+Consultar `POST /predict/delivery` en `/docs`, con fecha, origen, destino y
+`promised_minutes`. `/predict` conserva el experimento temporal v1 por compatibilidad.
+La demo completa usa **v2** y devuelve también el riesgo en `delivery_prediction`.
+La API carga `DELIVERY_MODEL_V2_DIR` al iniciar; Compose monta el bundle local.
+V2 aún no se publica en S3; los objetos anteriores son de v1.
+
+Entrenamiento reproducible (la salida debe ser nueva):
+
+```bash
+OMP_NUM_THREADS=2 OPENBLAS_NUM_THREADS=2 uv run --locked python ml/experiments/train_delivery_v2.py \
+  --data-root data --output models/delivery-duration/meituan-eta-risk-v2
+```
+
+Resultados/alcance en `docs/DATA_ML.md`; notebook explicativo:
+`notebooks/03_eta_y_riesgo.ipynb`. Los bundles incluyen hashes, entorno y métricas
+reales. No se reentrena al atender peticiones.
+
+## Demostración completa para la exposición
+
+El flujo puede ejecutarse por HTTP con el modelo entrenado y MongoDB local:
+
+```bash
+DELIVERY_DEMO_ENABLED=1 docker compose up --build -d --wait
+python scripts/demo_delivery.py
+```
+
+Abrir http://127.0.0.1:8000/docs. El endpoint optativo
+`POST /demo/deliveries` ejecuta solicitud, cotización, confirmación, asignación,
+recogida, entrega, cobro y entrega de efectivo, y libera al repartidor.
+El modelo T19 debe estar disponible en `models/`, como indica T34.
+
+El comando guarda los parámetros y resultados de esa ejecución en
+`data/reports/presentation/demo_result.json`: versión/duración del modelo,
+distancia, desglose de importes, historial, recorrido, conversación y efectivo.
+Negocio/repartidor/pedido/asignación/efectivo quedan en el volumen MongoDB local;
+la cotización completa y su configuración se conservan en el recibo JSON.
+Cada ejecución genera IDs nuevos `demo-`; no sobrescribe anteriores.
+
+`examples/demo_delivery.json` contiene únicamente valores de ejemplo, incluidos
+ubicaciones, tarifas, límites y carga: son datos simulados para exponer, no tarifas
+o cobertura de El Salvador. La duración procede del modelo real y conserva sus
+limitaciones. Ningún dato demo se añade al entrenamiento. El endpoint acepta
+explícitamente estos parámetros, no establece tarifas predeterminadas.
+
+La aceptación se limita a ese recorrido simulado y no cambia los requisitos de
+los endpoints generales. Los pasos son consecutivos: si falla uno, consultar el
+pedido y sus eventos; no se promete rollback global ni reanudación del recorrido.
+La demo está deshabilitada por defecto y se habilita explícitamente en el Compose
+local de loopback. `docker compose down` detiene la demo conservando sus datos.
+
 ## Qué se construirá
 
 Un MVP para pequeños comedores, pupuserías y negocios de almuerzos/cenas sin repartidor propio. Simula solicitudes por WhatsApp, cotiza envíos locales, gestiona entregas individuales/agrupadas, asigna repartidores simulados en bicicleta o motocicleta, registra efectivo ficticio y muestra resultados en Next.js. La predicción de duración usará **datos reales verificables** y modelos ML/DL evaluados; los costos comerciales se calculan por reglas explícitas, no por resultados fabricados.
@@ -1004,3 +1068,18 @@ validaciones de cotizaciones. Superan el mínimo académico de diez; no requiere
 MongoDB, AWS, modelos entrenados ni datasets. Resultado comprobado en T35:
 **14 aprobadas**. Los valores de prueba son fixtures sintéticos. Esta selección
 no equivale a repetir la suite completa ni al flujo integrado de T36.
+
+
+## Prueba del flujo simulado — T36
+
+```bash
+uv run --locked pytest backend/tests/test_delivery_flow.py -q
+```
+
+Una sola prueba integra solicitud WhatsApp simulada, estimación y desglose de
+precios, confirmación, asignación, recogida/entrega, cobro y entrega de efectivo
+al operador. Comprueba historiales y liberación del repartidor. Resultado T36:
+**1 aprobada**. Usa servicios reales del proyecto con repositorios en memoria;
+predictor, evidencia de cotización y políticas son fixtures exclusivos del test.
+No acredita flujo HTTP/cloud, calidad ML o autorización comercial: la API sigue
+bloqueando avances que requieren una fuente de cotización validada.

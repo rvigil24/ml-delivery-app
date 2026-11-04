@@ -831,3 +831,42 @@ Esta topología permite demostrar la aplicación sin AWS. No sustituye Atlas en
 la arquitectura cloud: la misma imagen admite la configuración Atlas/S3 explícita
 con `docker run`, como documenta README. No contiene frontend, reentrenamiento,
 emulador S3, Terraform ni configuración de despliegue de producción.
+
+
+## Demostración HTTP completa — ampliación T36
+
+Por solicitud de Ruben para preparar su exposición, se añade
+`POST /demo/deliveries`, registrado solo con `DELIVERY_DEMO_ENABLED=1`.
+Recibe explícitamente negocio, repartidor, pedido, políticas de precio/vehículo/
+ruta, costos y carga; exige simulated=true e IDs demo-. Antes de crear registros,
+comprueba configuración, modelo y viabilidad. Ejecuta los servicios existentes
+contra MongoStorage, con inferencia del predictor real cargado al iniciar.
+
+La aceptación de la cotización es propia del recorrido simulado; no se instala
+como validador de los endpoints generales. El resultado devuelve cotización,
+configuración, mensajes, historiales logísticos/contables, asignación liberada y
+limitaciones. Se conservan importes Decimal como cadenas. El comando
+scripts/demo_delivery.py genera IDs nuevos y guarda entrada/recibo local JSON;
+los datos operativos persisten en las cinco colecciones MongoDB existentes.
+No se añade una colección de cotizaciones ni reanudación por pasos. No hay
+transacción que abarque todo el recorrido: una interrupción conserva los pasos
+confirmados para inspección, sin reportarse como éxito. Los conflictos responden
+409 y las referencias ausentes 404. Las políticas del ejemplo son simuladas;
+modelo/duración son reales, con su falta de validación local documentada.
+
+
+## Contrato ML v2 solicitado por Ruben
+
+POST /predict/delivery recibe requested_at ISO con zona horaria, origin y
+ destination (latitude/longitude en grados) y promised_minutes positivo.
+Devuelve estimated_minutes, late_probability (0–1), distancia aproximada,
+model_version, algoritmos, aviso de entradas fuera del rango observado y
+limitaciones. No se prescribe un umbral de rechazo o asignación por riesgo.
+
+La capa API valida y llama DeliveryEstimationService; el adaptador
+LocalDeliveryModelV2 carga DeliveryPredictorV2 una sola vez. Bundle propio con
+eta.pkl/risk.pkl, hashes, evidencia, tarjeta y entorno exacto. Configuración
+DELIVERY_MODEL_V2_DIR; si falta o falla la carga se responde 503. No se cambian
+contratos v1 ni se reentrena en requests. La demo T36 pide promised_minutes
+explícito y usa ambos modelos v2; su cotización conserva duración/model_version
+y el recibo incluye prediction completa. S3 conserva v1 hasta publicar v2.

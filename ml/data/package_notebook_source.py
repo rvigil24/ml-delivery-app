@@ -17,6 +17,8 @@ def main() -> None:
     for name in ("backend/src", "backend/tests", "ml/src", "ml/data", "ml/experiments", "ml/tests", "infra/docker"):
         paths.extend((ROOT / name).rglob("*.py"))
     paths.extend((ROOT / "docs").glob("*.md"))
+    paths.extend((ROOT / "scripts").glob("*.py"))
+    paths.extend((ROOT / "examples").glob("*.json"))
     files = sorted(set(paths))
     manifest = {
         "created_at_utc": datetime.now(timezone.utc).isoformat(),
