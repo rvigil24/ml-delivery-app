@@ -9,6 +9,10 @@ y riesgo de retraso**. Next.js y el despliegue AWS están pendientes.
 
 **Evidencias para la entrega:** [Anexo PDF](reports/Anexo_Evidencias_Asistente_Delivery.pdf) · [Word editable](reports/Anexo_Evidencias_Asistente_Delivery.docx) · [Paquete completo ZIP](reports/Entrega_Asistente_Delivery.zip).
 
+**Presentación para la defensa:** [PowerPoint editable con notas](reports/Presentacion_Defensa.pptx) · [PDF](reports/Presentacion_Defensa.pdf).
+
+**Guion y demostración:** [Guía PDF](reports/Guia_Exposicion_y_Demo.pdf) · [Word editable](reports/Guia_Exposicion_y_Demo.docx).
+
 ## Inicio rápido: demo con modelos desde S3
 
 Requisitos: Git, Docker con Compose, Python 3.9+ para el comando de demo y un
