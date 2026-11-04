@@ -866,7 +866,29 @@ limitaciones. No se prescribe un umbral de rechazo o asignación por riesgo.
 La capa API valida y llama DeliveryEstimationService; el adaptador
 LocalDeliveryModelV2 carga DeliveryPredictorV2 una sola vez. Bundle propio con
 eta.pkl/risk.pkl, hashes, evidencia, tarjeta y entorno exacto. Configuración
-DELIVERY_MODEL_V2_DIR; si falta o falla la carga se responde 503. No se cambian
+DELIVERY_MODEL_V2_DIR o manifiesto S3 v2 fijado; si falta configuración válida
+o falla la carga se responde 503. No se cambian
 contratos v1 ni se reentrena en requests. La demo T36 pide promised_minutes
 explícito y usa ambos modelos v2; su cotización conserva duración/model_version
-y el recibo incluye prediction completa. S3 conserva v1 hasta publicar v2.
+y el recibo incluye prediction completa. S3 conserva v1 y el bundle v2 publicado bajo su propio prefijo.
+
+
+### Arranque remoto v2 — corrección T33
+
+La misma descarga por ObjectStore admite ahora schema delivery-s3-model-v2 y
+lista exacta eta.pkl/risk.pkl/metadata.json/evidence.json/model_card.md/License.txt.
+El manifiesto está fijado por clave/SHA256/tamaño mediante variables
+DELIVERY_MODEL_V2_MANIFEST_KEY, _SHA256 y _SIZE. Se comprueba también que su
+model_version corresponda a metadata antes de cargar pesos. V1 conserva su
+contrato y lista de archivos. DELIVERY_MODEL_V2_DIR explícito tiene prioridad.
+
+Lifespan descarga en TemporaryDirectory, cierra el cliente S3 y carga ambos
+modelos una sola vez. Caché eliminada al apagar o si falla verificación/carga.
+No hay fallback implícito a archivos de la computadora o a pesos ficticios.
+DeliveryEstimationService incorpora model_source=s3/local a la respuesta.
+Si no se puede preparar v2, la predicción devuelve 503. Health v1 no cambia.
+
+Compose base permanece local. compose.s3.yaml es un complemento de desarrollo
+para la misma API con descarga S3 y perfil montado en lectura bajo UID/GID del
+host; no es configuración de despliegue. En AWS no se monta ese perfil: el SDK
+usará el rol IAM y lectura del prefijo del bundle, a configurar en T45/T43.

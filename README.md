@@ -20,7 +20,8 @@ Consultar `POST /predict/delivery` en `/docs`, con fecha, origen, destino y
 `promised_minutes`. `/predict` conserva el experimento temporal v1 por compatibilidad.
 La demo completa usa **v2** y devuelve también el riesgo en `delivery_prediction`.
 La API carga `DELIVERY_MODEL_V2_DIR` al iniciar; Compose monta el bundle local.
-V2 aún no se publica en S3; los objetos anteriores son de v1.
+V2 está publicado y verificado en S3; puede recuperarse al iniciar como se
+describe abajo. El directorio local explícito tiene prioridad.
 
 Entrenamiento reproducible (la salida debe ser nueva):
 
@@ -1083,3 +1084,49 @@ al operador. Comprueba historiales y liberación del repartidor. Resultado T36:
 predictor, evidencia de cotización y políticas son fixtures exclusivos del test.
 No acredita flujo HTTP/cloud, calidad ML o autorización comercial: la API sigue
 bloqueando avances que requieren una fuente de cotización validada.
+
+
+## Arranque de v2 desde S3 — adaptación T33
+
+El bucket existente contiene los dos modelos en
+`models/delivery-duration/meituan-eta-risk-v2/`. Configuración no secreta:
+
+```dotenv
+DELIVERY_MODEL_V2_DIR=
+DELIVERY_MODEL_V2_MANIFEST_KEY=models/delivery-duration/meituan-eta-risk-v2/manifest.json
+DELIVERY_MODEL_V2_MANIFEST_SHA256=0381a68fb7a7634823217d85718ce0efa5dad04fe3bf4f4b36358fa189d5e102
+DELIVERY_MODEL_V2_MANIFEST_SIZE=1216
+```
+
+La API verifica el hash del manifiesto, su esquema/lista de archivos, los hashes
+del contenido, versión y entorno del bundle antes de cargar los pesos. Descarga
+una sola vez al iniciar, sirve ambos modelos desde memoria y elimina su caché
+privada al terminar. Una configuración/descarga/verificación fallida deja
+`/predict/delivery` en 503, sin sustituir pesos o reentrenar. La respuesta incluye
+`model_source: "s3"` cuando efectivamente se cargó desde S3. Un directorio local
+no vacío tiene prioridad; dejarlo vacío para usar la descarga remota.
+
+Para la demo Docker local con un perfil AWS ya configurado en `.env`:
+
+```bash
+DELIVERY_RUN_UID="$(id -u)" \
+DELIVERY_RUN_GID="$(id -g)" \
+DELIVERY_AWS_CONFIG_DIR="$HOME/.aws" \
+DELIVERY_DEMO_ENABLED=1 \
+docker compose -f compose.yaml -f compose.s3.yaml up --build -d --wait
+python scripts/demo_delivery.py
+```
+
+`compose.s3.yaml` monta únicamente el perfil local en lectura y usa el UID/GID
+del usuario del equipo para poder leerlo. V2 se obtiene de S3; el montaje models/
+de Compose base sigue disponible para compatibilidad con v1. El archivo `.env`
+no se copia a la imagen. Para detener esta variante usar los mismos `-f` con
+`down`, conservando el volumen de datos.
+
+En AWS: configurar las tres variables del manifiesto, dejar
+`DELIVERY_MODEL_V2_DIR` y `DELIVERY_AWS_PROFILE` vacíos y usar el rol IAM del
+servicio con lectura del prefijo del bundle. No se necesita montar models/ o
+credenciales personales. El SDK resuelve las credenciales del rol. La creación
+del rol y el despliegue siguen en T45/T43; esta adaptación no los ejecuta.
+La etiqueta `model_available` de `/health` sigue describiendo el predictor v1;
+la disponibilidad de v2 se comprueba en `/predict/delivery`.

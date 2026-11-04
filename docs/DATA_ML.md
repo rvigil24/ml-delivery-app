@@ -1480,8 +1480,15 @@ fuente auditada; todos los plazos de la cohorte son positivos (mínimo 30 min).
 
 El bundle local `models/delivery-duration/meituan-eta-risk-v2/` contiene eta.pkl,
 risk.pkl, evidencia, tarjeta y metadatos con hashes/entorno/entradas/rangos.
-No sobrescribe v1 ni los objetos S3; v2 aún no se publica en AWS.
+No sobrescribe v1; v2 se publicó posteriormente en AWS con su propio prefijo
+y manifiesto fijado por SHA256/tamaño, conservando ambos bundles.
 `ml/experiments/train_delivery_v2.py` reproduce el experimento en una carpeta nueva.
 `notebooks/03_eta_y_riesgo.ipynb` explica y compara resultados reales y consultas.
 Solo una nueva prueba unitaria de variables y la prueba OpenAPI afectada se
 comprobaron; no se repitieron suites completas o experimentos anteriores.
+
+
+La adaptación T33 permite recuperar v2 desde S3 al iniciar la API, sin directorio
+local de pesos. Se conserva el manifiesto publicado de 1216 bytes/SHA256
+0381a68fb7a7634823217d85718ce0efa5dad04fe3bf4f4b36358fa189d5e102.
+No cambia el entrenamiento, sus métricas o las limitaciones de las coordenadas.
