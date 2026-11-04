@@ -258,6 +258,38 @@ no elige, asigna, reserva, persiste cotizaciones o cambia el pedido/historial.
 Los valores de demostración se identifican como fixtures. Una previsualización
 con importes no sustituye la fuente autoritativa requerida por T20/T26/T28.
 
+## Persistencia operativa — T32
+
+MongoDB Atlas Free sobre AWS us-east-1 es el servicio elegido. Tras desarrollar
+y probar localmente, Ruben creó el clúster; conexión, esquema, transacción y
+lecturas de la API en Atlas se verificaron. Persisten negocios, pedidos/historial, repartidores,
+asignaciones y efectivo simulado; el entrenamiento y los archivos siguen fuera
+de la base operacional. URI/base explícitas y privadas, sin datos prefijados.
+
+CRUD de catálogos y creación/consulta/listado/transiciones de pedidos por API.
+No se cambia un estado mediante edición genérica ni se borra su historial;
+se conservan las restricciones de referencias y repartidores ocupados.
+Validadores e índices se preparan de forma explícita; la API comprueba su
+existencia antes de usar la persistencia. Actualizaciones condicionales y
+transacciones preservan atomicidad y rechazos sin cambios parciales.
+La indisponibilidad produce 503, sin sustituir MongoDB por memoria.
+
+Guardar datos no valida cotizaciones, cobertura o importes comerciales:
+T20/T26/T28 mantienen sus requisitos y T31 su alcance académico. No se crean
+recursos cloud, pagos reales o permisos de producción como parte de la prueba local.
+
+## Almacenamiento de objetos — T33
+
+S3 ml-kodigo-resources en us-east-1 almacena copias privadas autorizadas de
+artefactos académicos, sin recrear bucket o modificar IAM/políticas. Modelo,
+documentación y metadatos se versionan y verifican por SHA-256/tamaño. Una
+clave existente con bytes distintos no se sobrescribe. Los CSV Meituan siguen
+locales; datasets declara disponibilidad exclusiva de metadatos/licencia.
+La API recupera opcionalmente un bundle propio al inicio con manifiesto fijado
+por hash/tamaño, conserva los controles T19 y limpia su caché al terminar.
+Fallos mantienen inferencia 503, sin entrenamiento o descarga por petición.
+Credenciales fuera de Git/frontend; sin despliegue o uso comercial habilitado.
+
 ## Prioridad de producto
 
 1. Evidencia académica: datos reales, ETL, tres ML + MLP, evaluación reproducible, FastAPI, MongoDB, S3, Docker, pruebas.

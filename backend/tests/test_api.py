@@ -98,7 +98,9 @@ def test_openapi_documents_implemented_endpoints_and_validation_error_schemas(tm
         response = client.get("/openapi.json")
         assert response.status_code == 200
         schema = response.json()
-        assert set(schema["paths"]) == {"/health", "/predict", "/orders/{order_id}/quotes"}
+        assert set(schema["paths"]) == {"/health", "/predict", "/orders/{order_id}/quotes", "/businesses",
+            "/businesses/{identifier}", "/couriers", "/couriers/{identifier}", "/orders", "/orders/{order_id}",
+            "/orders/{order_id}/transitions"}
         request_schema = schema["components"]["schemas"]["PredictRequest"]
         assert request_schema["required"] == ["requested_at"] and not request_schema["additionalProperties"]
         assert request_schema["properties"]["requested_at"]["format"] == "date-time"

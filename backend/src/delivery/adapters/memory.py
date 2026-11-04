@@ -34,6 +34,12 @@ class InMemoryOrderRepository:
         with self._lock:
             return self._get(order_id)
 
+    def list(self, limit: int):
+        if isinstance(limit, bool) or not isinstance(limit, int) or not 1 <= limit <= 100:
+            raise ValueError("limit fuera de rango")
+        with self._lock:
+            return tuple(self._records[key] for key in sorted(self._records)[:limit])
+
     def _get(self, order_id: str) -> OrderRecord:
         try:
             return self._records[order_id]

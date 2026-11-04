@@ -34,8 +34,8 @@ corresponden al reparto previo y deben interpretarse con esta actualización.
 - **T26–T27:** completadas por cierre autorizado, con evidencia abajo; integración verificable en el PR y la guía externa.
 - **T28–T29:** completadas por cierre autorizado, con evidencia abajo; integración verificable en el PR y la guía externa.
 - **T30–T31:** completadas por cierre autorizado con alcance académico, con evidencia abajo; integración verificable en el PR y la guía externa.
-- **Siguiente tarea:** T32, pendiente; el próximo bloque aún no se ha iniciado.
-- **T32–T40:** continuar según dependencias y criterios de aceptación.
+- **T32–T33:** completadas por cierre autorizado con evidencia local, Atlas y S3 indicada abajo; integración verificable en el PR del bloque y la guía externa. No hay bloque activo; siguiente tarea: T34 (Docker/Compose).
+- **T34–T40:** continuar según dependencias y criterios de aceptación.
 - **T41–T54:** asignadas a Ruben Vigil; despliegue y gastos siguen requiriendo autorización explícita.
 
 Cada agente trabaja una tarea por iteración, informa resultados y evita hacer
@@ -377,7 +377,33 @@ externa. Se regenera el ZIP de fuentes desde `main` limpio. La previsualización
 no sustituye los requisitos comerciales T20/T26/T28; cobertura/cotización
 comercial y sus valores reales siguen pendientes. T32 no se inicia en este cierre.
 
-## Instrucciones concretas y criterios de aceptación: T01–T31
+### Cierre autorizado: T32–T33 — persistencia y objetos
+
+Rama `backend/T32-T33-almacenamiento`, desde `origin/main` actualizado en
+`6ebcf66` (PR #16 integrado). Responsable: Ruben Vigil.
+
+- T32: implementada y verificada localmente. Atlas Free sobre AWS us-east-1 elegido por Ruben; aún sin clúster, autorizó código/pruebas locales. PyMongo, adaptadores de negocios/pedidos/repartidores/asignaciones/efectivo, codec preciso, validadores/índices explícitos, CAS y transacciones reales. CRUD de catálogos, registro/consulta/listado/transiciones de pedidos por HTTP; referencias e historial protegidos. Cliente compartido/cerrado por lifespan, 503 sin fallback ni autocreación de colecciones no validadas. 87 pruebas del backend aprobadas con MongoDB 8.0 real y las siete nuevas también en Python 3.9; persistencia tras reinicio de servidor comprobada. Evidencia agregada local, contratos/README/guía/fuentes Colab actualizados. Conexión cloud Atlas pendiente; no se afirma haberla probado.
+- T33: implementada y verificada en AWS real por autorización explícita de Ruben. Perfil remote-admin y endpoint S3 real seleccionados por operación, sin cambiar floci/localhost:4566 global. Puerto/adaptador de objetos, SHA-256, PUT condicional, descargas atómicas y modelo recuperable al inicio desde manifiesto fijado. AWS CLI publicó 47 objetos privados (2,183,341 bytes) en models/delivery-duration/meituan-temporal-rf-v1/, datasets/meituan/1f9b4288cee5a78d1e5da007fc306bbaa662fc6d/ (solo metadatos/licencia) y docs/ml-delivery-app/ed6b32c222a2706df91c/. Checksums/tamaños/ACL privados verificados; recibo incremental t33_s3_publication.json y descarga/inferencia real t33_s3_model_smoke.json, en data/reports/presentation/. .env no secreto configurado y carga explícita con uv comprobada. CSV/notebooks ejecutados excluidos; condiciones Meituan conservadas. Cinco pruebas nuevas; 92 del backend con MongoDB real aprobadas y las cinco de S3 también en Python 3.9 (avisos de fin de soporte Boto3). Sin cambios de bucket/IAM, recursos nuevos o despliegue; documentación/guía/fuentes actualizadas.
+
+Cierre autorizado por Ruben: T32 y T33 se registran como completadas con esta
+evidencia. Se publica un único PR y se verifica la integración del commit en
+origin/main; la guía externa registra el resultado efectivo. Sin modificar Excel.
+La persistencia no resuelve requisitos de cotización comercial; Docker/Compose
+del producto, Terraform y despliegues permanecen en sus tareas.
+
+**Verificación Atlas posterior — 2026-11-04:** Ruben creó el clúster y guardó
+la URI en .env. Se completó MONGODB_DATABASE=delivery, que estaba vacío, sin
+mostrar credenciales. Conexión real, cinco colecciones con validadores/índices,
+transacción snapshot de lectura y GET API de negocios/repartidores/pedidos
+verificados. En la misma aplicación se recuperó el modelo de S3 y se comprobó
+inferencia real sobre fecha ilustrativa. Sin pedidos/datos ficticios añadidos
+a Atlas; clientes cerrados al terminar. Evidencia sin URI ni credenciales:
+data/reports/presentation/t32_atlas_smoke.json. La condición previa de conexión
+cloud pendiente de T32 queda resuelta; no se afirma una repetición de toda la
+suite de integración contra Atlas. El cierre conserva esta distinción entre
+las pruebas locales completas y la comprobación cloud.
+
+## Instrucciones concretas y criterios de aceptación: T01–T33
 
 ### T01 — Crear repositorio Git y estructura modular del proyecto
 
@@ -689,6 +715,26 @@ comercial y sus valores reales siguen pendientes. T32 no se inicia en este cierr
 
 **Terminado cuando:** se reutiliza el modelo de T30 y la creación guardada, una lectura por pedido, importes/opciones trazables e historial intacto. Configuración/entrada/estado/modelo ausentes o inválidos producen errores documentados, sin defaults o tiempos ficticios; ningún vehículo admisible no se presenta como cobertura validada. Pruebas HTTP/3.9+, integración real ilustrativa, contratos y guía actualizados. Los requisitos comerciales T20/T26/T28 siguen bloqueados sin fuente autoritativa; no hay selección automática, almacenamiento o despliegue anticipados.
 
+### T32 — Configurar MongoDB con CRUD, índices y validaciones
+
+**Responsable:** Ruben Vigil
+
+**Dependencias:** entidades, puertos y garantías T04/T20/T26/T28 y API T30–T31. Atlas Free AWS us-east-1 elegido; desarrollo/pruebas locales autorizados mientras no exista clúster.
+
+**Implementar:** adaptadores MongoDB/PyMongo y composición API con cliente compartido, CRUD operativo, persistencia de historiales/asignaciones/efectivo, validadores, índices, CAS y transacciones sin filtrar BSON al dominio.
+
+**Terminado cuando:** persistencia entre conexiones/reinicio, precisión UTC/Decimal, duplicados, esquema, CRUD HTTP, referencias, conflictos y rollback real comprobados. Configuración privada explícita, esquema preparado/verificado antes de usarlo y fallo 503 sin fallback; compatibilidad 3.9+, contratos/guía/pruebas. Conexión Atlas se verifica cuando haya clúster/URI y se distingue de pruebas locales; sin crear cloud, autorizar cotizaciones o anticipar S3/Docker/Terraform.
+
+### T33 — Integrar almacenamiento de objetos con S3 o MinIO
+
+**Responsable:** Ruben Vigil
+
+**Dependencias:** bucket existente/configuración AWS y artefactos reales con términos revisados. Ruben autorizó AWS CLI y subidas a ml-kodigo-resources; CSV Meituan excluidos de esta publicación.
+
+**Implementar:** puerto/adaptador de objetos, claves versionadas, escritura condicional, checksum y descarga atómica; publicación curada con manifiestos/recibos y modelo opcional desde S3 al iniciar API.
+
+**Terminado cuando:** acceso AWS real/región y objetos privados comprobados, hashes/tamaños preservados, conflictos sin sobrescribir, errores sanitizados y recibos reanudables. Integración real de descarga/inferencia más tests SDK/3.9+, configuración/docs/guía. Sin bucket nuevo, cambios IAM/políticas, secretos versionados, frontend privilegiado, reentrenamiento o registros Meituan distribuidos sin resolver sus términos.
+
 ## Backlog completo y asignaciones
 
 | ID | Área | Tarea | Responsable | Estado de referencia / actualización autorizada |
@@ -724,8 +770,8 @@ comercial y sus valores reales siguen pendientes. T32 no se inicia en este cierr
 | T29 | Lógica del negocio y simulación | Elaborar análisis financiero: márgenes, costos fijos, punto de equilibrio y ROI estimado | Ruben Vigil | Completada |
 | T30 | API, almacenamiento e infraestructura | Implementar API FastAPI con /health, /predict y documentación OpenAPI | Ruben Vigil | Completada |
 | T31 | API, almacenamiento e infraestructura | Integrar el modelo predictivo con el motor de cotizaciones | Ruben Vigil | Completada |
-| T32 | API, almacenamiento e infraestructura | Configurar MongoDB con CRUD, índices y validaciones | Ruben Vigil | Pendiente |
-| T33 | API, almacenamiento e infraestructura | Integrar almacenamiento de objetos con S3 o MinIO | Ruben Vigil | Pendiente |
+| T32 | API, almacenamiento e infraestructura | Configurar MongoDB con CRUD, índices y validaciones | Ruben Vigil | Completada |
+| T33 | API, almacenamiento e infraestructura | Integrar almacenamiento de objetos con S3 o MinIO | Ruben Vigil | Completada |
 | T34 | API, almacenamiento e infraestructura | Contenerizar los servicios mediante Docker y Docker Compose | Ruben Vigil | Pendiente |
 | T35 | Pruebas, documentación y entrega | Implementar al menos 10 pruebas unitarias con pytest | Ruben Vigil | Pendiente |
 | T36 | Pruebas, documentación y entrega | Probar el flujo completo: solicitud → cotización → asignación → entrega → efectivo | Ruben Vigil | Pendiente |

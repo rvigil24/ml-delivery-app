@@ -5,6 +5,7 @@ from datetime import timezone
 import logging
 import os
 from pathlib import Path
+import tempfile
 from typing import Callable, Optional
 
 from fastapi import FastAPI, Request
@@ -13,17 +14,22 @@ from fastapi.responses import JSONResponse
 
 from delivery.adapters.local_model import LocalDurationPredictor
 from delivery.domain.estimation import PredictionUnavailable
-from delivery.domain.order_lifecycle import OrderConflict, OrderNotFound
+from delivery.domain.catalogs import CatalogConflict, CatalogNotFound, StorageUnavailable
+from delivery.domain.order_lifecycle import BusinessNotFound, MissingPrerequisite, OrderConflict, OrderNotFound
 from delivery.domain.pricing import OperatorCosts, PricingPolicy
 from delivery.domain.vehicle_rules import VehiclePolicy
 from delivery.ports.estimation import DurationPredictor
 from delivery.ports.orders import OrderRepository
 from delivery.services.predictions import PredictionService
+from delivery.services.catalogs import CatalogService
+from delivery.services.orders import OrderService
+from delivery.services.assignments import DispatchOrderRequirements
 from delivery.services.quote_previews import QuoteConfigurationMissing, QuotePreviewService
 from .schemas import (
     ErrorResponse, HealthResponse, PredictRequest, PredictResponse, QuoteAmountsResponse,
     QuotePreviewRequest, QuotePreviewResponse, VehicleDecisionResponse,
 )
+from .storage import storage_router
 
 
 logger = logging.getLogger(__name__)
@@ -36,10 +42,49 @@ def error_response(status: int, code: str, message: str) -> JSONResponse:
 def create_app(model_directory: Optional[Path] = None,
                predictor_factory: Callable[[Path], DurationPredictor] = LocalDurationPredictor, *,
                orders: Optional[OrderRepository] = None, pricing_policy: Optional[PricingPolicy] = None,
-               vehicle_policy: Optional[VehiclePolicy] = None) -> FastAPI:
+               vehicle_policy: Optional[VehiclePolicy] = None, mongo_storage=None) -> FastAPI:
     @asynccontextmanager
     async def lifespan(application: FastAPI):
+        model_cache = None
+        storage, owned_storage = mongo_storage, False
+        if storage is None and (os.environ.get("MONGODB_URI") or os.environ.get("MONGODB_DATABASE")):
+            from delivery.adapters.mongo import MongoStorage
+            try:
+                storage = MongoStorage(os.environ.get("MONGODB_URI"), os.environ.get("MONGODB_DATABASE"))
+                storage.verify_schema()
+                owned_storage = True
+            except StorageUnavailable:
+                if storage is not None:
+                    storage.close()
+                    storage = None
+                logger.warning("Persistencia MongoDB no disponible; no se usará un reemplazo en memoria")
+        effective_orders = orders if orders is not None else (storage.orders if storage is not None else None)
+        application.state.business_catalog = CatalogService(storage.businesses) if storage is not None else None
+        application.state.courier_catalog = CatalogService(storage.couriers) if storage is not None else None
+        application.state.order_service = OrderService(effective_orders, storage.businesses,
+            DispatchOrderRequirements(effective_orders)) if storage is not None else None
         configured = model_directory if model_directory is not None else os.environ.get("DELIVERY_MODEL_DIR")
+        if not configured and os.environ.get("DELIVERY_MODEL_MANIFEST_KEY"):
+            try:
+                from delivery.adapters.s3 import create_s3_store
+                from delivery.domain.objects import ObjectReference
+                from delivery.services.model_files import download_model_bundle
+                reference = ObjectReference(os.environ.get("S3_BUCKET", "ml-kodigo-resources"),
+                    os.environ["DELIVERY_MODEL_MANIFEST_KEY"], int(os.environ["DELIVERY_MODEL_MANIFEST_SIZE"]),
+                    os.environ["DELIVERY_MODEL_MANIFEST_SHA256"])
+                store = create_s3_store(profile=os.environ.get("DELIVERY_AWS_PROFILE") or None,
+                    bucket=reference.bucket, region=os.environ.get("AWS_REGION", "us-east-1"),
+                    endpoint=os.environ.get("S3_ENDPOINT_URL") or None)
+                model_cache = tempfile.TemporaryDirectory(prefix="delivery-model-")
+                try:
+                    configured = download_model_bundle(store, reference, Path(model_cache.name))
+                finally:
+                    store.client.close()
+            except Exception:
+                logger.warning("No se pudo recuperar el bundle S3 verificado; inferencia no disponible")
+                if model_cache is not None:
+                    model_cache.cleanup()
+                    model_cache = None
         predictor = None
         if configured:
             try:
@@ -48,10 +93,16 @@ def create_app(model_directory: Optional[Path] = None,
                 # El detalle es diagnóstico local; nunca forma parte de la respuesta HTTP.
                 logger.exception("No se pudo cargar el modelo local; inferencia no disponible")
         application.state.predictions = PredictionService(predictor)
-        application.state.quote_previews = QuotePreviewService(orders, application.state.predictions,
+        application.state.quote_previews = QuotePreviewService(effective_orders, application.state.predictions,
                                                                pricing_policy, vehicle_policy)
         application.state.model_available = predictor is not None
-        yield
+        try:
+            yield
+        finally:
+            if owned_storage:
+                storage.close()
+            if model_cache is not None:
+                model_cache.cleanup()
 
     application = FastAPI(title="Asistente de Delivery Económico", version="0.1.0",
         description="Inferencia académica de duración; sin cotización comercial o validación local.", lifespan=lifespan)
@@ -75,6 +126,20 @@ def create_app(model_directory: Optional[Path] = None,
     @application.exception_handler(OrderConflict)
     async def order_conflict(request: Request, error: OrderConflict):
         return error_response(409, "order_conflict", "El estado del pedido no permite esta operación.")
+
+    @application.exception_handler(StorageUnavailable)
+    async def storage_unavailable(request: Request, error: StorageUnavailable):
+        return error_response(503, "storage_unavailable", "La persistencia no está disponible.")
+
+    @application.exception_handler(CatalogNotFound)
+    @application.exception_handler(BusinessNotFound)
+    async def catalog_not_found(request: Request, error: Exception):
+        return error_response(404, "entity_not_found", "Entidad inexistente.")
+
+    @application.exception_handler(CatalogConflict)
+    @application.exception_handler(MissingPrerequisite)
+    async def operation_conflict(request: Request, error: Exception):
+        return error_response(409, "operation_conflict", "Operación incompatible o sin requisitos validados.")
 
     @application.exception_handler(Exception)
     async def unexpected(request: Request, error: Exception):
@@ -123,6 +188,7 @@ def create_app(model_directory: Optional[Path] = None,
                                    for decision in preview.vehicles.decisions),
             limitations=preview.pricing.estimate.limitations)
 
+    application.include_router(storage_router())
     return application
 
 

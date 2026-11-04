@@ -120,10 +120,10 @@ Cuando una tarea requiera cambiar dependencias, se actualizarán deliberadamente
 `pyproject.toml` y `uv.lock` juntos.
 
 Dependencias directas actuales: **boto3**, **Pandas**, **Matplotlib**, **Dask DataFrame**,
-**PySpark**, **scikit-learn**, **PyTorch**, **FastAPI**, **Pydantic** y **Uvicorn**.
+**PySpark**, **scikit-learn**, **PyTorch**, **FastAPI**, **Pydantic**, **PyMongo** y **Uvicorn**.
 El grupo `dev` incluye pytest y el cliente de pruebas HTTP compatible con Python
 (HTTPX en 3.9/3.10, HTTPX2 desde 3.11). Hatchling construye/instala el paquete.
-El driver MongoDB y las herramientas de frontend se incorporarán en sus tareas.
+Las herramientas de frontend se incorporarán en sus tareas.
 
 Las pruebas de `backend/tests/test_environment.py` comprueban la instalación del
 paquete y la preparación local del cliente S3. La segunda prueba bloquea la
@@ -767,6 +767,111 @@ Verificación T31: **80 pruebas del backend aprobadas en Python 3.12**; las once
 nuevas de T30–T31 también pasan en Python 3.9. Previsualización HTTP con bundle
 real y reglas/coordenadas de fixture verificada, sin mutación: evidencia local
 en `data/reports/presentation/t31_quote_smoke.json`. Sin nuevas dependencias.
+
+## MongoDB y persistencia — T32
+
+Servicio elegido: **MongoDB Atlas Free en AWS us-east-1**. Ruben creó el clúster
+y guardó la URI privada; conexión Atlas, cinco colecciones/validadores/índices,
+transacción de lectura y lecturas API se verificaron el 2026-11-04. La API
+también recuperó el modelo real de S3. Evidencia sin credenciales:
+`data/reports/presentation/t32_atlas_smoke.json`. La aplicación no carga `.env`
+sola; usar su configuración explícitamente:
+
+```bash
+uv sync --locked
+uv run --locked --env-file .env python -m delivery.adapters.mongo
+uv run --locked --env-file .env uvicorn delivery.api.app:app --host 127.0.0.1 --port 8000
+```
+
+El primer comando de módulo crea validadores/índices sin borrar datos; un
+esquema existente incompatible exige migración explícita. La API verifica el
+esquema antes de habilitar almacenamiento y comparte un cliente durante su
+vida. Sin configuración/conexión/esquema preparados, los endpoints operativos
+devuelven 503 `storage_unavailable`; no hay fallback de memoria. `/health`
+sigue comprobando proceso/modelo, no garantiza disponibilidad de la base.
+
+En `/docs`: CRUD de `/businesses` y `/couriers`; crear/listar/consultar pedidos
+en `/orders` y transiciones en `/orders/{order_id}/transitions` con estado
+esperado/destino. Catálogos referenciados no se eliminan y un repartidor con
+asignación activa no se edita. Los pedidos se actualizan por flujo de estados,
+sin borrado genérico de historial. Listas de hasta 100 registros por consulta.
+
+Persisten también asignaciones/efectivo mediante sus servicios actuales.
+Transacciones reservan el grupo y ocupan al repartidor conjuntamente; los
+conflictos revierten todos los cambios. Versiones internas evitan escrituras
+obsoletas; importes Decimal128 y fechas UTC conservan precisión. Ver detalles
+y límites del codec en ARCHITECTURE. Las reglas de cotización autoritativa
+siguen vigentes: persistir un borrador académico no permite cobrar/asignar.
+
+Pruebas reales opt-in, con bases desechables `delivery_test_<uuid>` y limpieza
+al terminar. Nunca usan MONGODB_URI de la aplicación:
+
+```bash
+export MONGODB_TEST_URI='mongodb://127.0.0.1:27018/?replicaSet=delivery-test'
+uv run --locked --extra notebooks pytest backend/tests -q
+```
+
+Se requiere un MongoDB de pruebas accesible con ese replica set. En esta
+iteración se utilizó un contenedor temporal de `mongo:8.0`, sin Dockerfiles o
+Compose del producto (T34). Sin MONGODB_TEST_URI, las siete pruebas de integración
+se omiten explícitamente; no se presentan como verificadas contra Atlas.
+Resultado local: **87 pruebas del backend aprobadas**, las siete nuevas también
+en Python 3.9. Persistencia tras reiniciar el servidor comprobada; evidencia
+agregada en `data/reports/presentation/t32_mongodb.json`. No se crea Atlas ni
+se cambia IAM/AWS; S3 corresponde a T33.
+
+## S3 y publicación de artefactos — T33
+
+Bucket existente `ml-kodigo-resources`, us-east-1. Subida condicional y descarga
+verificada por SHA-256, sin crear bucket, cambiar IAM/políticas o sobrescribir
+otro contenido. Perfil y endpoint explícitos evitan heredar el emulador local:
+
+```bash
+uv run --locked --extra notebooks python ml/data/package_notebook_source.py
+uv run --locked python ml/data/publish_s3.py --profile remote-admin
+uv run --locked python ml/data/publish_s3.py --profile remote-admin --apply
+```
+
+El último comando publica la selección autorizada: bundle académico con
+licencia/atribución, manifiestos del dataset, código/documentación, notebooks
+fuente sin outputs y reportes agregados. **Los CSV Meituan originales, procesados
+y particiones permanecen locales**; datasets declara metadata_only. Se conservan
+restricciones no comerciales. No se suben .env, credenciales, guía personal,
+archivos de agentes o notebooks ejecutados con registros.
+
+Checksum/tamaño y ACL privadas se verifican. El recibo incremental está en
+`data/reports/presentation/t33_s3_publication.json` con claves/hashes/estado;
+se puede reanudar sin sobrescribir. El manifiesto de documentación identifica
+HEAD y cambios sin commit de ese snapshot, sin atribuirle un cierre Git.
+
+Para servir el modelo desde S3, dejar DELIVERY_MODEL_DIR sin configurar y
+exportar DELIVERY_MODEL_MANIFEST_KEY, SHA256 y SIZE según el recibo; usar
+DELIVERY_AWS_PROFILE para el perfil local y S3_ENDPOINT_URL para AWS real.
+La API descarga una vez al arrancar, valida el bundle T19 en su entorno exacto
+y limpia la caché al cerrar; no entrena o descarga por petición.
+
+En este equipo quedó configurado `.env` local, ignorado por Git. Para cargarlo
+explícitamente sin agregar python-dotenv:
+
+```bash
+uv run --locked --env-file .env uvicorn delivery.api.app:app --host 127.0.0.1 --port 8000
+```
+
+Publicación T33 verificada: **47 objetos, 2,183,341 bytes**, privados, bajo
+`models/delivery-duration/meituan-temporal-rf-v1/`,
+`datasets/meituan/1f9b4288cee5a78d1e5da007fc306bbaa662fc6d/` (metadatos) y
+`docs/ml-delivery-app/ed6b32c222a2706df91c/`. Documentación remota es un snapshot
+inmutable previo a registrar este resultado, no un espejo de cambios posteriores.
+
+```bash
+uv run --locked pytest backend/tests/test_s3.py -q
+```
+
+Pruebas de contrato SDK con objetos sintéticos; la publicación/descarga real
+se acredita por su recibo y evidencia local, separadas de esos tests.
+Resultado: 92 pruebas del backend con MongoDB real aprobadas; las cinco nuevas
+también pasan en Python 3.9, con aviso de fin de soporte de Boto3 para esa
+versión. El entorno de ejecución del bundle continúa en Python 3.12.
 
 ## Notebooks para estudiar y exponer
 
