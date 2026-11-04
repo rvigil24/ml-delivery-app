@@ -30,8 +30,6 @@ out/
 *.tsbuildinfo
 
 # Capturas locales de revisión visual (no son archivos del producto)
-/.impeccable/review/
-/.impeccable/config.local.json
 
 # Archivos locales de datos y modelos (no código ETL)
 /data/

@@ -983,8 +983,7 @@ URI o excepciones potencialmente sensibles.
 HEALTHY durante la espera significa vitalidad, no disponibilidad funcional.
 Después se consulta `/health`, que tampoco acredita por sí mismo modelo v2 o
 persistencia. Antes de una exposición deben comprobarse predicción y operación
-Mongo de forma explícita. No se añade endpoint, contrato o dependencia hacia
-archivos de agentes. Imagen ECR, valor del secreto y prueba cloud siguen pendientes
+Mongo de forma explícita. No se añade endpoint o contrato. Imagen ECR, valor del secreto y prueba cloud siguen pendientes
 hasta autorizar creación/despliegue; el código no los publica automáticamente.
 
 ## Pipeline de integración y entrega
@@ -1116,8 +1115,10 @@ y no se deducen de esos fixtures. No hay accesos al backend, Atlas ni S3.
 El cliente de navegador no usa secretos ni calcula tarifas o inferencias.
 No se añaden endpoints, despliegues, puertos AWS o recursos a Terraform. Las
 cuatro vistas son perspectivas de una demo, no un sistema de autenticación.
-PRODUCT.md, DESIGN.md y el contexto de Impeccable documentan el diseño; no son
-dependencias de ejecución. Reproducción y comprobaciones en README.
+Los estilos se definen en frontend/src/app/globals.css. La interfaz usa fondo
+#f3f6f4, superficies blancas, texto #172f28 y color principal #17694b. La tipografía
+es Segoe UI con alternativas Helvetica Neue y Arial; la navegación lateral pasa
+a horizontal en móvil. Reproducción y comprobaciones en README.
 
 
 ## T48 — dirección, cercanía y menú de comida
