@@ -1,5 +1,6 @@
 """Carga de modelos, conexión de base de datos y cierre de recursos."""
 
+import asyncio
 import logging
 import os
 import tempfile
@@ -87,16 +88,23 @@ def application_lifespan(
         ):
             from delivery.database.connection import MongoStorage
 
-            try:
-                storage = MongoStorage(
-                    os.environ.get("MONGODB_URI"), os.environ.get("MONGODB_DATABASE")
-                )
-                storage.verify_schema()
-                owned_storage = True
-            except StorageUnavailable:
-                if storage is not None:
-                    storage.close()
-                    storage = None
+            # Atlas puede necesitar otro intento al abrir conexiones TLS nuevas.
+            for attempt in range(3):
+                try:
+                    storage = MongoStorage(
+                        os.environ.get("MONGODB_URI"),
+                        os.environ.get("MONGODB_DATABASE"),
+                    )
+                    storage.verify_schema()
+                    owned_storage = True
+                    break
+                except StorageUnavailable:
+                    if storage is not None:
+                        storage.close()
+                        storage = None
+                    if attempt < 2:
+                        await asyncio.sleep(1)
+            if storage is None:
                 logger.warning(
                     "Persistencia MongoDB no disponible; no se usará un reemplazo en memoria"
                 )

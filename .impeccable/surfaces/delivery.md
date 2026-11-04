@@ -80,3 +80,9 @@ Sin nuevo mundo visual. Revisión ship: seis capturas válidas escritorio/móvil
 T53: seguimiento del pedido del cliente y estados de paneles por polling visible
 cada5s. Sin reiniciar formularios ni inferencia ML. Revisión final ship, seis
 capturas escritorio/móvil de estados sincronizados y error con datos retenidos.
+
+T54: control desplegable de escenarios completos en Operaciones. Botones
+explícitos, resultados reales y recibos; estado de error sin falso éxito.
+Se compactan referencias de pedidos, con ID íntegro accesible/en detalle.
+Revisión inicial pidió esa corrección móvil; verdict final ship para el fix.
+Identidad visual y tokens conservados.

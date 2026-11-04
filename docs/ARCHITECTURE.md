@@ -1324,3 +1324,29 @@ alias compatible para procesos en ejecución. Docker y documentación usan la
 entrada principal. Esquema Mongo e interfaces HTTP conservados. Diez pruebas
 unitarias, sin nuevas pruebas. El contrato se vuelve a comparar con el OpenAPI
 previo al refactor (normal y demo).
+
+
+### T54 — demostración individual y agrupada
+
+POST /demo/deliveries conserva el escenario individual. POST /demo/group-deliveries
+requiere simulated=true, negocio/repartidor nuevos, pedidos solicitados del mismo
+negocio, políticas/costos/cargas/plazo explícitos. Se valida antes de escribir:
+modelo, precios, zona, distancia/carga acumulada y comparación T25. Los servicios
+existentes registran solicitud→cotizado→confirmado→asignado→recogido→entregado,
+recorren las paradas en orden, registran cobro/remisión por pedido y liberan la
+asignación sólo al entregar todo. No registra un validador de cotizaciones en
+los endpoints generales. Ambos endpoints sólo existen con DELIVERY_DEMO_ENABLED=1.
+
+Next /api/demo acepta exclusivamente escenario individual/grouped, usa los JSON
+versionados de examples/ y crea IDs nuevos. Operaciones ofrece ejecución explícita,
+resultados y descarga del recibo. No reintenta POST ni afirma éxito sin comprobar
+pedidos, efectivo y liberación. Una falla puede dejar pasos persistidos: no hay
+transacción global ni reanudación automática. La comparación usa un pago base
+por recorrido; no suma pagos individuales como costo del grupo. ETA individual
+no incorpora la secuencia agrupada. Referencias compactas en la tabla conservan
+ID completo en detalle, title y nombre accesible.
+
+El arranque intenta MongoDB hasta tres veces, cerrando clientes fallidos, para
+no dejar la demo sin persistencia ante el fallo inicial observado de conexión.
+Sin configuración/acceso sigue sin fallback en memoria. Modelos/Atlas y las dos
+demos se verificaron localmente; la imagen AWS no se modificó en este cierre.

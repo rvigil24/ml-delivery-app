@@ -8,6 +8,13 @@ type Row = { record: OrderRecord; cash: null | { currency: string; expected_amou
 type Preview = { amounts: { currency: string; delivery_fee: string; courier_payment: string; variable_cost: string; attributable_cost: string; margin: string }; distance_km: string };
 const cashLabels: Record<string, string> = { pendiente: "Pendiente de cobro", cobrado: "Cobrado por el repartidor", entregado_al_operador: "Entregado al operador" };
 
+function orderReference(id: string) {
+  if (id.length <= 36) return id;
+  const token = id.match(/[0-9a-f]{8}-[0-9a-f-]{27}/i)?.[0].slice(0, 8);
+  const item = id.match(/-order-(\d+)$/)?.[1];
+  return token ? `Pedido ${token}${item ? ` · ${item}` : ""}` : `${id.slice(0, 12)}…${id.slice(-8)}`;
+}
+
 export function OperationsPanel() {
   const [rows, setRows] = useState<Row[]>([]);
   const [selectedId, setSelectedId] = useState("");
@@ -59,7 +66,7 @@ export function OperationsPanel() {
     <div className="business-toolbar"><p>Hasta 100 pedidos guardados. Los cobros son registros simulados.</p><button className="button button-secondary" disabled={loading || calculating} onClick={() => setRevision((value) => value + 1)}>Actualizar</button></div>
     {loading ? <p role="status">Consultando pedidos y efectivo…</p> : error ? <p className="form-error" role="alert">{error}</p> : !rows.length ? <section className="panel empty-state"><h2>Todavía no hay pedidos</h2><p>Los pedidos registrados en la API aparecerán aquí.</p></section> : <div className="work-grid">
       <section className="panel"><div className="section-heading"><h2>Pedidos y efectivo</h2><span className="count-label">{rows.length} pedidos</span></div>
-        <div className="table-scroll"><table className="operations-table"><caption className="sr-only">Seleccioná un pedido para consultar su desglose.</caption><thead><tr><th>Pedido</th><th>Estado</th><th>Efectivo</th></tr></thead><tbody>{rows.map(({ record, cash }) => <tr key={record.order.id} aria-selected={selected?.record.order.id === record.order.id}><td><button className="text-button" disabled={calculating} onClick={() => { setSelectedId(record.order.id); setPreview(null); setCalculationError(""); }}>{record.order.id}</button></td><td>{statusLabels[record.order.status]}</td><td>{cash ? <>{cashLabels[cash.events.at(-1)?.status || ""] || "Estado no reconocido"}<small className="record-id">{cash.currency} {cash.expected_amount}</small></> : "Sin registro"}</td></tr>)}</tbody></table></div>
+        <div className="table-scroll"><table className="operations-table"><caption className="sr-only">Seleccioná un pedido para consultar su desglose.</caption><thead><tr><th>Pedido</th><th>Estado</th><th>Efectivo</th></tr></thead><tbody>{rows.map(({ record, cash }) => <tr key={record.order.id} aria-selected={selected?.record.order.id === record.order.id}><td><button className="text-button" title={record.order.id} aria-label={`Ver pedido ${record.order.id}`} disabled={calculating} onClick={() => { setSelectedId(record.order.id); setPreview(null); setCalculationError(""); }}>{orderReference(record.order.id)}</button></td><td>{statusLabels[record.order.status]}</td><td>{cash ? <>{cashLabels[cash.events.at(-1)?.status || ""] || "Estado no reconocido"}<small className="record-id">{cash.currency} {cash.expected_amount}</small></> : "Sin registro"}</td></tr>)}</tbody></table></div>
         <p className="panel-footnote">Sin registro no significa cero. El efectivo no se suma de nuevo como ingreso.</p>
       </section>
       {selected && <section className="panel"><div className="section-heading"><h2>Tarifa, costos y margen</h2></div><div className="order-detail-body">

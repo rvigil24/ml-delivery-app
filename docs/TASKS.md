@@ -1054,7 +1054,7 @@ fuentes actualizados. Sin modificar Excel, borrar ramas o iniciar despliegue.
 | T51 | Frontend y simulación visual | Implementar panel de operaciones con tarifas, costos, efectivo y márgenes | Ruben Vigil | Completada |
 | T52 | Frontend y simulación visual | Conectar las vistas de Next.js con los endpoints reales de FastAPI | Ruben Vigil | Completada |
 | T53 | Frontend y simulación visual | Sincronizar actualizaciones de estados entre las vistas sin WhatsApp real | Ruben Vigil | Completada |
-| T54 | Frontend y simulación visual | Preparar demo end-to-end de entrega individual, agrupada y pago en efectivo | Ruben Vigil | Pendiente |
+| T54 | Frontend y simulación visual | Preparar demo end-to-end de entrega individual, agrupada y pago en efectivo | Ruben Vigil | Completada |
 
 ## Orden sugerido para integración
 
@@ -1490,7 +1490,7 @@ en confirmación verificada en código. Cierre condicionado a CI e integración
 normal. Sin despliegue AWS.
 
 
-## Bloque activo — T53: sincronización de estados
+## Bloque cerrado — T53: sincronización de estados
 
 Responsable: Ruben Vigil. Rama feat/T53-sincronizacion desde origin/main.
 Dependencias:T48–T52 integradas, contratos de consulta y actualización condicional.
@@ -1527,3 +1527,25 @@ ports o adapters. Se conserva la misma suite de diez pruebas y T54 pendiente.
 OpenAPI normal/demo vuelve a coincidir exactamente con el original; diez pruebas
 aprobadas y arranque local con MongoDB/modelos disponibles. Integración pendiente
 de CI. T54 se mantiene pendiente.
+
+
+## Bloque activo — T54: demo completa
+
+Responsable:Ruben Vigil. Rama feat/T54-demo-final desde origin/main actualizado.
+Dependencias:T47–T53 integradas y servicios de pedidos/rutas/efectivo/modelos listos.
+Criterio: escenarios individual y agrupado hasta entrega/efectivo, predicciones
+reales, comparación explícita y recorrido reproducible para la exposición.
+Se reutilizan servicios y demo individual; se añade demo agrupada, control Next,
+recibo descargable y CLI --grouped. Configuración de ejemplo identificada; no se
+sustituye la aceptación de cotizaciones de pedidos generales ni se inventan datosML.
+
+Ejecución real: tres pedidos entregados en Atlas, dos asignaciones cerradas,
+efectivo remitido por pedido y repartidores disponibles, comprobados por consultas
+independientes. Inferencia con bundle S3. Navegador1440/390, bloqueo de doble clic
+y error sin falso éxito; corrección de IDs largos en tabla móvil. La recaptura
+reutiliza recibos reales y consulta registros persistidos, sin nuevas escrituras.
+Suite mantiene exactamente10 pruebas; tipos/build inicial aprobados. Guía Word/PDF
+actualizada, reporte técnico/AWS corregidos y paquete con recibos reales preparado.
+Revisión visual: se corrigieron referencias largas en móvil; verdict final ship
+para esa corrección, sin pendientes. Guía4p, reporte8p, AWS2p y ZIP36 archivos
+verificados. Cierre autorizado condicionado a CI/integración. Sin despliegue AWS.
