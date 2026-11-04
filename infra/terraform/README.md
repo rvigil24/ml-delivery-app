@@ -101,7 +101,7 @@ texto DESPLEGAR. Exige CI aprobada para ese commit, variables de entorno GitHub
 `AWS_DEPLOY_ROLE_ARN` y `AWS_ACCOUNT_ID`, y el entorno `aws-demo`. Antes de usarlo
 hay que autorizar/aprovisionar infraestructura, configurar OIDC y restricciones
 del entorno (main y aprobación), publicar el valor del secreto y preparar Atlas.
-No contiene claves AWS permanentes. El rol/entorno todavía no se han configurado;
+No contiene claves AWS permanentes. El rol AWS todavía no se ha creado; el entorno GitHub ya limita a main y exige aprobación de rvigil24;
 no ejecutar el workflow como prueba mientras esos requisitos estén pendientes.
 
 El job obtiene credenciales temporales, publica una imagen etiquetada con el
@@ -123,3 +123,46 @@ sus redes y PassRole de los dos roles de tarea. No necesita leer la URI Atlas,
 modificar IAM, escribir S3 ni crear recursos. `ecr:GetAuthorizationToken` y las
 operaciones Describe/List que AWS no permite limitar por recurso necesitan
 Resource '*'; la confianza OIDC y el resto de recursos deben estar acotados.
+
+## Seguridad preparada y activación pendiente
+
+El proveedor OIDC y el rol de entrega se declaran en `github_oidc.tf`. Antes de
+aplicarlo se comprobó que la cuenta no tenía proveedores OIDC. Si esto cambia,
+revisar el plan: no crear duplicados ni importar identidades ajenas automáticamente.
+La confianza usa aud `sts.amazonaws.com` y este sub exacto, obtenido de GitHub:
+
+`repo:rvigil24@23065092/ml-delivery-app@1443588308:environment:aws-demo`
+
+El formato inmutable fue confirmado por la API OIDC del repositorio. El entorno
+GitHub `aws-demo` ya permite únicamente la rama main y exige aprobación de Ruben.
+La aprobación propia se permite porque el proyecto tiene un único desarrollador
+activo. El workflow también comprueba main, DESPLEGAR y CI aprobada. No hay
+variables AWS configuradas todavía; se cargarán después de autorizar el apply.
+
+El rol GitHub solo publica imágenes en el ECR de demo, registra revisiones de
+su familia, actualiza su servicio y consulta tareas/IP. PassRole se limita a los
+dos roles ECS y al servicio ecs-tasks.amazonaws.com. No lee o escribe el secreto
+Atlas, no administra IAM ni escribe S3. Las confianzas ECS incluyen SourceAccount
+y SourceArn de la cuenta/región para reducir usos desde otros contextos.
+
+Plan revisado: 19 altas, cero cambios/bajas, servicio con cero tareas. Incluye los
+16 recursos de infraestructura ya propuestos y tres de seguridad (proveedor,
+rol GitHub y política). `deployment.tfvars` privado tiene la IPv4 pública /32
+observada y el SHA base de imagen; se excluye de Git. La IP puede cambiar: confirmar
+que sigue siendo la del equipo de exposición antes de aplicar. Crear la base con
+cero tareas todavía crea IAM, ECR, logs y el contenedor de secreto con posible
+costo de almacenamiento: necesita autorización explícita. No se ha aplicado.
+
+Después de esa autorización: aplicar el plan revisado, configurar
+`AWS_DEPLOY_ROLE_ARN` y `AWS_ACCOUNT_ID` en el entorno GitHub usando las salidas,
+y cargar la URI completa en Secrets Manager desde `.env` mediante el operador
+local. El valor no se añade a GitHub, Terraform o imagen, ni se imprime. Usar
+perfil local y endpoint real de Secrets Manager; no un perfil de emulador.
+No registrar `secret_version` en Terraform. La aplicación solo recibe ese valor
+en runtime, a través de su rol de ejecución. Inicializar/migrar Atlas no forma
+parte de este paso: el esquema existente se comprueba, sin recrearlo.
+
+La validación funcional del rol OIDC, la inyección del secreto y el acceso Atlas
+siguen pendientes hasta autorizar recursos y arrancar la demo. No sustituirlas
+por fmt/validate o una CI verde. La activación de Fargate a una tarea mediante
+el workflow manual constituye un despliegue adicional y debe estar autorizado.

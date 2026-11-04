@@ -981,11 +981,28 @@ artefactos locales, .env, Mongo cloud o cuentas AWS. Acciones fijadas por SHA,
 contents:read y credenciales checkout no persistidas.
 
 `deploy.yml` es workflow_dispatch manual, main + confirmación DESPLEGAR + CI
-aprobada para el mismo SHA. Entorno GitHub aws-demo y rol OIDC pendiente de
-configurar en la etapa de seguridad; id-token:write solo en ese job. No crea
+aprobada para el mismo SHA. Entorno GitHub aws-demo protegido para main/aprobación y rol OIDC declarado,
+pendiente de crear en AWS; id-token:write solo en ese job. No crea
 infraestructura o secretos ni ejecuta apply. Publica imagen con tag SHA,
 registra revisión conservando la configuración actual y actualiza ECS. Muestra
 IP de tarea para Atlas; espera estabilidad ECS sin afirmar readiness funcional.
 La imagen/desired_count de variables Terraform deben sincronizarse antes de un
 plan futuro para evitar retrocesos por drift. CD no ejecutado, infraestructura
-aún no desplegada y reglas/protecciones de entorno no configuradas todavía.
+aún no desplegada y entorno GitHub protegido; permisos AWS y secreto todavía no activados.
+
+## Seguridad cloud — configuración preparada
+
+Terraform añade proveedor OIDC GitHub, rol de despliegue y política acotada al
+ECR/servicio/familia de tareas de demo. Confianza exacta aud/sub con identificadores
+inmutables confirmados por la API de GitHub; el entorno aws-demo ya requiere main
+y aprobación de rvigil24. No se usan claves permanentes en Actions. Los roles ECS
+incluyen restricciones SourceAccount/SourceArn. Rol GitHub sin acceso a la URI
+Atlas o escritura S3; rol de ejecución solo lee el ARN del secreto asignado;
+rol de aplicación solo descarga el prefijo v2. No se carga el valor del secreto
+desde Terraform. Documento operativo: infra/terraform/README.md.
+
+Plan real revisado con variables privadas: 19 creaciones, cero cambios/bajas,
+servicio con cero tareas. No aplicado; no proveedor, roles o secreto creados en
+AWS. No se ha probado asumir el rol, inyectar el secreto o desplegar en cloud.
+La preparación de código no equivale a habilitar acceso AWS; la tarea de seguridad
+permanece abierta hasta activación autorizada y comprobación real.
