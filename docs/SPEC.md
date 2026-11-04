@@ -223,6 +223,41 @@ es académico, sin demanda/capacidad validadas, datos comerciales observados o
 rentabilidad garantizada. No deriva volumen del dataset ML, mezcla costos de
 otros escenarios ni cuenta efectivo T28 como ingreso adicional; no modifica estados.
 
+## API de inferencia — T30
+
+API FastAPI local con health, predict y documentación OpenAPI. La solicitud
+contiene únicamente la creación del pedido con zona horaria (`requested_at`),
+normalizada a UTC; el predictor T19/T21 usa hora/día UTC. La respuesta informa
+minutos, versión/procedencia, definición creación–entrega y límites académicos,
+sin tarifa, diferencias entre vehículos o validación local acreditadas.
+
+El modelo se carga una vez al arrancar desde un directorio configurado de un
+bundle propio, sin entrenamiento o descarga. Health informa proceso y carga
+inicial; no representa estado de MongoDB/S3. Entradas inválidas devuelven 422,
+ausencia/incompatibilidad o fallo conocido de predicción 503, y errores
+inesperados 500 sin detalles internos. Esquemas/códigos en ARCHITECTURE y OpenAPI.
+T30 no conecta cotización comercial, almacenamiento, canales o despliegues.
+
+## Integración del motor de cotizaciones — T31
+
+La previsualización académica combina duración T19/T21, importes T22 y reglas
+de vehículos T23 sobre un snapshot de pedido solicitado. Requiere políticas y
+costos explícitos, conserva versiones/contexto y usa la fecha de creación
+guardada. Se reutiliza el modelo de la API, sin recargar, entrenar o convertir
+distancia en duración. No predice diferencias entre vehículos.
+
+Se expone mediante POST /orders/{order_id}/quotes con quote_id, carga y costos;
+el cliente no provee fecha o tarifas para sustituir las configuradas. Sin
+repositorio/políticas se bloquea con 503; un pedido ausente produce 404 y un
+estado incompatible 409. MongoDB/CRUD permanecen en T32; no se cargan pedidos
+o reglas ilustrativas automáticamente en la aplicación.
+
+El resultado siempre es académico, con cobertura y cotización comercial sin
+validar. Incluye decisiones para ambos vehículos, incluso ninguno admisible;
+no elige, asigna, reserva, persiste cotizaciones o cambia el pedido/historial.
+Los valores de demostración se identifican como fixtures. Una previsualización
+con importes no sustituye la fuente autoritativa requerida por T20/T26/T28.
+
 ## Prioridad de producto
 
 1. Evidencia académica: datos reales, ETL, tres ML + MLP, evaluación reproducible, FastAPI, MongoDB, S3, Docker, pruebas.

@@ -116,7 +116,7 @@ se verificarán en los servicios/repositorios. Cada valor monetario se suministr
 explícitamente, sin tarifa, redondeo, comisión ni fórmula de margen predefinidos.
 Una versión declarada en `DeliveryDuration` registra procedencia; no certifica
 por sí sola que exista un artefacto evaluado. Esa verificación sigue en
-T19/T30/T31. No se fija el esquema de features de `/predict`.
+T19/T30/T31. T30 concreta la entrada temporal HTTP de `/predict` descrita abajo.
 
 Los datos en `backend/tests/test_domain.py` son fixtures sintéticas para probar
 validaciones: no representan tarifas acordadas, observaciones ni resultados ML.
@@ -184,6 +184,37 @@ Los eventos y mensajes del simulador no son observaciones reales de entregas.
 
 ### Borrador HTTP para coordinación
 
+**Contrato implementado T30:** `GET /health` devuelve 200 con
+`{"status":"ok","model_available":true|false}` como comprobación de proceso,
+sin certificar MongoDB/S3 o validez geográfica. `POST /predict` acepta únicamente
+`{"requested_at":"2022-10-22T12:00:00-06:00"}`: fecha de creación ISO 8601 con
+zona horaria, normalizada a UTC. No acepta campos adicionales, números Unix,
+coordenadas o vehículos como features. Se usa el puerto T21 y el bundle T19,
+con hora/día UTC; nunca se usa la hora de consulta como sustituto.
+
+La respuesta 200 contiene `requested_at_utc`, `duration_minutes`,
+`duration_source="prediccion"`, `interval_definition`, `model_version`,
+`academic_only=true`, `coverage_validated=false` y limitaciones explícitas.
+Es duración creación–entrega, sin tarifa, intervalo predictivo o validación para
+El Salvador/vehículos. `PredictionService` exige una predicción de dominio
+válida; una duración ilustrativa no puede publicarse como inferencia.
+
+Errores JSON `{"detail":{"code":"...","message":"..."}}`: 422
+`invalid_request`, 503 `prediction_unavailable`, 500 `internal_error`, sin
+reflejar entradas, rutas locales o excepciones internas. Los esquemas y códigos
+se publican en `/openapi.json` y `/docs`. T30 implementa health/predict/OpenAPI;
+T31 añade la previsualización de cotizaciones descrita abajo. Los demás
+endpoints de negocio siguientes siguen siendo propuestas.
+
+`create_app(model_directory=None, predictor_factory=...)` compone dependencias;
+en producción usa `LocalDurationPredictor` y `DELIVERY_MODEL_DIR` exportado.
+Sin configuración o si la carga falla, el proceso queda disponible con
+`model_available=false` e inferencia 503. La carga se intenta una sola vez por
+inicio de aplicación mediante lifespan; no hay reentrenamiento, descarga o
+reintentos por request. Tras corregir el artefacto/configuración se reinicia.
+La disponibilidad indica carga inicial, no garantiza el éxito de cada petición.
+El bundle exige su entorno versionado; no se relaja su validación para Python 3.9.
+
 Solo `/health`, `/predict` y OpenAPI son requisitos ya documentados. Las demás
 rutas, nombres de campos y respuestas siguientes son propuestas de T03, no
 endpoints implementados. T04 acuerda los tipos y T30 documenta los esquemas en
@@ -192,9 +223,9 @@ OpenAPI antes de conectar el frontend.
 | Operación | Ruta propuesta o requerida | Entrada/salida conceptual |
 |---|---|---|
 | Salud del proceso | `GET /health` (requerida) | Estado del proceso. No equivale a certificar disponibilidad del modelo, MongoDB o S3; los chequeos de dependencias se acordarán en T30. |
-| Inferencia | `POST /predict` (requerida) | Entrada pendiente de T07/T13. Si el target candidato se valida, duración en minutos, versión del modelo y definición del intervalo; sin tarifa. |
+| Inferencia | `POST /predict` (implementada T30) | Creación `requested_at` con zona horaria; duración en minutos, versión del modelo y definición creación–entrega, sin tarifa. Contrato T30 arriba. |
 | Crear y consultar pedido | `POST /orders`, `GET /orders/{order_id}` | Datos de negocio/origen/destino/detalles; identificador y estado del pedido. Campos finales en T04. |
-| Solicitar cotización | `POST /orders/{order_id}/quotes` | Referencia al pedido; cotización identificada con distancia/unidad, duración/procedencia y desglose monetario con moneda explícita. Parámetros en T21–T23. |
+| Previsualizar cotización | `POST /orders/{order_id}/quotes` (T31) | Referencia a pedido solicitado, quote_id, carga y costos explícitos; respuesta académica con distancia/duración/importes/opciones de vehículo, sin emisión comercial ni mutación. |
 | Solicitar transición | `POST /orders/{order_id}/transitions` | Estado solicitado y contexto necesario; pedido actualizado o rechazo. Matriz interna T20 aprobada; DTOs y conexión HTTP siguen en T30. |
 | Crear asignación | `POST /assignments` | Referencias a pedidos y contexto de selección; asignación a repartidor aprobado y paradas, según T24/T26. |
 | Registrar efectivo ficticio | `POST /orders/{order_id}/cash-events` | Registro/evento contable simulado, importe y moneda explícitos. Contrato interno T28 abajo; DTOs y HTTP siguen en T30. |
@@ -215,13 +246,44 @@ No devolver `200` con una estimación ficticia para ocultar un fallo.
 | Almacenamiento de archivos | Leer un objeto identificado por clave y versión; publicar solo desde procesos autorizados | Contenido y manifiesto con hash; bucket/región desde configuración. T33 concreta operaciones y permisos, sin crear buckets. |
 | Predictor de duración | Cargar pipeline validado y predecir con entradas compatibles | Esquema de features de T07/T13, resultado/unidad/intervalo y versión de T19. Ausencia/incompatibilidad del modelo es un error explícito. |
 
-No se fijan todavía DTOs HTTP ni features desconocidas. El adapter
+Los DTOs de inferencia T30 se describen arriba; no se fijan DTOs de negocio
+futuros ni features desconocidas. El adapter
 de inferencia valida la compatibilidad entre esquema y artefacto; el cálculo
 de tarifas usa sus propias reglas y no extrae conclusiones comerciales de las
 métricas del modelo. Las rutas de archivos y el driver de MongoDB quedan fuera
 de las entidades de dominio.
 
 ### Organización prevista del código
+
+**Contrato T31 — integración académica de cotizaciones:**
+`QuotePreviewService.preview(order_id, quote_id, load_kg, costs)` lee un único
+OrderRecord solicitado y combina estimación T21, PricingService T22 y reglas
+T23 sobre ese mismo snapshot. Exige repositorio, políticas completas de precios/
+vehículos y costos explícitos; usa la creación guardada para el predictor T19.
+Reutiliza el mismo PredictionService inicializado en T30, sin llamada HTTP
+interna, recarga o entrenamiento. El resultado inmutable conserva pedido/historial,
+desglose/política, evaluación/política de vehículos y Quote con duración/importes.
+
+`POST /orders/{order_id}/quotes` materializa la propuesta HTTP como
+**previsualización académica**, no emisión comercial. Entrada: quote_id,
+load_kg y costs {currency, variable_cost, attributable_cost}; sin fecha, tarifas
+o políticas suministradas por el cliente. La composición `create_app(...,
+orders=..., pricing_policy=..., vehicle_policy=...)` debe proporcionar esas
+dependencias; no hay datos prefijados o CRUD anticipado. Sin configuración,
+devuelve 503 quote_configuration_missing; sin modelo, 503 prediction_unavailable;
+pedido inexistente 404 order_not_found; estado no solicitado 409 order_conflict;
+entrada incompatible con unidades/moneda 422 invalid_request. Errores sin
+detalles privados, con el mismo formato T30.
+
+La respuesta incluye IDs, creación UTC, distancia/método, duración y procedencia,
+desglose Decimal, versiones de políticas/zona, carga, decisiones de ambos
+vehículos y limitaciones. Se conservan todos/uno/ninguno como opciones, sin
+selección automática. Cumplir la zona configurada no equivale a cobertura real:
+academic_only=true, coverage_validated=false, commercial_quote_validated=false.
+Aunque se calculen importes cuando ningún vehículo cumple, no se ofrece una
+asignación o cotización validada. No persiste ni reserva IDs; consultar/generar
+otro borrador no modifica el historial. Los puertos T20/T26/T28 siguen bloqueados
+sin una fuente autoritativa explícita; esta vista no implementa esa autorización.
 
 **Contrato T29 — escenario financiero aprobado:** función pura
 `analyze_finances(FinancialScenario(...))`, sin repositorios o efectos laterales.
@@ -480,8 +542,9 @@ Random Forest, metadatos, evidencia y ficha. Su entrada interna es hora UTC
 su salida es una duración en minutos, sin intervalo predictivo. El cargador
 `delivery_ml.artifact.load_pipeline` verifica esquema, hashes y entorno antes de
 deserializar un bundle propio de confianza. Incompatibilidad/ausencia falla
-explícitamente. No es un DTO HTTP ni cambia los puertos propuestos: T30/T31
-concretarán el adapter/API. No se publica en S3 ni se acredita uso operativo;
+explícitamente. El bundle no es un DTO HTTP: T30 adapta la fecha y la salida,
+y T31 combina duración/precios/reglas en previsualizaciones académicas. No se
+publica en S3 ni se acredita uso operativo;
 ver selección y límites en DATA_ML.
 
 **Estimación académica T21 aprobada:** `AcademicQuoteService.estimate(order_id,
@@ -509,7 +572,8 @@ no usa la hora de una consulta posterior y no entrena durante inferencia.
 Modelo ausente/incompatible o salida inválida produce `PredictionUnavailable`;
 una fecha sin zona se rechaza. No hay fallback de tiempo ficticio. El resultado
 continúa siendo experimental/externo al dominio local, con las limitaciones de
-T19. No se conectan HTTP, S3, proveedor de mapas ni un validador comercial de T20.
+T19. T30 expone inferencia por HTTP; T21 no conecta S3, proveedor de mapas
+o un validador comercial de T20.
 
 ```text
 backend/
