@@ -182,6 +182,47 @@ duración, asignación o cobro. Se conservan los requisitos T20/T26; el chat no 
 autoriza ni los omite. No hay WhatsApp Business, teléfonos, tokens o mensajes
 externos. La interfaz visual, HTTP y sincronización siguen en T48/T30/T53.
 
+## Efectivo — base simulada aprobada T28
+
+Ruben aprobó registrar únicamente el importe del envío de una cotización
+validada, con moneda explícita: `pendiente → cobrado → entregado_al_operador`.
+El registro de cobro se permite después de entregar el pedido y por el importe
+completo, igual que la entrega al operador. Se excluyen comida, pagos parciales,
+devoluciones, cambio y deducciones automáticas de remuneración del repartidor.
+No se vuelve a calcular ni redondear la tarifa; se preservan sus términos.
+
+Una expectativa por pedido e historial UTC inmutable, con actualizaciones
+condicionales atómicas en memoria. Duplicados, saltos, retrocesos, moneda/monto
+incorrectos o fechas anteriores al historial no escriben. Se conserva separado
+del estado logístico: entregar no implica cobrar, y cobrar/remitir no cambia
+pedidos ni libera repartidores. Un pedido cancelado no puede abrir efectivo;
+si se cancela con una expectativa pendiente, no se puede cobrar ni se fabrica
+un reembolso. Sin fuente de cotización validada se bloquea la apertura.
+Son registros ficticios para la demo; persistencia y análisis financiero
+conservan sus alcances posteriores T32/T29.
+
+## Análisis financiero — escenario académico aprobado T29
+
+Ruben aprobó una proyección homogénea por período con volumen, moneda,
+desglose unitario T22, costos fijos adicionales e inversión explícitos.
+Resultado = volumen × margen unitario − costos fijos; estos excluyen costos
+ya incluidos por envío. Se preservan importes unitarios conciliados, con una
+unidad monetaria explícita, sin asignar valores comerciales predeterminados.
+
+El punto de equilibrio es el menor volumen entero no negativo con resultado
+≥ 0: techo de costos fijos/margen positivo; no existe con costos fijos positivos
+y margen ≤ 0. Si no hay costos fijos, el mínimo es cero, incluso si un margen
+negativo hace perder dinero al aumentar volumen. ROI simple del período (%) =
+resultado/inversión × 100; inversión cero produce resultado no calculable.
+No anualizar ni restar la inversión nuevamente como gasto operativo.
+
+Se muestran ingresos/costos agregados, contribución y resultado, también si son
+negativos. Los agregados monetarios no admiten pérdida de precisión; ROI usa
+aproximación Decimal de 28 dígitos ROUND_HALF_UP cuando sea necesaria. El escenario
+es académico, sin demanda/capacidad validadas, datos comerciales observados o
+rentabilidad garantizada. No deriva volumen del dataset ML, mezcla costos de
+otros escenarios ni cuenta efectivo T28 como ingreso adicional; no modifica estados.
+
 ## Prioridad de producto
 
 1. Evidencia académica: datos reales, ETL, tres ML + MLP, evaluación reproducible, FastAPI, MongoDB, S3, Docker, pruebas.
@@ -199,7 +240,7 @@ Marketplace de repartidores, validación automática de identidad, GPS continuo,
 - Región/zona de demostración y método vial/comercial; Haversine de referencia académica ya fue aprobado en T21.
 - Valores reales de límites/capacidades y seguridad; los criterios configurables T23 ya fueron aprobados.
 - Viabilidad operativa y persistencia de agrupaciones; T24 y la reserva/carga simuladas T26 ya fueron aprobadas.
-- Valores de tarifas/costos y reglas adicionales de combustible/comisiones/ROI; las fórmulas básicas configurables T22 ya fueron aprobadas.
+- Valores reales de tarifas, costos, demanda e inversión y reglas adicionales de combustible/comisiones; las fórmulas configurables T22 y el escenario financiero T29 ya fueron aprobados.
 - Integración de requisitos, recotización, errores y contratos REST adicionales; la matriz básica T20 ya fue aprobada.
 
 No codificar constantes arbitrarias como decisiones comerciales aprobadas.

@@ -197,7 +197,7 @@ OpenAPI antes de conectar el frontend.
 | Solicitar cotización | `POST /orders/{order_id}/quotes` | Referencia al pedido; cotización identificada con distancia/unidad, duración/procedencia y desglose monetario con moneda explícita. Parámetros en T21–T23. |
 | Solicitar transición | `POST /orders/{order_id}/transitions` | Estado solicitado y contexto necesario; pedido actualizado o rechazo. Matriz interna T20 aprobada; DTOs y conexión HTTP siguen en T30. |
 | Crear asignación | `POST /assignments` | Referencias a pedidos y contexto de selección; asignación a repartidor aprobado y paradas, según T24/T26. |
-| Registrar efectivo ficticio | `POST /orders/{order_id}/cash-events` | Evento contable simulado; registro identificado. Campos y validaciones pendientes de T28. |
+| Registrar efectivo ficticio | `POST /orders/{order_id}/cash-events` | Registro/evento contable simulado, importe y moneda explícitos. Contrato interno T28 abajo; DTOs y HTTP siguen en T30. |
 
 Para `/predict` se propone distinguir entrada inválida, ausencia de modelo y
 fallo de inferencia. Como borrador de traducción HTTP: `422` para validación,
@@ -222,6 +222,66 @@ métricas del modelo. Las rutas de archivos y el driver de MongoDB quedan fuera
 de las entidades de dominio.
 
 ### Organización prevista del código
+
+**Contrato T29 — escenario financiero aprobado:** función pura
+`analyze_finances(FinancialScenario(...))`, sin repositorios o efectos laterales.
+El escenario exige identificador de período, volumen entero no negativo,
+`QuoteAmounts` unitario T22, costos fijos adicionales, inversión y unidad
+monetaria explícitos. Todos los importes comparten la moneda del desglose y
+deben estar expresados en la unidad indicada; no se redondean entradas
+silenciosamente. El margen unitario debe conciliar con tarifa menos pago,
+costo variable y atribuible. Los costos fijos **excluyen** lo ya incluido por
+envío; su clasificación es una responsabilidad explícita de quien configura.
+
+`FinancialReport` conserva el escenario y calcula ingresos/costos por envío,
+contribución = volumen × margen unitario, costo total incluyendo fijos y
+resultado operativo = contribución − costos fijos adicionales. Inversión es
+el denominador del ROI simple del período, no un segundo gasto operativo:
+ROI (%) = resultado / inversión × 100; con inversión cero devuelve None.
+No anualiza, calcula TIR/VAN ni supone recuperación de la inversión.
+
+El equilibrio es el menor volumen entero no negativo con resultado ≥ 0:
+cero si no hay costos fijos adicionales; con costos fijos positivos y margen
+positivo se usa techo de fijos/margen, calculado exactamente; con margen ≤ 0
+no existe y se devuelve None. Equilibrio cero con margen negativo no significa
+que aumentar entregas sea rentable. No se garantiza demanda/capacidad para
+alcanzarlo. Los agregados monetarios son exactos dentro de un contexto Decimal
+local de 28 dígitos; se rechazan pérdidas de precisión. Solo el porcentaje ROI
+permite aproximación a 28 dígitos significativos, ROUND_HALF_UP.
+
+El resultado se marca académico, sin demanda validada. No deriva volumen de
+los datasets ML o del efectivo T28, no interpreta efectivo como ingreso extra,
+no combina escenarios T25 con otra tarifa/base, ni modifica pedidos/estados.
+Sin valores comerciales predeterminados o rentabilidad observada atribuida.
+
+**Contrato T28 — efectivo simulado aprobado:** `CashService.open(order_id)`
+consulta el pedido y exige `CashQuoteSource.get_validated(order) -> Quote`, una
+fuente autoritativa que rechaza cotizaciones no validadas. Se verifica la
+asociación al pedido y la presencia de importes; sin fuente, falla. Conserva
+ID de cotización, moneda e importe del envío (`delivery_fee`), sin comida,
+deducciones al repartidor, nuevos cálculos o redondeos implícitos.
+
+Un registro por pedido, con estados independientes `pendiente → cobrado →
+entregado_al_operador`. `collect(order_id, currency, amount)` y
+`remit(order_id, currency, amount)` exigen pedido entregado y el importe completo
+en la misma moneda, Decimal finito no negativo. No permiten saltos, repeticiones,
+parciales o sobrepagos. `get(order_id)` consulta el snapshot inmutable.
+
+`CashRepository.create/get/transition` mantiene el registro e historial UTC;
+la transición compara el estado esperado, valida importe/moneda/fecha y añade
+el evento como una sola operación. `InMemoryCashRepository` usa un lock local y
+rechaza aperturas duplicadas sin sobrescribir. No modifica pedidos, asignaciones
+o disponibilidad: la entrega logística es terminal, y su lectura no puede
+retroceder entre la comprobación de entrega y la escritura contable.
+Las fechas no pueden preceder al historial logístico leído ni al último evento
+de efectivo. La apertura de un pedido cancelado se rechaza; si se cancela tras
+abrir, el registro permanece pendiente y no se puede cobrar, sin fabricar una
+devolución. Los términos guardados no se actualizan por recotizaciones implícitas.
+
+No hay cancelaciones contables, cambio, devoluciones, liquidación neta,
+remuneración pagada o contabilidad general. Todo registro se marca simulado;
+el doble de cotización de los tests no habilita una fuente comercial de
+producción. Persistencia/HTTP y análisis financiero siguen en T32/T30/T29.
 
 **Contrato T27 — mensajes simulados:** `WhatsAppSimulationService.request(order)`
 delega el registro a `OrderService.register` y devuelve `SimulatedConversation`.
@@ -491,9 +551,9 @@ definitivos.
 | Fuente real, licencia y duración objetivo observada | T05–T07 y [DATA_ML.md](DATA_ML.md) | Entrenamiento válido y esquema definitivo de `/predict`. |
 | Features disponibles al cotizar y representatividad geográfica/vehículo | T07/T13/T19 | Prometer una predicción aplicable al escenario local o diferenciada por vehículo. |
 | Valores reales de zona/límites/carga, seguridad y método vial/comercial | [SPEC.md](SPEC.md), T21/T23/T26 | Criterios y asignación simulada configurables aprobados; faltan valores concretos, cobertura comercial y viabilidad vial. |
-| Valores de tarifas/costos y reglas adicionales de combustible/comisiones | [SPEC.md](SPEC.md), T22/T25/T29 | Fórmulas T22 y supuestos de comparación T25 aprobados; faltan importes concretos y acuerdos para cotización comercial/análisis financiero. No se sustituyen pendientes por cero. |
+| Valores de tarifas/costos, demanda e inversión y reglas adicionales de combustible/comisiones | [SPEC.md](SPEC.md), T22/T25/T29 | Fórmulas T22, comparación T25 y escenario T29 aprobados; faltan valores y evidencia para cotización comercial o rentabilidad observada. No se sustituyen pendientes por cero. |
 | Integración de requisitos, recotización y traducción de errores | T20/T26/T30/T32 y contratos de este documento | Conectar la base T20 aprobada con cotización/asignación, MongoDB y HTTP sin omitir requisitos. |
-| Agrupación operativa y efectivo ficticio | T24/T26/T28 | T26 reserva en memoria y comprueba carga del plan; faltan viabilidad operativa, persistencia y contabilidad simulada. |
+| Agrupación operativa y efectivo ficticio | T24/T26/T28 | T26 reserva en memoria y T28 registra el efectivo simulado con reglas aprobadas; faltan viabilidad operativa, integración comercial y persistencia. |
 | Driver MongoDB, esquemas OpenAPI, errores y carga del modelo | T19/T30–T33 | Integración operativa API/storage/inferencia; no requiere resolverlos con código en T03. |
 | Topología de despliegue, presupuesto e IAM | T41–T46 | Despliegue AWS. Next.js junto al backend o separado sigue pendiente; S3 ya existe y no se recrea. |
 

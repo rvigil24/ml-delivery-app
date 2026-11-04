@@ -32,8 +32,9 @@ corresponden al reparto previo y deben interpretarse con esta actualización.
 - **T22–T23:** completadas con la evidencia de cierre indicada abajo; integración verificable en su PR y la guía externa.
 - **T24–T25:** completadas con la evidencia de cierre indicada abajo; integración verificable en su PR y la guía externa.
 - **T26–T27:** completadas por cierre autorizado, con evidencia abajo; integración verificable en el PR y la guía externa.
-- **Siguiente tarea:** T28, pendiente; el próximo bloque aún no se ha iniciado.
-- **T28–T40:** continuar según dependencias y criterios de aceptación.
+- **T28–T29:** completadas por cierre autorizado, con evidencia abajo; integración verificable en el PR y la guía externa.
+- **Siguiente tarea:** T30, pendiente; el próximo bloque aún no se ha iniciado.
+- **T30–T40:** continuar según dependencias y criterios de aceptación.
 - **T41–T54:** asignadas a Ruben Vigil; despliegue y gastos siguen requiriendo autorización explícita.
 
 Cada agente trabaja una tarea por iteración, informa resultados y evita hacer
@@ -319,7 +320,34 @@ y sincroniza `main` local; resultado/PR/commit se registran en GitHub y la guía
 externa. Se regenera el ZIP de fuentes desde `main` limpio. La integración
 comercial de cotizaciones sigue pendiente; T28 no se inicia en este cierre.
 
-## Instrucciones concretas y criterios de aceptación: T01–T27
+### Cierre autorizado: T28–T29 — efectivo y análisis financiero
+
+Rama `backend/T28-T29-efectivo-finanzas`, creada desde `origin/main` actualizado
+en `80c88c1` (PR #14 integrado). Responsable: Ruben Vigil.
+
+- T28: completada sobre base simulada aprobada explícitamente por Ruben. Efectivo solo del envío, con importe/moneda de cotización validada; estados pendiente, cobrado y entregado al operador. Cobro tras entrega logística y montos completos, sin parciales, devoluciones o deducciones del repartidor. Registro/historial UTC inmutables y transiciones atómicas locales; duplicados/concurrencia sin eventos extra. Seis pruebas nuevas, 64 del backend aprobadas en Python 3.12 y las seis nuevas también en Python 3.9. Contratos, README, SPEC, guía externa y fuentes Colab actualizados.
+- T29: completada sobre fórmulas y alcance aprobados explícitamente por Ruben. Escenario homogéneo por período con volumen/desglose T22, costos fijos adicionales, inversión y unidad monetaria explícitos. Agregados conciliados, resultado con pérdidas, equilibrio entero exacto o inexistente y ROI simple del período o no calculable. Costos fijos excluyen lo ya incluido por envío; no predice demanda ni cuenta efectivo como ingreso adicional. Cinco pruebas nuevas; 69 del backend aprobadas en Python 3.12 y las cinco nuevas también en Python 3.9. Contratos, README, SPEC, guía externa y fuentes Colab actualizados.
+
+Sin fuente autoritativa de cotización validada, la apertura se bloquea. Se
+conservan términos por pedido, sin modificar logística/disponibilidad. Sin
+dinero real, API, persistencia o AWS.
+
+Por orden explícita de Ruben se registran T28 y T29 como completadas en el
+backlog local. Dependencias y criterios contrastados con implementación y
+contratos; 69 pruebas del backend aprobadas en Python 3.12 y las once nuevas
+del bloque también en Python 3.9. Las 93 fuentes coinciden con el paquete
+verificado y los hashes del artefacto/evidencia T19 permanecen intactos.
+Pasaron `uv lock --check`, `uv pip check` y `git diff --check`; no se repiten
+pruebas o entrenamientos ML sin cambios. No se modifica el Excel ni se atribuye
+revisión independiente.
+
+El cierre publica un único PR, verifica la inclusión del commit en `origin/main`
+y sincroniza `main` local; resultado/PR/commit se registran en GitHub y la guía
+externa. Se regenera el ZIP de fuentes desde `main` limpio. La fuente comercial
+de cotización y los valores reales del escenario financiero siguen pendientes;
+T30 no se inicia en este cierre.
+
+## Instrucciones concretas y criterios de aceptación: T01–T29
 
 ### T01 — Crear repositorio Git y estructura modular del proyecto
 
@@ -591,6 +619,26 @@ comercial de cotizaciones sigue pendiente; T28 no se inicia en este cierre.
 
 **Terminado cuando:** solicitud válida registrada con acuse; errores/duplicados sin éxito ficticio; actualizaciones solo de eventos aceptados con fechas UTC; consultas repetidas sin escrituras. Simulación/reconstrucción explícitas, requisitos T20/T26 intactos, pruebas/contratos/guía. Sin tarifas, tiempos, cotizaciones o mensajes externos fabricados; UI y sincronización mantienen su alcance posterior.
 
+### T28 — Simular pagos en efectivo y estados contables
+
+**Responsable:** Ruben Vigil
+
+**Dependencias:** pedidos/historial T20 y base simulada aprobada. La apertura requiere fuente autoritativa de cotización validada con importe/moneda; los borradores T21/T22 no la sustituyen.
+
+**Implementar:** expectativa única por pedido y flujo pendiente → cobrado → entregado al operador, por el importe completo del envío, con historial UTC independiente de la logística.
+
+**Terminado cuando:** apertura bloqueada sin evidencia; cobro solo tras entrega; importes/moneda exactos y términos conservados, sin deducciones o redondeos implícitos. Rechazos, duplicados, fechas inválidas y concurrencia no escriben eventos extra; snapshots inmutables y pedido/asignación intactos. Pruebas, contratos y guía actualizados. Sin dinero real, parciales/devoluciones, ROI o persistencia anticipada.
+
+### T29 — Elaborar análisis financiero: márgenes, costos fijos, punto de equilibrio y ROI estimado
+
+**Responsable:** Ruben Vigil
+
+**Dependencias:** desglose unitario T22 y fórmulas/alcance académico aprobados. Todos los valores son entradas explícitas; no requiere convertir efectivo T28 en ingresos ni inventar datos comerciales.
+
+**Implementar:** escenario financiero homogéneo por período con agregados de ingresos/costos, contribución, resultado, equilibrio entero y ROI simple, conservando entradas y supuestos.
+
+**Terminado cuando:** moneda/unidad/margen conciliados; costos fijos adicionales sin doble conteo declarado; pérdidas visibles y ceros/margen no positivo/inversión cero resueltos. Equilibrio calculado con techo exacto y aproximación solo en ROI, sin pérdida monetaria silenciosa. Proyección inmutable y académica sin demanda validada, pruebas/contratos/guía; sin valores predeterminados, rentabilidad observada atribuida, cambios de pedidos o infraestructura.
+
 ## Backlog completo y asignaciones
 
 | ID | Área | Tarea | Responsable | Estado de referencia / actualización autorizada |
@@ -622,8 +670,8 @@ comercial de cotizaciones sigue pendiente; T28 no se inicia en este cierre.
 | T25 | Lógica del negocio y simulación | Comparar costos de entregas individuales y agrupadas | Ruben Vigil | Completada |
 | T26 | Lógica del negocio y simulación | Desarrollar simulador de asignación de repartidores aprobados | Ruben Vigil | Completada |
 | T27 | Lógica del negocio y simulación | Implementar simulación de mensajes y solicitudes por WhatsApp | Ruben Vigil | Completada |
-| T28 | Lógica del negocio y simulación | Simular pagos en efectivo y estados contables | Ruben Vigil | Pendiente |
-| T29 | Lógica del negocio y simulación | Elaborar análisis financiero: márgenes, costos fijos, punto de equilibrio y ROI estimado | Ruben Vigil | Pendiente |
+| T28 | Lógica del negocio y simulación | Simular pagos en efectivo y estados contables | Ruben Vigil | Completada |
+| T29 | Lógica del negocio y simulación | Elaborar análisis financiero: márgenes, costos fijos, punto de equilibrio y ROI estimado | Ruben Vigil | Completada |
 | T30 | API, almacenamiento e infraestructura | Implementar API FastAPI con /health, /predict y documentación OpenAPI | Ruben Vigil | Pendiente |
 | T31 | API, almacenamiento e infraestructura | Integrar el modelo predictivo con el motor de cotizaciones | Ruben Vigil | Pendiente |
 | T32 | API, almacenamiento e infraestructura | Configurar MongoDB con CRUD, índices y validaciones | Ruben Vigil | Pendiente |
