@@ -4,8 +4,8 @@ Proyecto académico de entregas simuladas con FastAPI, MongoDB y modelos de
 Machine Learning entrenados con datos reales de Meituan. La demo actual permite
 recorrer un pedido hasta la entrega del efectivo y consultar **duración estimada
 y riesgo de retraso**. Next.js ofrece el chat de comida y los paneles locales de
-Negocio, Repartidor y Operaciones conectados a la API; el registro final desde
-Cliente y la sincronización completa siguen pendientes. La infraestructura AWS ya está
+Cliente, Negocio, Repartidor y Operaciones conectados a la API. El pedido del
+cliente ya se guarda en Atlas; la sincronización automática sigue pendiente. La infraestructura AWS ya está
 creada; la API cloud ya fue verificada con modelos desde S3 y persistencia Atlas.
 
 **Reporte para lectura y entrega:** [PDF](reports/Reporte_Tecnico_Asistente_Delivery.pdf) · [Word editable](reports/Reporte_Tecnico_Asistente_Delivery.docx).
@@ -52,7 +52,7 @@ menú permite pasar a Cliente, Negocio y Repartidor. Cliente representa una
 1. Dirección de entrega y ubicación (GPS, coordenadas manuales o destino de ejemplo).
 2. Negocios ordenados por distancia aproximada desde la API.
 3. Menú del negocio consultado en la API, productos y cantidades.
-4. Revisión y confirmación local simulada del pedido.
+4. Revisión y registro del pedido de prueba en la API y MongoDB.
 
 El texto de la dirección no se geocodifica automáticamente: la cercanía usa
 el punto seleccionado, que debe corresponder a la dirección. La API devuelve
@@ -65,8 +65,13 @@ necesitar CORS. `DELIVERY_API_URL` es configuración exclusiva del servidor y
 por defecto apunta a `http://127.0.0.1:8001`; puede cambiarse con
 `frontend/.env.local` usando `frontend/.env.example` como referencia.
 
-La confirmación aún no envía el pedido al negocio ni lo guarda en Atlas; se
-borra al recargar. Las escrituras y sincronización siguen pendientes en T52–T53.
+La confirmación guarda la solicitud y devuelve su referencia. FastAPI valida
+productos y cantidades contra su menú y obtiene el origen del negocio. El pedido
+aparece en Negocio y Operaciones al consultar/actualizar. Un reintento con la
+misma referencia y contenido devuelve el registro existente; contenido distinto
+se rechaza. La conversación se reinicia al recargar, pero el pedido permanece
+guardado. No envía WhatsApp, calcula un total ni inicia un cobro. La sincronización
+automática sigue pendiente.
 Negocio consulta pedidos e historial de la API, permite filtrar por estado y
 actualizar la consulta. Confirma pedidos cotizados o cancela antes de asignación,
 siempre sujeto a las validaciones del backend. Cancelar pide confirmación; los

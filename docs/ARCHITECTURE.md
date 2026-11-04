@@ -11,8 +11,9 @@ nube ya verificada. La infraestructura ECS/Fargate está creada y el contenedor
 cloud sirve la API con los dos modelos S3 y persistencia Atlas ya verificados.
 Next.js ofrece cuatro vistas locales. Cliente consulta negocios por cercanía y
 menús; Negocio consulta y actualiza pedidos; Repartidor consulta sus asignaciones
-y registra recogidas/entregas. Operaciones aún es una vista de muestra. El
-registro final desde Cliente y la sincronización completa siguen pendientes.
+y registra recogidas/entregas. Operaciones consulta pedidos y efectivo y solicita
+desgloses al backend. Cliente registra solicitudes del menú en MongoDB. La
+sincronización automática sigue pendiente.
 Los detalles de versiones previas explican compatibilidad,
 no cambian el contrato v2 descrito en esta sección.
 
@@ -1220,3 +1221,29 @@ mezcla monedas ni cuenta efectivo como ingreso adicional. Requiere configuració
 de políticas/predictor existente; no introduce importes predeterminados,
 cotizaciones persistidas o escrituras de efectivo. Actualización manual; T52–T54
 siguen pendientes. No se despliega esta ampliación en AWS.
+
+
+### T52 — Registro desde el chat de comida
+
+POST `/food/orders` recibe `{id, business_id, destination, delivery_address,
+items:[{product_id,quantity}], notes}`. ID demo-chat-, cantidades enteras positivas,
+productos únicos del menú del negocio. FastAPI resuelve nombres y origen desde
+su catálogo y compone el detalle guardado; ignora ninguna entrada extra: el DTO
+las rechaza. No acepta precios ni estados enviados por el cliente. Devuelve
+OrderRecord (HTTP200 tanto creación como reintento idéntico).
+
+FoodCatalogService delega el registro en OrderService; ante DuplicateOrder sólo
+devuelve el registro si todos los datos inmutables coinciden. Conserva el estado
+actual y su historial; contenido diferente con el mismo ID es409. No migra el
+esquema Mongo: productos/cantidades/dirección quedan como detalle del pedido.
+Next `/api/food` reenvía POST sólo desde servidor. El chat conserva ID por
+contenido durante la sesión, bloquea doble envío y sólo muestra éxito tras una
+respuesta persistida válida. Si se pierde la respuesta, permite reintentar con
+el mismo ID. Recargar reinicia la conversación, no borra registros.
+
+Las cuatro vistas consultan la misma API: Cliente guarda solicitudes, Negocio
+consulta/transiciona, Repartidor consulta/progresa/cierra sus asignaciones y
+Operaciones consulta efectivo/desgloses. T52 no sustituye los requisitos de
+cotización/configuración/asignación aún necesarios para avanzar un pedido ni
+crea dinero, asignaciones o productos con precios. Actualización manual (T53
+pendiente). Nuevas rutas locales sin despliegue AWS.

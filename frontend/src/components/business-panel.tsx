@@ -38,7 +38,9 @@ export function BusinessPanel() {
       if (controller.signal.aborted) return;
       if (!Array.isArray(rows)) throw new Error("Catálogo inválido.");
       setBusinesses(rows);
-      setBusinessId((current) => rows.some((row: BusinessChoice) => row.id === current) ? current : rows[0]?.id || "");
+      const linkedBusiness = new URLSearchParams(window.location.search).get("business_id");
+      setBusinessId((current) => rows.some((row: BusinessChoice) => row.id === current) ? current
+        : !current && rows.some((row: BusinessChoice) => row.id === linkedBusiness) ? linkedBusiness! : rows[0]?.id || "");
       if (!rows.length) setLoading(false);
     }).catch(() => { if (!controller.signal.aborted) { setCatalogError("No pudimos cargar los negocios. Pulsá Actualizar para intentarlo de nuevo."); setLoading(false); } });
     return () => controller.abort();

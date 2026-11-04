@@ -1052,7 +1052,7 @@ fuentes actualizados. Sin modificar Excel, borrar ramas o iniciar despliegue.
 | T49 | Frontend y simulación visual | Implementar panel del negocio para ver pedidos y cambiar su estado | Ruben Vigil | Completada |
 | T50 | Frontend y simulación visual | Implementar panel del repartidor para consultar rutas y confirmar entregas | Ruben Vigil | Completada |
 | T51 | Frontend y simulación visual | Implementar panel de operaciones con tarifas, costos, efectivo y márgenes | Ruben Vigil | Completada |
-| T52 | Frontend y simulación visual | Conectar las vistas de Next.js con los endpoints reales de FastAPI | Ruben Vigil | Pendiente |
+| T52 | Frontend y simulación visual | Conectar las vistas de Next.js con los endpoints reales de FastAPI | Ruben Vigil | Completada |
 | T53 | Frontend y simulación visual | Sincronizar actualizaciones de estados entre las vistas sin WhatsApp real | Ruben Vigil | Pendiente |
 | T54 | Frontend y simulación visual | Preparar demo end-to-end de entrega individual, agrupada y pago en efectivo | Ruben Vigil | Pendiente |
 
@@ -1435,7 +1435,7 @@ business y food siguieron devolviendo200; preview producción3001 también200.
 Sin cambio de UI, contratos, responsables, AWS o IP.
 
 
-## Bloque activo — T51: panel de Operaciones
+## Bloque cerrado — T51: panel de Operaciones
 
 Responsable: Ruben Vigil. Rama feat/T51-operaciones desde origin/main actualizado.
 Dependencias: T47, consulta T20/T32, cálculo T22/T31 y registro de efectivo T28.
@@ -1452,3 +1452,23 @@ resultado real). Sin desborde. Detector sin hallazgos. Revisión visual independ
 materiales. Cierre autorizado condicionado a CI e integración normal aprobadas.
 El cálculo real devolvió503 por configuración ausente; el desglose visual se
 verificó con fixture aislada, sin afirmar tarifas configuradas.
+
+
+## Bloque activo — T52: vistas conectadas con FastAPI
+
+Responsable: Ruben Vigil. Rama feat/T52-pedidos-conectados desde origin/main.
+Dependencias: T48–T51 integradas, repositorios T32 y contratos de pedidos T20.
+Criterio: Cliente guarda la selección validada en FastAPI/MongoDB; las demás
+vistas consultan el mismo registro. POST /food/orders valida pertenencia,
+cantidades, origen y referencia idempotente; Next usa proxy server-only.
+No se altera la máquina de estados ni se adelantan sincronización T53 o demo T54.
+
+Implementación preparada: confirmación del chat persistida, referencia estable
+por contenido, sin éxito optimista/doble envío ni duplicado al reintentar.
+Dos pruebas nuevas más dos de catálogo:4 aprobadas. Tipos y build aprobados.
+Flujo real: un pedido SIMULADO guardado en Atlas, pérdida controlada de primera
+respuesta y reintento con mismoID, único registro/evento; visible en Negocio y
+Operaciones. Enlace al negocio correcto verificado. Revisión visual independiente:
+ship, cuatro capturas válidas sin correcciones materiales. Cierre autorizado
+condicionado a CI e integración normal. No se despliega AWS ni se inventan
+políticas para sortear requisitos de cotización/asignación.

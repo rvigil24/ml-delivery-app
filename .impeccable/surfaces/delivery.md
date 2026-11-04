@@ -68,3 +68,7 @@ Sin correcciones materiales; la lectura de API/servicio confirmó el dictamen.
 T51: Operaciones consulta pedidos/efectivo y solicita desglose a FastAPI.
 Mantiene la identidad existente; distingue registro ausente y previsualización
 sin guardar. Revisión final ship, escritorio/móvil. No altera DESIGN.md ni tokens.
+
+T52: el chat confirma sólo tras guardar por API; muestra referencia/estado y
+enlace al negocio correspondiente. Error recuperable conserva referencia.
+Revisión final ship: cuatro capturas escritorio/móvil. Mundo visual conservado.
