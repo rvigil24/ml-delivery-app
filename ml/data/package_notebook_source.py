@@ -19,6 +19,12 @@ def main() -> None:
     paths.extend((ROOT / "docs").glob("*.md"))
     paths.extend((ROOT / "scripts").glob("*.py"))
     paths.extend((ROOT / "examples").glob("*.json"))
+    # Lista explícita: nunca incluir estado, planes, tfvars privados o plugins.
+    terraform = ROOT / "infra" / "terraform"
+    paths.extend(terraform.glob("*.tf"))
+    for name in ("README.md", ".terraform.lock.hcl", "terraform.tfvars.example"):
+        if (terraform / name).is_file():
+            paths.append(terraform / name)
     files = sorted(set(paths))
     manifest = {
         "created_at_utc": datetime.now(timezone.utc).isoformat(),

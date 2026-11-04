@@ -1,0 +1,6 @@
+# Ejemplo documental: reemplazar la IP antes de desplegar.
+# 192.0.2.1 pertenece a TEST-NET, no es la IP real del presentador.
+presenter_cidr   = "192.0.2.1/32"
+image_tag        = "demo-v1"
+desired_count    = 0
+mongodb_database = "delivery"

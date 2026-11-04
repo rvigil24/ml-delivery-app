@@ -34,7 +34,7 @@ corresponden al reparto previo y deben interpretarse con esta actualización.
 - **T26–T27:** completadas por cierre autorizado, con evidencia abajo; integración verificable en el PR y la guía externa.
 - **T28–T29:** completadas por cierre autorizado, con evidencia abajo; integración verificable en el PR y la guía externa.
 - **T30–T31:** completadas por cierre autorizado con alcance académico, con evidencia abajo; integración verificable en el PR y la guía externa.
-- **T32–T33:** completadas por cierre autorizado con evidencia local, Atlas y S3 indicada abajo; integración verificable en el PR del bloque y la guía externa. T34 completada por cierre autorizado con evidencia abajo. T35 completada por cierre autorizado con evidencia abajo. T36 y la mejora ML con arranque v2 S3 completadas por cierre autorizado, con evidencia abajo. T37 completada por cierre autorizado, con evidencia abajo. T38 completada por cierre autorizado, con reporte Word/PDF y evidencia abajo. T39 completada por cierre autorizado, con informe y paquete de evidencias. T40 completada por cierre autorizado, con presentación y demo ensayada. T41 completada por cierre autorizado con propuesta ECS/Fargate y presupuesto breve; evidencia abajo. Sin bloque activo hasta iniciar T42.
+- **T32–T33:** completadas por cierre autorizado con evidencia local, Atlas y S3 indicada abajo; integración verificable en el PR del bloque y la guía externa. T34 completada por cierre autorizado con evidencia abajo. T35 completada por cierre autorizado con evidencia abajo. T36 y la mejora ML con arranque v2 S3 completadas por cierre autorizado, con evidencia abajo. T37 completada por cierre autorizado, con evidencia abajo. T38 completada por cierre autorizado, con reporte Word/PDF y evidencia abajo. T39 completada por cierre autorizado, con informe y paquete de evidencias. T40 completada por cierre autorizado, con presentación y demo ensayada. T41 completada por cierre autorizado con propuesta ECS/Fargate y presupuesto breve; evidencia abajo. T42 completada por cierre autorizado con Terraform validado y plan sin apply.
 - **T40:** completada con material editable, PDF y guía; evidencia abajo.
 - **T41–T54:** asignadas a Ruben Vigil; despliegue y gastos siguen requiriendo autorización explícita.
 
@@ -1042,7 +1042,7 @@ fuentes actualizados. Sin modificar Excel, borrar ramas o iniciar despliegue.
 | T39 | Pruebas, documentación y entrega | Preparar informe técnico y evidencias de los hitos | Ruben Vigil | Completada |
 | T40 | Pruebas, documentación y entrega | Preparar presentación y demostración para la defensa | Ruben Vigil | Completada |
 | T41 | Despliegue y CI/CD | Definir arquitectura de despliegue en AWS y revisar presupuesto estimado | Ruben Vigil | Completada |
-| T42 | Despliegue y CI/CD | Implementar infraestructura como código con Terraform (ECS/Fargate, ECR, red, IAM y S3 existente) | Ruben Vigil | Pendiente |
+| T42 | Despliegue y CI/CD | Implementar infraestructura como código con Terraform (ECS/Fargate, ECR, red, IAM y S3 existente) | Ruben Vigil | Completada |
 | T43 | Despliegue y CI/CD | Configurar servicio ECS/Fargate y variables para despliegue; conservar Compose local | Ruben Vigil | Pendiente |
 | T44 | Despliegue y CI/CD | Crear pipeline CI/CD en GitHub Actions para pruebas, build y despliegue | Ruben Vigil | Pendiente |
 | T45 | Despliegue y CI/CD | Configurar secretos, permisos mínimos y acceso seguro a la infraestructura | Ruben Vigil | Pendiente |
@@ -1092,3 +1092,30 @@ oficiales, sin extender el análisis de precios por solicitud del usuario.
 Comprobaciones: generación Word/PDF, estructura OOXML, dos páginas y revisión
 del texto/diagrama. Sin nuevos tests de producto, entrenamiento o recursos cloud.
 T41 completada por autorización explícita de cierre el 2026-11-04. Word/PDF de dos páginas, XML y contenido verificados; git diff --check sin errores. Publicación e integración verificables en el PR y guía externa. Sin apply o recursos cloud.
+
+## T42 — Terraform ECS/Fargate
+
+Responsable: Ruben Vigil. Inicio autorizado tras cerrar T41 en PR #26.
+Rama `infra/T42-ecs-fargate` desde `origin/main` `68605c0` actualizado.
+Dependencias satisfechas: diseño T41 y contenedor/API/Atlas/S3 existentes.
+Criterio: infraestructura declarada, formateada, validada y plan revisable, sin
+apply, secretos en estado o cambios al bucket existente.
+
+Archivos: `infra/terraform/` con red pública, ECR, ECS/Fargate, roles separados,
+logs y contenedor de secreto sin valor; data S3 existente. Servicio con cero
+tareas obligatorio durante esta preparación. No EC2, bucket administrado,
+ALB, NAT o publicación de imagen. Variables de ejemplo explícitamente ficticias.
+
+Comprobación real: Terraform 1.13.5 temporal con checksum oficial y proveedor
+AWS 6.71.0 firmado, lock versionado. Init, fmt, validate y plan real con perfil
+remote-admin, quitando endpoints/credenciales de emulador del entorno del proceso.
+Plan con ejemplo TEST-NET /32 y etiqueta aún no publicada: 16 creaciones,
+0 cambios, 0 destrucciones. Es un plan orientativo, no uno listo para aplicar.
+No se leyó el valor de la URI Atlas ni se ejecutó apply. Plan/texto/evidencia
+quedan ignorados en data/reports/presentation/terraform/.
+
+Pendiente de T43: publicar imagen, cargar secreto y resolver espera de Atlas
+antes de iniciar Uvicorn dentro de la misma tarea. La API valida Mongo una sola
+vez al iniciar; permitir el /32 después no la recupera, y reemplazar una tarea
+cambia su IP. No habilitar tareas hasta resolverlo. T42 completada por cierre explícitamente autorizado. Integración verificable
+en el PR y guía externa. No se ejecutó apply.
