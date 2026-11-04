@@ -13,6 +13,8 @@ y riesgo de retraso**. Next.js y el despliegue AWS están pendientes.
 
 **Guion y demostración:** [Guía PDF](reports/Guia_Exposicion_y_Demo.pdf) · [Word editable](reports/Guia_Exposicion_y_Demo.docx).
 
+**Propuesta AWS (ECS con Fargate, pendiente de desplegar):** [PDF](reports/Propuesta_Despliegue_AWS.pdf) · [Word editable](reports/Propuesta_Despliegue_AWS.docx).
+
 ## Inicio rápido: demo con modelos desde S3
 
 Requisitos: Git, Docker con Compose, Python 3.9+ para el comando de demo y un

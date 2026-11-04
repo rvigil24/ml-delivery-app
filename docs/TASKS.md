@@ -34,7 +34,7 @@ corresponden al reparto previo y deben interpretarse con esta actualización.
 - **T26–T27:** completadas por cierre autorizado, con evidencia abajo; integración verificable en el PR y la guía externa.
 - **T28–T29:** completadas por cierre autorizado, con evidencia abajo; integración verificable en el PR y la guía externa.
 - **T30–T31:** completadas por cierre autorizado con alcance académico, con evidencia abajo; integración verificable en el PR y la guía externa.
-- **T32–T33:** completadas por cierre autorizado con evidencia local, Atlas y S3 indicada abajo; integración verificable en el PR del bloque y la guía externa. T34 completada por cierre autorizado con evidencia abajo. T35 completada por cierre autorizado con evidencia abajo. T36 y la mejora ML con arranque v2 S3 completadas por cierre autorizado, con evidencia abajo. T37 completada por cierre autorizado, con evidencia abajo. T38 completada por cierre autorizado, con reporte Word/PDF y evidencia abajo. T39 completada por cierre autorizado, con informe y paquete de evidencias. T40 completada por cierre autorizado, con presentación y demo ensayada. Sin bloque activo; siguiente tarea: T41 (arquitectura AWS y presupuesto, sin desplegar).
+- **T32–T33:** completadas por cierre autorizado con evidencia local, Atlas y S3 indicada abajo; integración verificable en el PR del bloque y la guía externa. T34 completada por cierre autorizado con evidencia abajo. T35 completada por cierre autorizado con evidencia abajo. T36 y la mejora ML con arranque v2 S3 completadas por cierre autorizado, con evidencia abajo. T37 completada por cierre autorizado, con evidencia abajo. T38 completada por cierre autorizado, con reporte Word/PDF y evidencia abajo. T39 completada por cierre autorizado, con informe y paquete de evidencias. T40 completada por cierre autorizado, con presentación y demo ensayada. T41 completada por cierre autorizado con propuesta ECS/Fargate y presupuesto breve; evidencia abajo. Sin bloque activo hasta iniciar T42.
 - **T40:** completada con material editable, PDF y guía; evidencia abajo.
 - **T41–T54:** asignadas a Ruben Vigil; despliegue y gastos siguen requiriendo autorización explícita.
 
@@ -1041,9 +1041,9 @@ fuentes actualizados. Sin modificar Excel, borrar ramas o iniciar despliegue.
 | T38 | Pruebas, documentación y entrega | Documentar arquitectura, resultados, experimentos y limitaciones | Ruben Vigil | Completada |
 | T39 | Pruebas, documentación y entrega | Preparar informe técnico y evidencias de los hitos | Ruben Vigil | Completada |
 | T40 | Pruebas, documentación y entrega | Preparar presentación y demostración para la defensa | Ruben Vigil | Completada |
-| T41 | Despliegue y CI/CD | Definir arquitectura de despliegue en AWS y revisar presupuesto estimado | Ruben Vigil | Pendiente |
-| T42 | Despliegue y CI/CD | Implementar infraestructura como código con Terraform (EC2, red, IAM y S3) | Ruben Vigil | Pendiente |
-| T43 | Despliegue y CI/CD | Configurar Docker Compose y variables para el entorno de despliegue | Ruben Vigil | Pendiente |
+| T41 | Despliegue y CI/CD | Definir arquitectura de despliegue en AWS y revisar presupuesto estimado | Ruben Vigil | Completada |
+| T42 | Despliegue y CI/CD | Implementar infraestructura como código con Terraform (ECS/Fargate, ECR, red, IAM y S3 existente) | Ruben Vigil | Pendiente |
+| T43 | Despliegue y CI/CD | Configurar servicio ECS/Fargate y variables para despliegue; conservar Compose local | Ruben Vigil | Pendiente |
 | T44 | Despliegue y CI/CD | Crear pipeline CI/CD en GitHub Actions para pruebas, build y despliegue | Ruben Vigil | Pendiente |
 | T45 | Despliegue y CI/CD | Configurar secretos, permisos mínimos y acceso seguro a la infraestructura | Ruben Vigil | Pendiente |
 | T46 | Despliegue y CI/CD | Validar despliegue, logs, persistencia y consumo de recursos | Ruben Vigil | Pendiente |
@@ -1073,3 +1073,22 @@ fuentes actualizados. Sin modificar Excel, borrar ramas o iniciar despliegue.
 - No métricas, etiquetas ni ROI falsos.
 - Documentación actualizada donde cambian contratos.
 - Revisión del otro integrante y actualización manual del backlog compartido.
+
+## T41 — arquitectura AWS y presupuesto breve
+
+Responsable: Ruben Vigil. Rama `docs/T41-arquitectura-aws`, desde `origin/main`
+`95c9f74`. Dependencias: API, persistencia Atlas, bundle S3 y contenedor ya
+implementados (T19, T30–T34 y mejora v2). Criterio: documentar topología,
+servicios, límites y una estimación breve antes de implementar infraestructura.
+
+Decisión explícita de Ruben: descartar EC2 y elegir ECS con Fargate. Se ajusta
+el alcance futuro de T42–T43 a esta decisión sin cambiar responsables o estados.
+Propuesta Word/PDF de dos páginas con diagrama, ECR, tarea de inferencia, Atlas,
+S3 y roles. Demo inicial con IP pública variable y acceso restringido; actualizar
+lista Atlas /32 al reemplazar tarea. Sin ALB/NAT, TLS o endpoint estable en esta
+base; no se afirma alta disponibilidad. Presupuesto orientativo con referencias
+oficiales, sin extender el análisis de precios por solicitud del usuario.
+
+Comprobaciones: generación Word/PDF, estructura OOXML, dos páginas y revisión
+del texto/diagrama. Sin nuevos tests de producto, entrenamiento o recursos cloud.
+T41 completada por autorización explícita de cierre el 2026-11-04. Word/PDF de dos páginas, XML y contenido verificados; git diff --check sin errores. Publicación e integración verificables en el PR y guía externa. Sin apply o recursos cloud.
