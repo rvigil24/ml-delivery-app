@@ -26,8 +26,9 @@ corresponden al reparto previo y deben interpretarse con esta actualización.
 - **T01–T12:** completadas e integradas en `main`; T10–T12 mediante PR #6, commit `f504c8f`.
 - **T13–T14:** completadas con la evidencia de cierre indicada abajo; integración verificable en el PR del bloque y la guía externa.
 - **T15–T16:** completadas con la evidencia de cierre indicada abajo; integración verificable en el PR del bloque y la guía externa.
-- **Siguiente tarea:** T17, pendiente; el próximo bloque aún no se ha iniciado.
-- **T17–T40:** continuar según dependencias y criterios de aceptación.
+- **T17–T18:** completadas con la evidencia de cierre indicada abajo; integración verificable en el PR del bloque y la guía externa.
+- **Siguiente tarea:** T19, pendiente; el próximo bloque aún no se ha iniciado.
+- **T19–T40:** continuar según dependencias y criterios de aceptación.
 - **T41–T54:** asignadas a Ruben Vigil; despliegue y gastos siguen requiriendo autorización explícita.
 
 Cada agente trabaja una tarea por iteración, informa resultados y evita hacer
@@ -184,7 +185,26 @@ El cierre publica un único PR, verifica su integración en remoto y sincroniza
 Las métricas de T15 son errores de entrenamiento y no seleccionan un modelo.
 T17–T19 y las features geográficas no validadas quedan fuera del bloque.
 
-## Instrucciones concretas y criterios de aceptación: T01–T16
+### Cierre autorizado: T17–T18 — MLP y evaluación
+
+Rama `ml/T17-T18-mlp-evaluacion`, creada desde `origin/main` actualizado en
+`2a5f3de` (PR #8 integrado). Responsable: Ruben Vigil.
+
+- T17: completada y entrenada. MLP PyTorch CPU `4→16→8→1`, 225 parámetros; tres folds T16, escalado de X/y solo con entrenamiento y elección de épocas por MAE medio interno. Se eligieron 7 de un máximo de 30 épocas; MAE CV 9.065874 min y RMSE CV 11.792678 min. Reajuste desde cero con los 409,083 pedidos train, sin cargar/evaluar test ni persistir modelo final. Evidencia local en `t17_mlp.json`/Markdown, curvas y guía externa. Notebook completo: 19 celdas sin errores; 46 pruebas aprobadas en Python 3.12 y las dos nuevas también en 3.9.
+- T18: completada y evaluada; baseline, tres ML y MLP ajustados con configuraciones T16/T17 verificadas antes de cargar los mismos 136,799 pedidos test. MAE/RMSE/R², sesgo, P95 de error absoluto y desglose por día. MLP MAE 9.121785 min; bosque MAE 9.125362 min/RMSE 11.855652 min. Informes locales, gráfico y guía externa; notebook completo con 21 celdas sin errores, 48 pruebas aprobadas en Python 3.12 y las dos nuevas también en 3.9. No se retoca la receta con test ni se persiste el modelo final.
+
+Por orden explícita de Ruben se registran T17 y T18 como completadas en el
+backlog local, sin modificar el Excel ni atribuir revisión independiente.
+Dependencias y criterios contrastados con implementación, reportes, hashes y
+comprobaciones reales: 48 pruebas aprobadas en Python 3.12, las cuatro nuevas
+del bloque también en 3.9 y notebook completo con 21 celdas sin errores.
+Los datos permanecen intactos; gráficos y reportes siguen fuera de Git.
+Google Colab directamente continúa pendiente. El cierre publica un único PR,
+verifica su integración en remoto y sincroniza `main`; PR/commit y resultado
+se registran en GitHub y la guía externa tras el merge.
+T19 y las features geográficas sin validar quedan fuera del alcance.
+
+## Instrucciones concretas y criterios de aceptación: T01–T18
 
 ### T01 — Crear repositorio Git y estructura modular del proyecto
 
@@ -346,6 +366,26 @@ T17–T19 y las features geográficas no validadas quedan fuera del bloque.
 
 **Terminado cuando:** cortes/conteos/purgas verificables, escaladores ajustados dentro de cada fold, candidatos y criterio de selección explícitos, métricas por fold y parámetros elegidos reproducibles, pruebas de aislamiento y notebook. Sin consultar test para tuning, entrenar MLP ni seleccionar/persistir el modelo final.
 
+### T17 — Implementar y entrenar una red neuronal MLP
+
+**Responsable:** Ruben Vigil
+
+**Dependencia:** particiones T13 y protocolo temporal T16 verificados.
+
+**Implementar:** MLP pequeña con PyTorch CPU, transformaciones aprendidas solo con train, selección interna de épocas y reajuste sin usar test.
+
+**Terminado cuando:** entrenamiento real, arquitectura/semillas/configuración reproducibles, curvas y métricas con unidades explícitas, escaladores aislados por fold, épocas elegidas sin test, pruebas y notebook ejecutables. Sin comparación final T18, persistencia T19 ni API.
+
+### T18 — Evaluar y comparar modelos mediante MAE, RMSE y métricas pertinentes
+
+**Responsable:** Ruben Vigil
+
+**Dependencia:** baseline T14, selección interna T16 y MLP T17 verificables.
+
+**Implementar:** comparación de los cinco modelos sobre el mismo test temporal, congelando parámetros/épocas antes de cargarlo; analizar errores con trazabilidad.
+
+**Terminado cuando:** reportes reproducibles con MAE/RMSE/R², errores firmados/absolutos y por día, mismo conjunto para todos, procedencia de las decisiones de CV, pruebas y notebook. Sin tuning a partir del test, selección/persistencia T19 ni cambios HTTP/AWS.
+
 ## Backlog completo y asignaciones
 
 | ID | Área | Tarea | Responsable | Estado de referencia / actualización autorizada |
@@ -366,8 +406,8 @@ T17–T19 y las features geográficas no validadas quedan fuera del bloque.
 | T14 | Machine Learning y Deep Learning | Implementar un modelo baseline | Ruben Vigil | Completada |
 | T15 | Machine Learning y Deep Learning | Entrenar tres algoritmos ML de distintas familias | Ruben Vigil | Completada |
 | T16 | Machine Learning y Deep Learning | Aplicar validación cruzada y optimización de hiperparámetros | Ruben Vigil | Completada |
-| T17 | Machine Learning y Deep Learning | Implementar y entrenar una red neuronal MLP | Ruben Vigil | Pendiente |
-| T18 | Machine Learning y Deep Learning | Evaluar y comparar modelos mediante MAE, RMSE y otras métricas pertinentes | Ruben Vigil | Pendiente |
+| T17 | Machine Learning y Deep Learning | Implementar y entrenar una red neuronal MLP | Ruben Vigil | Completada |
+| T18 | Machine Learning y Deep Learning | Evaluar y comparar modelos mediante MAE, RMSE y otras métricas pertinentes | Ruben Vigil | Completada |
 | T19 | Machine Learning y Deep Learning | Seleccionar, guardar y documentar el modelo final | Ruben Vigil | Pendiente |
 | T20 | Lógica del negocio y simulación | Implementar registro y gestión de pedidos y sus estados | Ruben Vigil | Pendiente |
 | T21 | Lógica del negocio y simulación | Implementar estimación de distancia y tiempo para cotizaciones | Ruben Vigil | Pendiente |

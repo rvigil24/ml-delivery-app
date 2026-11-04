@@ -357,6 +357,54 @@ elegido. Informes con todos los candidatos/folds y hashes en
 `data/reports/meituan/<revision>/t16_validation.{json,md}`. Test no se carga;
 la comparación posterior y persistencia final siguen en T18/T19.
 
+## MLP pequeña — T17
+
+```bash
+uv sync --locked --extra notebooks
+uv run --locked python ml/experiments/train_mlp.py
+```
+
+PyTorch **2.8 CPU**, instalado desde su índice oficial, entrena una red
+`4 → 16 ReLU → 8 ReLU → 1 lineal` de **225 parámetros**. Escala entradas y
+target solo con el entrenamiento de cada fold y devuelve predicciones en minutos.
+No requiere GPU ni paquetes CUDA. Se incorpora PyTorch porque T17 requiere una
+red implementada con un framework de deep learning.
+
+En los tres folds T16 se prueban hasta 30 épocas con configuración fija.
+La menor media de MAE interno eligió **7 épocas**: MAE CV **9.065874 min**,
+RMSE CV **11.792678 min**. Se reajusta desde cero con todo train durante esas
+7 épocas. Son resultados de selección interna; test sigue reservado.
+
+Informes e historiales en `data/reports/meituan/<revision>/t17_mlp.{json,md}`.
+El notebook genera también `t17_learning_curves.png`, fuera de Git. La comparación
+posterior y persistencia corresponden a T18/T19.
+
+## Comparación sobre test — T18
+
+```bash
+uv run --locked python ml/experiments/compare_models.py
+```
+
+Requiere informes T16/T17 con hashes/versiones vigentes. Ajusta los cinco modelos
+con todo train, fijando previamente los parámetros/épocas elegidos por CV, y
+después carga el mismo test de **136,799 pedidos**. No vuelve a hacer tuning.
+
+| Modelo | MAE test (min) | RMSE test (min) | R² |
+|---|---:|---:|---:|
+| Baseline | 9.501230 | 12.562496 | -0.038054 |
+| Regresión lineal | 9.509476 | 12.290476 | 0.006414 |
+| Random Forest | 9.125362 | 11.855652 | 0.075474 |
+| LinearSVR | 9.510380 | 12.290099 | 0.006475 |
+| MLP | 9.121785 | 11.917718 | 0.065769 |
+
+MLP y bosque tienen MAE casi iguales; el bosque tiene menor RMSE. El R² es bajo
+y los errores siguen siendo relevantes. No se demuestra precisión operativa en
+El Salvador ni superioridad estadística de una diferencia pequeña.
+JSON/Markdown con sesgo, P95 absoluto y errores por día en
+`data/reports/meituan/<revision>/t18_comparison.*`; el notebook exporta
+`t18_model_comparison.png`. T19 decidirá selección/persistencia sin retocar
+hiperparámetros con estas cifras de test.
+
 ## Notebooks para estudiar y exponer
 
 [`notebooks/01_datos_y_procesamiento.ipynb`](notebooks/01_datos_y_procesamiento.ipynb)
@@ -365,8 +413,8 @@ pruebas se necesita Java 17 también en el entorno de ejecución del notebook.
 
 [`notebooks/02_modelado_y_evaluacion.ipynb`](notebooks/02_modelado_y_evaluacion.ipynb)
 incluye T13 (variables/partición), T14 (baseline y métricas reales) y T15
-(tres familias, resultados sobre train) y T16 (validación/tuning temporal);
-T17–T19 quedan pendientes.
+(tres familias, resultados sobre train), T16 (validación/tuning temporal) y T17
+(MLP y curvas de aprendizaje) y T18 (comparación/errores); T19 queda pendiente.
 Puede adquirir y preparar la fuente por sí mismo. Sus pruebas específicas
 usan Pandas/scikit-learn, sin necesitar Java para ejecutarlas.
 
@@ -397,6 +445,10 @@ T15: segundo notebook completo con **13 celdas** ejecutadas sin errores;
 **42 pruebas aprobadas en Python 3.12** y las dos nuevas también en Python 3.9.
 T16: notebook ampliado a **16 celdas** ejecutadas sin errores y suite de
 **44 pruebas aprobadas en Python 3.12**; sus dos pruebas nuevas pasan también en 3.9.
+T17: **19 celdas** ejecutadas sin errores, curvas exportadas y **46 pruebas
+aprobadas en Python 3.12**; las dos nuevas pasan también en Python 3.9.
+T18: **21 celdas** ejecutadas sin errores, comparación exportada y **48 pruebas
+aprobadas en Python 3.12**; las dos nuevas pasan también en Python 3.9.
 Una ejecución aislada desde el ZIP regeneró 546,281 pedidos con el mismo hash
 de T08 antes de incorporar T09. El EDA y las equivalencias Dask/Spark–Pandas se verificaron
 en Python 3.12 y 3.9. La ejecución directamente en el servicio de Colab queda por comprobar.
