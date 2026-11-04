@@ -24,7 +24,7 @@ La pantalla inicial es Operaciones; un menú permite cambiar entre los cuatro ro
 
 ## Capabilities and Constraints
 
-T47 cubre layout, navegación y ejecución local. T48 pide primero dirección y punto de entrega, consulta negocios por cercanía y menús en FastAPI, permite elegir productos/cantidades y prepara una confirmación local simulada; sin enviar ni persistir el pedido. El catálogo de productos es de ejemplo, versionado con la API y sin precios inventados. T49 consulta pedidos del negocio, detalle e historial en la API y permite confirmar/cancelar según estado y requisitos del backend, sin cambios optimistas. T50–T54 incorporan los demás paneles e integración. No inventar cotizaciones, métricas, estados consultados, rutas viales ni datos de entrenamiento. Ejemplos claramente identificados; sin credenciales en el frontend.
+T47 cubre layout, navegación y ejecución local. T48 pide primero dirección y punto de entrega, consulta negocios por cercanía y menús en FastAPI, permite elegir productos/cantidades y prepara una confirmación local simulada; sin enviar ni persistir el pedido. El catálogo de productos es de ejemplo, versionado con la API y sin precios inventados. T49 consulta pedidos del negocio, detalle e historial en la API y permite confirmar/cancelar según estado y requisitos del backend, sin cambios optimistas. T50 consulta asignaciones y paradas de la API, registra avances secuenciales y libera al repartidor al finalizar una ruta entregada, sin crear rutas ficticias. T51–T54 incorporan operaciones y el resto de integración. No inventar cotizaciones, métricas, estados consultados, rutas viales ni datos de entrenamiento. Ejemplos claramente identificados; sin credenciales en el frontend.
 
 ## Brand Commitments
 

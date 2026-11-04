@@ -186,6 +186,14 @@ class MongoDispatchRepository:
     def get_assignment(self, assignment_id):
         return decode(SimulatedAssignment, self._assignment_doc(assignment_id)["data"])
 
+    @mongo_errors
+    def list_assignments(self, courier_id, limit):
+        if isinstance(limit, bool) or not isinstance(limit, int) or not 1 <= limit <= 100:
+            raise ValueError("limit fuera de rango")
+        query = {"data.courier.id": courier_id}
+        return tuple(decode(SimulatedAssignment, doc["data"]) for doc in
+                     self.database.assignments.find(query).sort("_id", 1).limit(limit))
+
     def _progress(self, order_id, target, session):
         doc = self.database.assignments.find_one({"data.route.orders.id": order_id, "data.released_at": None}, session=session)
         if doc is None:

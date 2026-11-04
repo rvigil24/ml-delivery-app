@@ -101,6 +101,8 @@ def create_app(model_directory: Optional[Path] = None,
         application.state.courier_catalog = CatalogService(storage.couriers) if storage is not None else None
         application.state.order_service = OrderService(effective_orders, storage.businesses,
             DispatchOrderRequirements(effective_orders)) if storage is not None else None
+        from delivery.services.courier_routes import CourierRouteService
+        application.state.courier_routes = CourierRouteService(storage.orders, application.state.order_service) if storage is not None else None
         configured = model_directory if model_directory is not None else os.environ.get("DELIVERY_MODEL_DIR")
         if not configured and os.environ.get("DELIVERY_MODEL_MANIFEST_KEY"):
             try:
@@ -235,6 +237,8 @@ def create_app(model_directory: Optional[Path] = None,
     from .food import food_router
     application.include_router(food_router())
     application.include_router(storage_router())
+    from .courier_routes import courier_routes_router
+    application.include_router(courier_routes_router())
     from .delivery_predictions import delivery_prediction_router
     application.include_router(delivery_prediction_router())
     if os.environ.get("DELIVERY_DEMO_ENABLED") == "1":
