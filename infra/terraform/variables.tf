@@ -27,12 +27,12 @@ variable "desired_count" {
 }
 
 variable "start_timeout_seconds" {
-  description = "Plazo para permitir la IP de tarea en Atlas y verificar su esquema antes de iniciar API."
+  description = "Espera de Atlas en segundos; cero espera sin límite evitando rotación de IP por timeout."
   type        = number
   default     = 900
   validation {
-    condition     = var.start_timeout_seconds >= 1 && var.start_timeout_seconds <= 3600 && floor(var.start_timeout_seconds) == var.start_timeout_seconds
-    error_message = "Indicar un entero entre 1 y 3600 segundos."
+    condition     = var.start_timeout_seconds >= 0 && var.start_timeout_seconds <= 3600 && floor(var.start_timeout_seconds) == var.start_timeout_seconds
+    error_message = "Indicar cero (sin límite) o un entero entre 1 y 3600 segundos."
   }
 }
 

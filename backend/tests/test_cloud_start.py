@@ -7,6 +7,7 @@ from delivery.domain.catalogs import StorageUnavailable
 def test_wait_then_exec_keeps_process_and_closes_clients(monkeypatch, tmp_path):
     monkeypatch.setenv("MONGODB_URI", "mongodb://example.invalid")
     monkeypatch.setenv("MONGODB_DATABASE", "delivery")
+    monkeypatch.setenv("DELIVERY_CLOUD_START_TIMEOUT_SECONDS", "0")
     monkeypatch.setattr(cloud_start, "WAIT_STATE", tmp_path / "wait.json")
     monkeypatch.setattr(cloud_start.sys, "argv", ["cloud_start"])
     monkeypatch.setattr(cloud_start.time, "sleep", lambda seconds: None)

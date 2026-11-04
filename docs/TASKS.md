@@ -1224,3 +1224,14 @@ al usuario, sin API administrativa disponible). T45 sigue Pendiente hasta valida
 acceso/secretos; T46 no se declara terminada ni se afirma inferencia/persistencia
 cloud. Corrección de código/documentos se integra bajo autorización persistente.
 Evidencia en data/reports/presentation/terraform/; sin suites locales nuevas.
+
+### Corrección de espera manual Atlas
+
+Ruben permitió la /32 anterior, pero el plazo de 900 s ya había vencido y ECS
+reemplazó la tarea (nueva IP 44.203.218.6). Se habilita 0 como espera sin límite
+para conservar la tarea durante el paso humano; no implica IP fija si hay otra
+caída o despliegue. Dos pruebas puntuales aprobadas (0.11 s), cubriendo espera
+sin límite/reintento/exec y cancelación limitada sin imprimir URI. Terraform
+prepara la configuración y el pipeline usa última revisión de familia + imagen
+nueva. Sin ampliar Atlas a 0.0.0.0/0, agregar NAT/EC2 o crear nuevos servidores.
+T45 sigue Pendiente hasta la comprobación real de acceso.

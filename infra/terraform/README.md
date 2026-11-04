@@ -184,3 +184,16 @@ configuración inicial como base. `desired_count` sigue bajo Terraform: el archi
 privado de despliegue ahora usa uno para coincidir con el servicio autorizado.
 Para parar costos de cómputo se puede llevar explícitamente a cero; no hacerlo
 implícitamente aplicando el archivo de ejemplo. S3 no fue recreado ni modificado.
+
+### Espera manual de la lista Atlas
+
+Para la demo desplegada se configuró `start_timeout_seconds = 0`: espera sin
+límite mientras se permite el /32 de la tarea. Evita que un timeout del proceso
+haga reemplazar la tarea y cambie su IP durante el paso manual. No convierte la
+IPv4 en fija: otra caída o despliegue puede cambiarla. Valores 1–3600 siguen
+habilitando una espera limitada. Durante la espera solo hay vitalidad; la API
+no sirve solicitudes hasta verificar Mongo. Sigue consumiendo la tarea reservada.
+
+El pipeline usa la última revisión de la familia como configuración base,
+incorporando los cambios preparados por Terraform, y reemplaza su imagen por
+la del commit aprobado. Conserva la revisión del servicio anterior para rollback.
