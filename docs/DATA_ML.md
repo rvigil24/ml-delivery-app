@@ -287,13 +287,27 @@ esos textos menciona expresamente AWS. Esto justifica separar copia privada
 académica de publicación, pero no acredita una autorización específica del
 editor para el caso concreto de alojamiento externo o distribución de modelos.
 
-**Condición pendiente para T33/T19:** comprobar compatibilidad de ese uso con
+**Condición registrada antes de T33/T19:** comprobar compatibilidad de ese uso con
 los términos, definir qué artefactos pueden alojarse de forma privada y conservar
 licencia/atribución. Si no se puede justificar, resolver permiso o fuente antes
 de publicar esos artefactos. La auditoría T07 aprueba calidad para preparación
 académica; no certifica derechos de publicación ni da permiso de despliegue.
 Se corrige la documentación sin subir archivos, cambiar el bucket o iniciar
 servicios AWS. El desarrollo de la preparación local puede continuar.
+
+**Revisión operativa T33, 2026-11-04:** Ruben autorizó publicar artefactos y
+confirmó S3 ml-kodigo-resources. Tras revisar los términos originales, esta
+entrega se limita a copia privada del bundle propio del trabajo académico no
+comercial, licencia/atribución, manifiestos y resultados agregados/documentación.
+Los CSV originales/procesados/particiones no se distribuyen: permanecen locales
+y en S3 se declara metadata_only. No se habilita distribución de registros a
+terceros, publicación pública del modelo o uso comercial/operativo. El bundle
+se conserva íntegro: publication describe su exportación anterior a la subida;
+un manifiesto separado registra el alcance de la copia académica posterior.
+AWS confirmó us-east-1, AES256, BucketOwnerEnforced y ausencia de política de
+bucket; no se cambia esa configuración. Los objetos usan acceso privado y
+checksums verificables. Esta decisión operativa no atribuye a Meituan una
+autorización específica de alojamiento externo que el texto no declara.
 
 ### Diccionario del CSV original
 

@@ -255,6 +255,93 @@ de las entidades de dominio.
 
 ### Organización prevista del código
 
+**Objetos T33 — S3 existente:** ObjectStore.upload/download intercambia
+ObjectReference(bucket, key, size, sha256, version_id opcional). S3ObjectStore
+usa PUT condicional IfNoneMatch=*; claves idénticas son idempotentes, contenido
+diferente exige otra versión. Solo archivos bajo datasets/, models/ o docs/.
+Cada PUT incluye checksum SHA256, metadata sha256 y AES256; no crea bucket,
+cambia IAM o publica ACL. Descargas verifican bytes antes de publicar el
+archivo local. ETag/metadata solos no acreditan integridad; objetos sin checksum
+se verifican leyendo el contenido. Errores del SDK no exponen credenciales.
+Este adaptador usa PUT simple, máximo 5 GiB por objeto.
+
+`ml/data/publish_s3.py --profile <perfil>` prepara un plan sin subir;
+`--apply` usa AWS CLI con perfil/endpoint real explícitos, sin modificar
+perfiles globales. Selección: bundle académico propio con licencia/atribución,
+manifiestos sin registros, documentación, código, notebooks fuente sin outputs
+y reportes agregados. CSV originales/procesados/particiones permanecen locales;
+el prefijo datasets declara metadata_only. El bundle conserva sus archivos y
+metadatos de exportación; un manifiesto adicional describe la copia académica
+privada posterior. Se conservan condiciones no comerciales; no se habilita
+redistribución de registros o uso operativo. Documentación se versiona por hash.
+
+La publicación verifica región, política no pública, propiedad del bucket,
+checksums/tamaños y concesiones privadas. No cambia Block Public Access,
+políticas o propiedad existentes. Recibos locales atómicos se actualizan por
+objeto para reanudar una publicación interrumpida sin sobrescribir contenido.
+
+La API recupera opcionalmente un bundle al inicio mediante
+DELIVERY_MODEL_MANIFEST_KEY/SHA256/SIZE y S3_BUCKET, con perfil local opcional
+DELIVERY_AWS_PROFILE y S3_ENDPOINT_URL. Se descarga una vez a caché privada,
+verifica manifiesto fijado y archivos permitidos; el cargador T19 valida
+entorno/hashes antes de abrir pickle. La caché se elimina al cerrar.
+DELIVERY_MODEL_DIR tiene prioridad; fallos dejan inferencia 503 sin fallback
+ficticio. El frontend no recibe credenciales o acceso directo privilegiado.
+
+**Persistencia T32 — Atlas y adaptadores:** servicio elegido por Ruben:
+MongoDB Atlas Free sobre AWS us-east-1. Tras las pruebas locales autorizadas,
+Ruben creó el clúster y configuró su URI; conexión/esquema e integración de
+lectura API reales se verificaron el 2026-11-04. PyMongo síncrono conserva las
+interfaces de servicios existentes. `MongoStorage(uri, database_name)` abre
+un cliente compartido; exige replica set/Atlas y lo cierra al finalizar.
+La API lee MONGODB_URI/MONGODB_DATABASE exportadas, sin cargar .env ni exponer
+la URI. Falla de almacenamiento produce 503 storage_unavailable, sin reemplazo
+en memoria. Una conexión prestada por composición conserva su propietario.
+
+Colecciones businesses/couriers con CRUD por `CatalogRepository` y
+`CatalogService`; orders con OrderRecord/historial; assignments con snapshot
+SimulatedAssignment; cash con CashRecord/historial. IDs strings en _id,
+versiones internas para compare-and-set y datos de dominio separados en data.
+Decimal se guarda como Decimal128, sin convertirlo a float; fechas UTC como
+ISO 8601 canónico con microsegundos para no truncar la precisión del historial
+al formato BSON date de milisegundos. El codec reconstruye únicamente tipos
+conocidos por sus anotaciones, sin pickle o nombres de clases suministrados.
+
+`python -m delivery.adapters.mongo` prepara explícitamente validadores/índices
+en la base configurada. JSON Schema exige campos/tipos, estados del dominio,
+límites geográficos y estructura; el dominio/servicios validan la semántica.
+Una colección existente con otro validador exige migración explícita: no se
+recrea ni se modifica silenciosamente. Al arrancar, la API comprueba esquemas
+e índices preparados antes de habilitar persistencia; no autocrea colecciones
+sin validar. Unicidad por _id, índice negocio/estado de pedidos y unicidad
+parcial de repartidor con asignación activa, más búsqueda de pedidos agrupados.
+
+Pedidos/catálogos usan actualizaciones condicionales por versión; estado e
+historial se guardan juntos. Transacciones snapshot/majority reservan el grupo
+y ocupan al repartidor, o revierten todo. Cada avance del plan modifica también
+la versión de asignación, serializando pedidos distintos de una misma ruta.
+Liberación exige todas las entregas. Registrar un pedido toca la versión del
+negocio para evitar carreras con borrado/edición de esa referencia. No se borra
+un negocio referenciado ni se modifica un repartidor ocupado; tampoco se
+elimina un repartidor con historial de asignaciones. Efectivo usa CAS atómico.
+
+HTTP T32: CRUD /businesses y /couriers (POST, GET/lista, GET/id, PUT/id,
+DELETE/id); POST/GET /orders, GET /orders/{order_id} y
+POST /orders/{order_id}/transitions con expected/target. Listas limitadas a
+1–100 registros, orden por ID. No hay edición directa de estados ni DELETE
+genérico de pedidos/historial. Los handlers invocan servicios; no acceden a BSON.
+Puertos amplían OrderRepository con list(limit); el adaptador en memoria
+conserva esa compatibilidad. Errores 404/409/422/503 mantienen detail.code/message.
+
+No crea clústeres, modifica AWS, implementa autenticación o carga valores de
+negocio. Asignaciones y efectivo conservan sus servicios/puertos y requisitos
+de cotización autoritativa; persistir no los aprueba. Las políticas de T31
+siguen siendo configuración explícita. Validación real local con MongoDB 8.0
+temporal y posterior conexión Atlas comprobada con transacción/lecturas, sin
+crear pedidos de demostración en cloud. Docker del producto y
+Terraform permanecen en sus tareas; el contenedor solo se usó como dependencia
+de pruebas y se retira al finalizar.
+
 **Contrato T31 — integración académica de cotizaciones:**
 `QuotePreviewService.preview(order_id, quote_id, load_kg, costs)` lee un único
 OrderRecord solicitado y combina estimación T21, PricingService T22 y reglas

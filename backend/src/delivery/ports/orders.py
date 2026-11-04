@@ -1,7 +1,7 @@
 """T20: repositorio de pedidos, catálogo de negocios y validación de requisitos."""
 
 from datetime import datetime
-from typing import Optional, Protocol
+from typing import Optional, Protocol, Tuple
 
 from delivery.domain.models import Business, Order, OrderStatus
 from delivery.domain.order_lifecycle import OrderRecord
@@ -13,6 +13,8 @@ class BusinessReader(Protocol):
 
 class OrderRepository(Protocol):
     def get(self, order_id: str) -> OrderRecord: ...
+
+    def list(self, limit: int) -> Tuple[OrderRecord, ...]: ...
 
     def create(self, order: Order, occurred_at: datetime) -> OrderRecord: ...
 

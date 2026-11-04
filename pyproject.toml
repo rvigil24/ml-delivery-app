@@ -15,6 +15,7 @@ dependencies = [
     "matplotlib>=3.9,<4",
     "pandas>=2.2,<3",
     "pydantic>=2.9,<3",
+    "pymongo>=4.9,<5",
     "pyspark>=3.5.7,<3.6",
     "scikit-learn>=1.6,<1.8",
     "torch>=2.8,<2.9",
