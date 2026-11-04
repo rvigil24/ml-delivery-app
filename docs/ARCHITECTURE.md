@@ -202,6 +202,17 @@ de las entidades de dominio.
 
 ### Organización prevista del código
 
+**Artefacto académico local T19:** el bundle versionado en
+`models/delivery-duration/meituan-temporal-rf-v1/` contiene transformación T13 y
+Random Forest, metadatos, evidencia y ficha. Su entrada interna es hora UTC
+`request_hour_utc` (0–23) y día UTC `request_weekday_utc` (lunes=0, domingo=6);
+su salida es una duración en minutos, sin intervalo predictivo. El cargador
+`delivery_ml.artifact.load_pipeline` verifica esquema, hashes y entorno antes de
+deserializar un bundle propio de confianza. Incompatibilidad/ausencia falla
+explícitamente. No es un DTO HTTP ni cambia los puertos propuestos: T30/T31
+concretarán el adapter/API. No se publica en S3 ni se acredita uso operativo;
+ver selección y límites en DATA_ML.
+
 ```text
 backend/
   src/delivery/

@@ -1260,6 +1260,70 @@ fuera de Git. Google Colab directamente continúa pendiente.
 Referencias: [R²](https://scikit-learn.org/1.7/modules/generated/sklearn.metrics.r2_score.html)
 y [prevención de fuga de datos](https://scikit-learn.org/1.7/common_pitfalls.html#data-leakage).
 
+## Selección y persistencia académica local — T19
+
+Responsable: Ruben Vigil. Se selecciona Random Forest con profundidad 6 por
+**menor MAE interno** entre las cinco alternativas: 8.955647 min frente a
+9.065874 de MLP. El test T18 no decide el ganador ni cambia hiperparámetros.
+La diferencia de MAE de test que favorece ligeramente a MLP no sustituye la
+regla de selección fijada por validación. El modelo elegido sigue teniendo
+MAE test 9.125362 min, RMSE 11.855652 min y R² 0.075474, sin validez operativa
+demostrada para El Salvador ni diferenciación de rutas/vehículos.
+
+```bash
+uv run --locked python ml/experiments/export_model.py
+```
+
+El exportador verifica T13 y la procedencia/versiones de informes T16–T18,
+selecciona por CV y reajusta solo con los 409,083 pedidos train. No carga test:
+sus métricas se conservan del informe T18. Comprueba que el error train del
+reajuste reproduce T18 dentro de 1e-9 minutos; no es una evaluación nueva.
+
+Pipeline completo: `FunctionTransformer(temporal_features)` seguido del pipeline
+Random Forest de T15 con parámetros elegidos en T16. Recibe únicamente
+`request_hour_utc` entero 0–23 y `request_weekday_utc` entero 0–6 (lunes=0),
+ambos UTC. Calcula las cuatro variables T13 y devuelve minutos. IDs, llegada,
+target, vehículo y distancia no son entradas. El contrato es interno del
+artefacto; no define todavía un payload HTTP ni reglas comerciales.
+
+El bundle `models/delivery-duration/meituan-temporal-rf-v1/` contiene:
+
+- `pipeline.pkl`: transformación y bosque ajustados, formato pickle protocolo 5.
+- `metadata.json`: esquema `delivery-duration-v1`, versión, entradas/unidades,
+  entorno exacto, receta/código/datos, selección, métricas reales y hashes.
+- `evidence.json`: copias completas de los reportes agregados T16–T18 que
+  fundamentan la selección/evaluación, aunque luego se regeneren los originales.
+- `model_card.md`: procedencia, decisión, alcance académico y limitaciones.
+
+Se escribe primero en staging y se recarga antes de publicar el directorio local.
+Sobre todo train se verifican predicciones con tolerancia absoluta 1e-12 minutos;
+la reducción paralela del bosque puede introducir diferencias numéricas mínimas.
+Las particiones se verifican intactas. Una receta idéntica existente se valida sin
+sobrescribir ni volver a ajustar; otra receta requiere otra versión con `--output`.
+
+El cargador `delivery_ml.artifact.load_pipeline(Path(...))` verifica esquema,
+columnas/unidad, versiones Python/scikit-learn/NumPy/SciPy/Pandas y hashes antes
+de deserializar. Solo cargar bundles propios de confianza: pickle puede ejecutar
+código, y hash/metadata no autentican al autor. Se debe conservar el mismo código
+y entorno versionado. No se añade joblib, ONNX ni otra dependencia para serializar.
+
+Todo queda fuera de Git. Guardar localmente no acredita derechos de publicación
+o alojamiento externo: la revisión de términos/atribución y la autorización antes
+de subir a S3 siguen pendientes en T33. Se conserva la condición documentada en
+la sección de términos; no se sube nada ni se modifica el bucket existente.
+
+Comprobaciones reales: 50 pruebas aprobadas en Python 3.12.14 (un aviso conocido
+de Dask/NumPy); las dos nuevas también pasan en Python 3.9.25. Sus casos
+controlados verifican selección por CV pese a un orden test contrario, recarga
+equivalente y rechazo de entorno/corrupción antes de deserializar. No son datos
+del experimento. Se ejecutaron las tres celdas nuevas T19 y se conservaron las
+21 anteriores sin cambios de código: notebook con 24 celdas verificadas en etapas,
+sin repetir entrenamientos previos. Fuente sin salidas y copia ejecutada fuera
+de Git; Google Colab directamente sigue pendiente.
+
+Referencias: [persistencia scikit-learn](https://scikit-learn.org/1.7/model_persistence.html)
+y [pickle de Python](https://docs.python.org/3.12/library/pickle.html).
+
 ## Entrenamiento y evaluación — T13 a T19
 
 - **T13:** variables predictoras, pipelines de preprocesamiento, división entrenamiento/prueba sin fuga de datos (temporal si corresponde).
