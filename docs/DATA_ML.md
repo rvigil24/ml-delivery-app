@@ -799,10 +799,8 @@ transferencia. La salida se reúne en memoria y no demuestra escalabilidad
 ilimitada. T12 debe medir trabajo equivalente real, sin inferir rapidez de la
 equivalencia ni confundir construir un grafo con ejecutar sus acciones.
 
-El notebook incorpora T11; T12 sigue pendiente. La reproducción no depende de
-las instrucciones temporales para agentes; metodología y contratos de datos
-permanecen aquí, en README y en el notebook. El empaquetador ya no exige ni
-incluye `AGENTS.md`.
+El notebook incorpora T11; T12 sigue pendiente. La metodología, los contratos de datos y las instrucciones de reproducción
+permanecen aquí, en README y en el notebook.
 
 Referencias oficiales: [instalación, Python y Java](https://spark.apache.org/docs/3.5.7/api/python/getting_started/install.html),
 [agrupaciones](https://spark.apache.org/docs/3.5.7/api/python/reference/pyspark.sql/api/pyspark.sql.DataFrame.groupBy.html).
@@ -1015,8 +1013,7 @@ cobertura china de entregas completadas. No se acredita generalización local,
 por vehículo o para toda la demanda. T15–T19 siguen pendientes.
 
 El segundo notebook incorpora el código, ajuste y errores reales. El paquete
-Colab incluye ahora `ml/experiments/` para poder ejecutarlo, sin datos ni
-dependencias hacia instrucciones temporales para agentes.
+Colab incluye ahora `ml/experiments/` para poder ejecutarlo, sin incluir datos.
 
 Referencias oficiales: [DummyRegressor](https://scikit-learn.org/stable/modules/generated/sklearn.dummy.DummyRegressor.html),
 [métricas y elección de funcional](https://scikit-learn.org/stable/modules/model_evaluation.html#regression-metrics).
