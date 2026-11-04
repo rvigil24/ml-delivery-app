@@ -76,3 +76,7 @@ Revisión final ship: cuatro capturas escritorio/móvil. Mundo visual conservado
 Corrección T52: Cliente muestra ETA/distancia reales antes de guardar y conserva
 la estimación al confirmar. Comparación de riesgo con plazo explícito opcional.
 Sin nuevo mundo visual. Revisión ship: seis capturas válidas escritorio/móvil.
+
+T53: seguimiento del pedido del cliente y estados de paneles por polling visible
+cada5s. Sin reiniciar formularios ni inferencia ML. Revisión final ship, seis
+capturas escritorio/móvil de estados sincronizados y error con datos retenidos.

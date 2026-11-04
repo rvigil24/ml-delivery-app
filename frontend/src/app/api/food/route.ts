@@ -20,7 +20,9 @@ export async function GET(request: NextRequest) {
   const query = request.nextUrl.searchParams;
   const base = (process.env.DELIVERY_API_URL || "http://127.0.0.1:8001").replace(/\/$/, "");
   let path: string;
-  if (query.get("operation") === "nearby") {
+  if (query.get("operation") === "order" && query.get("order_id")) {
+    path = `/orders/${encodeURIComponent(query.get("order_id")!)}`;
+  } else if (query.get("operation") === "nearby") {
     const params = new URLSearchParams({ latitude: query.get("latitude") || "", longitude: query.get("longitude") || "" });
     path = `/businesses/nearby?${params}`;
   } else if (query.get("operation") === "menu" && query.get("business_id")) {

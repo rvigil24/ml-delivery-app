@@ -1,13 +1,14 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { useLiveRefresh } from "@/lib/use-live-refresh";
 import { canFinishRoute, nextCourierStop, stopCompleted, type Courier, type CourierRoute } from "@/lib/courier-routes";
 import { coordinates } from "@/lib/demo-data";
 import { statusLabels } from "@/lib/business-orders";
 import { Icon } from "./icon";
 
 async function query(params: Record<string, string>, signal: AbortSignal) {
-  const response = await fetch(`/api/courier?${new URLSearchParams(params)}`, { signal });
+  const response = await fetch(`/api/courier?${new URLSearchParams(params)}`, { signal: AbortSignal.any([signal, AbortSignal.timeout(20000)]), cache: "no-store" });
   if (!response.ok) throw new Error("No pudimos consultar las entregas.");
   return response.json();
 }
@@ -48,6 +49,15 @@ export function CourierPanel() {
     return () => controller.abort();
   }, [courierId, revision]);
 
+  const sync = useCallback(async (signal: AbortSignal) => {
+    try {
+      const [assignments, people] = await Promise.all([query({ operation: "assignments", courier_id: courierId }, signal), query({ operation: "couriers" }, signal)]);
+      if (!Array.isArray(assignments) || !Array.isArray(people)) throw new Error("Respuesta inválida");
+      if (!signal.aborted && !actionLock.current) { setRoutes(assignments); setCouriers(people); setDataError(""); }
+    } catch { if (!signal.aborted) setDataError("No pudimos actualizar las entregas. Se conserva el último estado; volveremos a intentar."); }
+  }, [courierId]);
+  useLiveRefresh(sync, !!courierId && !loading && !saving && !catalogError);
+
   const courier = couriers.find((row) => row.id === courierId);
   const selected = routes.find((row) => row.id === routeId) || routes.find((row) => row.active) || routes[0];
   const next = selected ? nextCourierStop(selected) : null;
@@ -80,6 +90,7 @@ export function CourierPanel() {
       <div className="form-field"><label htmlFor="assignment-select">Ruta asignada</label><select id="assignment-select" value={selected?.id || ""} disabled={saving || !routes.length} onChange={(event) => { setRouteId(event.target.value); clearFeedback(); }}><option value="" disabled>{loading ? "Consultando rutas…" : "Sin asignaciones"}</option>{routes.map((row) => <option key={row.id} value={row.id}>{row.id} · {row.active ? "En curso" : "Finalizada"}</option>)}</select></div>
       <button type="button" className="button button-secondary" disabled={saving || loading} onClick={() => { clearFeedback(); setRevision((value) => value + 1); }}>Actualizar</button>
     </section>
+    <p className="form-help">Estados con actualización automática cada 5 segundos.</p>
     {courier && <p className="courier-profile"><Icon name="bike"/>{courier.vehicle === "bicicleta" ? "Bicicleta" : "Motocicleta"} · {courier.approved ? "Aprobado" : "Aprobación pendiente"} · {courier.available ? "Disponible" : "Ocupado"}</p>}
     {loading && <p className="business-status" role="status">Consultando asignaciones…</p>}
     {(catalogError || dataError) && <p className="form-error" role="alert">{catalogError || dataError}</p>}

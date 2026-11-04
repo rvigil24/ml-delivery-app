@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
+import { useLiveRefresh } from "@/lib/use-live-refresh";
 import { statusLabels, type OrderRecord } from "@/lib/business-orders";
 
 type Row = { record: OrderRecord; cash: null | { currency: string; expected_amount: string; events: { status: string }[] } };
@@ -12,6 +13,7 @@ export function OperationsPanel() {
   const [selectedId, setSelectedId] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [syncError, setSyncError] = useState("");
   const [revision, setRevision] = useState(0);
   const [preview, setPreview] = useState<Preview | null>(null);
   const [calculating, setCalculating] = useState(false);
@@ -23,10 +25,19 @@ export function OperationsPanel() {
       const body = await response.json();
       if (!response.ok) throw new Error(body.message);
       if (!Array.isArray(body)) throw new Error("Respuesta de pedidos inválida.");
-      if (!controller.signal.aborted) { setRows(body); setLoading(false); }
+      if (!controller.signal.aborted) { setRows(body); setSelectedId((current) => body.some((row: Row) => row.record.order.id === current) ? current : body[0]?.record.order.id || ""); setLoading(false); }
     }).catch((cause) => { if (!controller.signal.aborted) { setError(cause.message || "No pudimos consultar los pedidos."); setLoading(false); } });
     return () => controller.abort();
   }, [revision]);
+  const sync = useCallback(async (signal: AbortSignal) => {
+    try {
+      const response = await fetch("/api/operations", { signal: AbortSignal.any([signal, AbortSignal.timeout(20000)]), cache: "no-store" });
+      const body = await response.json();
+      if (!response.ok || !Array.isArray(body)) throw new Error("Consulta no disponible");
+      if (!signal.aborted) { setRows(body); setError(""); setSyncError(""); }
+    } catch { if (!signal.aborted) setSyncError("No pudimos actualizar los pedidos. Se conserva el último estado; volveremos a intentar."); }
+  }, []);
+  useLiveRefresh(sync, !loading && !calculating);
   const selected = rows.find((row) => row.record.order.id === selectedId) || rows[0];
   async function calculate(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -43,6 +54,8 @@ export function OperationsPanel() {
     finally { setCalculating(false); }
   }
   return <div className="business-panel operations-panel">
+    <p className="form-help">Estados con actualización automática cada 5 segundos.</p>
+    {syncError && <p className="form-error" role="alert">{syncError}</p>}
     <div className="business-toolbar"><p>Hasta 100 pedidos guardados. Los cobros son registros simulados.</p><button className="button button-secondary" disabled={loading || calculating} onClick={() => setRevision((value) => value + 1)}>Actualizar</button></div>
     {loading ? <p role="status">Consultando pedidos y efectivo…</p> : error ? <p className="form-error" role="alert">{error}</p> : !rows.length ? <section className="panel empty-state"><h2>Todavía no hay pedidos</h2><p>Los pedidos registrados en la API aparecerán aquí.</p></section> : <div className="work-grid">
       <section className="panel"><div className="section-heading"><h2>Pedidos y efectivo</h2><span className="count-label">{rows.length} pedidos</span></div>
