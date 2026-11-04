@@ -748,6 +748,149 @@ Métodos: [reloj de alta resolución — Python](https://docs.python.org/3/libra
 [buenas prácticas — Dask](https://docs.dask.org/en/stable/best-practices.html),
 [transformaciones y acciones — Spark](https://spark.apache.org/docs/3.5.7/rdd-programming-guide.html#rdd-operations).
 
+## Variables y separación temporal — T13
+
+Responsable: Ruben Vigil. Dependencias T07–T12 verificadas e integradas.
+`delivery_ml.model_data` define el preprocesamiento fijo y la partición;
+`ml/data/prepare_model_data.py` verifica T08 y materializa una versión nueva.
+
+```bash
+uv run --locked python ml/data/prepare_model_data.py
+```
+
+### Versión de features `temporal-cyclic-v1`
+
+Entradas confirmadas: `request_hour_utc` (0–23) y `request_weekday_utc`
+(lunes=0 a domingo=6), comprobadas contra el timestamp de solicitud. Se derivan
+`request_hour_sin`, `request_hour_cos`, `request_weekday_sin` y
+`request_weekday_cos` con seno/coseno de `2*pi*hora/24` y `2*pi*día/7`.
+Es transformación de calendario fija, sin aprender medias, escalas, vocabularios
+o estadísticas del test. Las representaciones mantienen próximos los extremos
+del ciclo. No se seleccionaron mirando desempeño predictivo.
+
+`model_xy` devuelve solo esas cuatro columnas y el target separado. Los CSV
+también conservan IDs, eventos y contexto para trazabilidad, pero no son entradas
+automáticas del modelo. Nunca usar todas las columnas salvo el target: eso
+incluiría llegada y otras fugas. Las coordenadas no entran en esta versión;
+la confirmación de escala/anonimización sigue pendiente. No hay distancias,
+features de vehículo ni cambios de contratos HTTP. La versión temporal puede
+tener capacidad limitada y no diferencia rutas o pedidos con igual contexto;
+T13 no acredita calidad predictiva ni sustituye una validación local.
+
+### Partición `t13-temporal-v1`
+
+Se fija `2022-10-23T00:00:00Z`, reservando las dos últimas fechas UTC de creación
+como prueba (último día parcial). Es decisión técnica del experimento basada
+en cobertura temporal, no una regla comercial o un corte elegido por métricas.
+
+- Entrenamiento: creación **y llegada estrictamente anteriores** al corte.
+- Prueba: creación en/después del corte.
+- `purged`: creación anterior, llegada en/después. Su etiqueta no habría estado disponible para entrenar al comenzar el test; se registra aparte sin moverla al test.
+
+No hay umbral de duración ni recorte de extremos. Se conserva contabilidad de
+los 546,281 pedidos, con IDs y waybills disjuntos entre las tres particiones.
+Cada salida tiene 11 columnas: seis de trazabilidad/contexto, cuatro predictores
+y el target observado. Se ordena por creación/ID, no aleatoriamente.
+
+| Partición | Pedidos | Fechas de creación UTC | SHA-256 del CSV |
+|---|---:|---|---|
+| train | 409,083 | 2022-10-16 15:39:37 a 2022-10-22 23:46:50 | `1057bca6506fb8f1fc1fb60a9e7f28f2835fc83ddbd62979936422c88b67f2df` |
+| test | 136,799 | 2022-10-23 00:00:00 a 2022-10-24 15:59:48 | `b4f4f3f3e833afcff1b871d6b765f810b47a5565e1de706b5a98949b09edef9e` |
+| purged | 399 | 2022-10-22 23:04:36 a 2022-10-22 23:59:59 | `fe357796c43bc17f5d1176a92db43842376d319aefee96cf7daac723ba88da67` |
+
+Localización: `data/splits/meituan/<revision>/t13-temporal-v1/`, ignorada por Git.
+El manifiesto enlaza hash del CSV/manifiesto T08, implementación, versiones,
+corte, selección de variables, roles y archivos de salida. Una repetición
+verificó copias existentes sin sobrescribir. Cambiar receta, intérprete o corte
+requiere otra versión mediante `--output`; `--test-start` exige zona horaria y
+segundos enteros. Fuente y cohorte T08 quedan intactas.
+
+### Alcance de la evaluación futura y comprobaciones
+
+El EDA T09 ya observó agregados de toda la cohorte. Por tanto, **el test no es
+ciego a aquella exploración previa**. Desde T13 queda reservado para evaluación;
+no se ajustarán features, escaladores, hiperparámetros o reglas usando sus
+resultados. Los futuros preprocesamientos aprendidos se ajustarán solo dentro
+del entrenamiento/folds. T16 también debe respetar el orden temporal y la
+disponibilidad de etiquetas al definir sus folds.
+
+Se mantiene el sesgo de cohorte completada/inmediata, país extranjero y ventana
+corta. No se entrenó baseline/modelo ni se calcularon MAE/RMSE u otras métricas.
+Las condiciones permiten esta preparación temporal, sin afirmar geografía ni
+generalización por vehículo. T14 queda pendiente del siguiente paso.
+
+Comprobaciones: **38 pruebas aprobadas en Python 3.12.14 y 3.9.25**; tres nuevas
+verifican calendario cíclico independiente de target/futuro, aislamiento temporal
+incluida llegada igual al corte, selección explícita de X/y y rechazos de datos
+ambiguos/contexto inválido. Materialización real y mismos hashes en ambos
+intérpretes. Segundo notebook `02_modelado_y_evaluacion.ipynb`: T13 ejecutable,
+T14–T19 pendientes; resultados agregados sin filas de pedidos.
+
+Referencia metodológica: [fugas y preprocesamiento](https://scikit-learn.org/stable/common_pitfalls.html#data-leakage),
+[evaluación temporal](https://scikit-learn.org/stable/modules/cross_validation.html#time-series-split).
+
+## Baseline observado — T14
+
+Responsable: Ruben Vigil; dependencia T13 preparada y verificada. Se añaden
+`delivery_ml.baseline` y `ml/experiments/evaluate_baseline.py`, usando
+`scikit-learn>=1.6,<1.8` con versiones fijadas por intérprete en `uv.lock`.
+
+```bash
+uv run --locked python ml/experiments/evaluate_baseline.py
+```
+
+Se fija **una sola referencia** antes de evaluar test:
+`DummyRegressor(strategy="median")`. Aprende exclusivamente la mediana de
+`y_train`, **27.75 minutos**, y predice esa constante para todos los pedidos.
+La elección es coherente con error absoluto (MAE principal); RMSE se reporta
+también como diagnóstico. No se comparan estrategias para escoger por test.
+El estimador recibe solo la lista de cuatro features de T13 e ignora sus valores
+por definición; IDs, llegada y target no entran como predictores.
+
+La receta valida hashes/manifiesto T13, ajusta con 409,083 pedidos, evalúa train
+y después carga test únicamente para evaluación del objeto ya ajustado. Se
+comprueban IDs disjuntos, disponibilidad temporal y constante inalterada después
+de evaluar. Los 399 purgados no participan. No se vuelve a calcular la constante
+con test ni se modifica el corte, las features o los archivos de datos.
+
+| Conjunto | Pedidos | MAE (minutos) | RMSE (minutos) |
+|---|---:|---:|---:|
+| Entrenamiento | 409,083 | 9.260672 | 12.192908 |
+| Prueba | 136,799 | 9.501230 | 12.562496 |
+
+MAE es el promedio de errores absolutos, no la mediana de errores. RMSE es la
+raíz del promedio de errores al cuadrado y penaliza más errores grandes. Son
+errores observados en minutos; no se informa porcentaje de exactitud ni se
+convierte la constante en regla comercial/promesa de tiempo de entrega.
+
+Salida: `data/reports/meituan/<revision>/t14_baseline.json` y `.md`, ignorados por
+Git, con fecha real, constante, métricas, versiones, hashes de train/test,
+manifiesto de partición, implementación, `pyproject.toml` y lockfile. El modelo
+se ajustó realmente en memoria; no se persistió un artefacto final (T19) ni se
+implementaron API, AWS o modelos de T15. Reejecutar reproduce la misma referencia
+congelada, no nuevas pruebas independientes ni una búsqueda de estrategias.
+
+Comprobaciones: **40 pruebas aprobadas en Python 3.12.14 y 3.9.25**. Se usó
+scikit-learn 1.7.2 / SciPy 1.18.1 en Python 3.12 y scikit-learn 1.6.1 /
+SciPy 1.13.1 en Python 3.9. Constante y métricas reales coinciden entre ambos
+intérpretes (tolerancia comprobada de 1e-10 minutos). Dos pruebas nuevas verifican
+mediana solo de train, inmutabilidad frente a test, métricas calculables a mano
+y rechazos de targets inválidos/vacíos. Los casos controlados no se incorporan
+al experimento real.
+
+La consulta de test en esta tarea es evaluación de una referencia fija; futuros
+ajustes/elección de hiperparámetros usarán exclusivamente entrenamiento y
+validación interna. Se mantiene el límite del EDA previo global y la corta
+cobertura china de entregas completadas. No se acredita generalización local,
+por vehículo o para toda la demanda. T15–T19 siguen pendientes.
+
+El segundo notebook incorpora el código, ajuste y errores reales. El paquete
+Colab incluye ahora `ml/experiments/` para poder ejecutarlo, sin datos ni
+dependencias hacia instrucciones temporales para agentes.
+
+Referencias oficiales: [DummyRegressor](https://scikit-learn.org/stable/modules/generated/sklearn.dummy.DummyRegressor.html),
+[métricas y elección de funcional](https://scikit-learn.org/stable/modules/model_evaluation.html#regression-metrics).
+
 ## Datos necesarios para cada parte del producto
 
 | Necesidad | Fuente adecuada | Método previsto |
