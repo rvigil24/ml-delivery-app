@@ -30,8 +30,9 @@ corresponden al reparto previo y deben interpretarse con esta actualización.
 - **T19:** completada con la evidencia de cierre indicada abajo; integración verificable en su PR y la guía externa.
 - **T20–T21:** completadas con la evidencia de cierre indicada abajo; integración verificable en su PR y la guía externa.
 - **T22–T23:** completadas con la evidencia de cierre indicada abajo; integración verificable en su PR y la guía externa.
-- **Siguiente tarea:** T24, pendiente; el próximo bloque aún no se ha iniciado.
-- **T24–T40:** continuar según dependencias y criterios de aceptación.
+- **T24–T25:** completadas con la evidencia de cierre indicada abajo; integración verificable en su PR y la guía externa.
+- **Siguiente tarea:** T26, pendiente; el próximo bloque aún no se ha iniciado.
+- **T26–T40:** continuar según dependencias y criterios de aceptación.
 - **T41–T54:** asignadas a Ruben Vigil; despliegue y gastos siguen requiriendo autorización explícita.
 
 Cada agente trabaja una tarea por iteración, informa resultados y evita hacer
@@ -270,7 +271,29 @@ No se fijan valores reales de tarifas, costos, zonas o límites. La emisión
 comercial y los avances de T20 siguen sujetos a los requisitos pendientes;
 no se añaden API, persistencia o infraestructura. T24 no se inicia en este cierre.
 
-## Instrucciones concretas y criterios de aceptación: T01–T23
+### Cierre autorizado: T24–T25 — rutas y escenarios de costos
+
+Rama `backend/T24-T25-rutas-costos`, creada desde `origin/main` actualizado
+en `41c0d93` (PR #12 integrado). Responsable: Ruben Vigil.
+
+- T24: completada; base académica aprobada explícitamente por Ruben e implementada. Ruta abierta desde inicio/grupo explícitos, vecino más cercano Haversine, precedencia recogida/entrega y desempate por ID. Máximo y zona T23 obligatorios, sin valores predeterminados; rechaza duplicados, pedidos no planificables y extremos fuera. Snapshots/paradas/tramos/totales inmutables, sin asignación o cambios de estado, capacidad/tiempos viales sin validar. 41 pruebas del backend aprobadas en Python 3.12 y las cinco nuevas también en Python 3.9. Documentación/guía/fuentes actualizadas.
+- T25: completada; supuestos académicos aprobados explícitamente por Ruben e implementados. Mismos pedidos/snapshots, inicio, políticas y moneda; rutas abiertas independientes por individual frente a un recorrido agrupado. Una base de pago por recorrido y costos explícitos para cada individual/grupo, sin ingresos/ROI o descuentos al cliente. Desgloses, agregados y diferencias con signo; sin mutar pedidos ni garantizar capacidad/viabilidad o ahorro. 46 pruebas del backend aprobadas en Python 3.12 y las cinco nuevas también en Python 3.9. Documentación/guía/fuentes actualizadas.
+
+Por orden explícita de Ruben se registran T24 y T25 como completadas en el
+backlog local, con las bases académicas y supuestos aprobados previamente.
+No se modifica el Excel ni se atribuye revisión independiente. Dependencias y
+criterios contrastados con implementación, contratos y comprobaciones reales:
+46 pruebas del backend aprobadas en Python 3.12 y las diez nuevas del bloque
+también en 3.9. Fuentes y modelo T19 comprobados; dependencias compatibles.
+No se repiten pruebas/entrenamientos/notebooks ML sin cambios de código.
+
+El cierre publica un único PR, verifica su integración en remoto y sincroniza
+`main`; PR/commit y resultado se registran después en GitHub y la guía externa.
+No se inventan tamaños/límites reales, distancias viales, velocidades, costos
+o tiempos; capacidad/viabilidad siguen sin validar. No se integran API,
+persistencia o AWS. T26 no se inicia en este cierre.
+
+## Instrucciones concretas y criterios de aceptación: T01–T25
 
 ### T01 — Crear repositorio Git y estructura modular del proyecto
 
@@ -502,6 +525,26 @@ no se añaden API, persistencia o infraestructura. T24 no se inicia en este cier
 
 **Terminado cuando:** ambos vehículos configurados, entradas válidas/unidades explícitas, bordes y límites probados, todos/uno/ninguno como opciones, pedido/historial y ML intactos, snapshot reproducible, pruebas/contratos/guía. Sin valores comerciales inventados, tiempos por vehículo ni asignación T26.
 
+### T24 — Implementar sugerencia sencilla de rutas y orden de entregas
+
+**Responsable:** Ruben Vigil
+
+**Dependencia:** pedidos T20, distancia T21, ServiceArea T23 y base de planificación aprobada.
+
+**Implementar:** ruta académica abierta por vecino cercano con recogida previa a entrega, grupo/inicio/configuración explícitos, snapshots y tramos reproducibles.
+
+**Terminado cuando:** precedencia y desempate comprobados, dos paradas por pedido, total de tramos sin retorno automático, rechazos sin filtrar entradas, pedido/historial intactos y restricciones visibles; pruebas, contratos y guía. Sin óptimo garantizado, capacidad/tiempos viales/asignación ni comparación T25.
+
+### T25 — Comparar costos de entregas individuales y agrupadas
+
+**Responsable:** Ruben Vigil
+
+**Dependencia:** política T22, rutas T24 y supuestos de comparación aprobados.
+
+**Implementar:** comparación académica de costos del operador con mismas entradas, costos explícitos, base por recorrido y diferencias con signo.
+
+**Terminado cuando:** snapshots/rutas/políticas/costos trazables, componentes/totales conciliados, redondeo/moneda preservados, caso agrupado más caro y caso individual idéntico probados, entradas incompletas rechazadas y pedido/historial intactos. Sin ingresos/ROI, ahorro garantizado, asignación o capacidad/vialidad implícitas; contratos y guía actualizados.
+
 ## Backlog completo y asignaciones
 
 | ID | Área | Tarea | Responsable | Estado de referencia / actualización autorizada |
@@ -529,8 +572,8 @@ no se añaden API, persistencia o infraestructura. T24 no se inicia en este cier
 | T21 | Lógica del negocio y simulación | Implementar estimación de distancia y tiempo para cotizaciones | Ruben Vigil | Completada |
 | T22 | Lógica del negocio y simulación | Desarrollar cálculo de tarifas, costos operativos y remuneración del repartidor | Ruben Vigil | Completada |
 | T23 | Lógica del negocio y simulación | Implementar reglas para entregas en bicicleta y motocicleta | Ruben Vigil | Completada |
-| T24 | Lógica del negocio y simulación | Implementar sugerencia sencilla de rutas y orden de entregas | Ruben Vigil | Pendiente |
-| T25 | Lógica del negocio y simulación | Comparar costos de entregas individuales y agrupadas | Ruben Vigil | Pendiente |
+| T24 | Lógica del negocio y simulación | Implementar sugerencia sencilla de rutas y orden de entregas | Ruben Vigil | Completada |
+| T25 | Lógica del negocio y simulación | Comparar costos de entregas individuales y agrupadas | Ruben Vigil | Completada |
 | T26 | Lógica del negocio y simulación | Desarrollar simulador de asignación de repartidores aprobados | Ruben Vigil | Pendiente |
 | T27 | Lógica del negocio y simulación | Implementar simulación de mensajes y solicitudes por WhatsApp | Ruben Vigil | Pendiente |
 | T28 | Lógica del negocio y simulación | Simular pagos en efectivo y estados contables | Ruben Vigil | Pendiente |
