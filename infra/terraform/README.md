@@ -204,3 +204,14 @@ agotó el margen anterior de 60 segundos, pero su tarea sí arrancó después:
 verificar ECS antes de reintentar un job, porque reintentar la entrega puede
 reemplazar la tarea y cambiar su IP. La corrección del margen no despliega una
 nueva imagen automáticamente. La tarea de espera 0 continúa ejecutándose.
+
+### Comprobación funcional realizada
+
+Tras autorizar 3.231.221.94/32 en Atlas se verificaron /health, predicción v2
+con source S3 y creación/lectura HTTP de un negocio SIMULADO. Otra conexión
+Atlas confirmó la persistencia; la fixture se eliminó y se comprobó ausencia.
+Logs de arranque/predicción y series CPU/memoria CloudWatch comprobados, sin
+ensayo de carga. Revisión activa :5 con imagen 17d4a75 y espera 0. Esta evidencia
+no incluye la demo automática de efectivo en AWS (continúa deshabilitada).
+Swagger actual: http://3.231.221.94:8000/docs, accesible desde la /32 permitida.
+No redesplegar por actualizar documentos: reemplazar la tarea puede cambiar IP.

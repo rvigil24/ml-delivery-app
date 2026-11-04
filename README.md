@@ -4,7 +4,7 @@ Proyecto académico de entregas simuladas con FastAPI, MongoDB y modelos de
 Machine Learning entrenados con datos reales de Meituan. La demo actual permite
 recorrer un pedido hasta la entrega del efectivo y consultar **duración estimada
 y riesgo de retraso**. Next.js está pendiente. La infraestructura AWS ya está
-creada; la API cloud espera la autorización de su IP en Atlas.
+creada; la API cloud ya fue verificada con modelos desde S3 y persistencia Atlas.
 
 **Reporte para lectura y entrega:** [PDF](reports/Reporte_Tecnico_Asistente_Delivery.pdf) · [Word editable](reports/Reporte_Tecnico_Asistente_Delivery.docx).
 
@@ -14,11 +14,11 @@ creada; la API cloud espera la autorización de su IP en Atlas.
 
 **Guion y demostración:** [Guía PDF](reports/Guia_Exposicion_y_Demo.pdf) · [Word editable](reports/Guia_Exposicion_y_Demo.docx).
 
-**Despliegue AWS (ECS con Fargate, validación funcional pendiente):** [PDF](reports/Propuesta_Despliegue_AWS.pdf) · [Word editable](reports/Propuesta_Despliegue_AWS.docx).
+**Despliegue AWS verificado (ECS con Fargate):** [PDF](reports/Propuesta_Despliegue_AWS.pdf) · [Word editable](reports/Propuesta_Despliegue_AWS.docx).
 
 Configuración de infraestructura y arranque cloud: [Terraform](infra/terraform/README.md).
-El contenedor Fargate está ejecutándose y espera acceso a Atlas antes de iniciar
-la API. Su IP actual debe permitirse como /32 en Network Access de Atlas.
+API actual: [Swagger en AWS](http://3.231.221.94:8000/docs). Acceso restringido a
+la IP configurada del presentador; la IPv4 cambia si se reemplaza la tarea.
 
 CI verifica pruebas básicas, Terraform y build Docker en cada PR. El [despliegue AWS](infra/terraform/README.md) es manual y requiere infraestructura y permisos previamente autorizados.
 

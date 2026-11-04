@@ -34,7 +34,7 @@ corresponden al reparto previo y deben interpretarse con esta actualización.
 - **T26–T27:** completadas por cierre autorizado, con evidencia abajo; integración verificable en el PR y la guía externa.
 - **T28–T29:** completadas por cierre autorizado, con evidencia abajo; integración verificable en el PR y la guía externa.
 - **T30–T31:** completadas por cierre autorizado con alcance académico, con evidencia abajo; integración verificable en el PR y la guía externa.
-- **T32–T33:** completadas por cierre autorizado con evidencia local, Atlas y S3 indicada abajo; integración verificable en el PR del bloque y la guía externa. T34 completada por cierre autorizado con evidencia abajo. T35 completada por cierre autorizado con evidencia abajo. T36 y la mejora ML con arranque v2 S3 completadas por cierre autorizado, con evidencia abajo. T37 completada por cierre autorizado, con evidencia abajo. T38 completada por cierre autorizado, con reporte Word/PDF y evidencia abajo. T39 completada por cierre autorizado, con informe y paquete de evidencias. T40 completada por cierre autorizado, con presentación y demo ensayada. T41 completada por cierre autorizado con propuesta ECS/Fargate y presupuesto breve; evidencia abajo. T42 completada por cierre autorizado con Terraform validado y plan sin apply. T43 completada por cierre autorizado con arranque local verificado. T44 integrada en PR #29 con CI aprobada. Bloque activo: T45 (seguridad/OIDC; activación AWS pendiente de autorización).
+- **T32–T33:** completadas por cierre autorizado con evidencia local, Atlas y S3 indicada abajo; integración verificable en el PR del bloque y la guía externa. T34 completada por cierre autorizado con evidencia abajo. T35 completada por cierre autorizado con evidencia abajo. T36 y la mejora ML con arranque v2 S3 completadas por cierre autorizado, con evidencia abajo. T37 completada por cierre autorizado, con evidencia abajo. T38 completada por cierre autorizado, con reporte Word/PDF y evidencia abajo. T39 completada por cierre autorizado, con informe y paquete de evidencias. T40 completada por cierre autorizado, con presentación y demo ensayada. T41 completada por cierre autorizado con propuesta ECS/Fargate y presupuesto breve; evidencia abajo. T42 completada por cierre autorizado con Terraform validado y plan sin apply. T43 completada por cierre autorizado con arranque local verificado. T44 integrada en PR #29 con CI aprobada. T45–T46 completadas con activación autorizada y evidencia cloud al final. Siguiente tarea: T47 (Next.js), sin iniciar en este cierre.
 - **T40:** completada con material editable, PDF y guía; evidencia abajo.
 - **T41–T54:** asignadas a Ruben Vigil; despliegue y gastos siguen requiriendo autorización explícita.
 
@@ -1045,8 +1045,8 @@ fuentes actualizados. Sin modificar Excel, borrar ramas o iniciar despliegue.
 | T42 | Despliegue y CI/CD | Implementar infraestructura como código con Terraform (ECS/Fargate, ECR, red, IAM y S3 existente) | Ruben Vigil | Completada |
 | T43 | Despliegue y CI/CD | Configurar servicio ECS/Fargate y variables para despliegue; conservar Compose local | Ruben Vigil | Completada |
 | T44 | Despliegue y CI/CD | Crear pipeline CI/CD en GitHub Actions para pruebas, build y despliegue | Ruben Vigil | Completada |
-| T45 | Despliegue y CI/CD | Configurar secretos, permisos mínimos y acceso seguro a la infraestructura | Ruben Vigil | Pendiente |
-| T46 | Despliegue y CI/CD | Validar despliegue, logs, persistencia y consumo de recursos | Ruben Vigil | Pendiente |
+| T45 | Despliegue y CI/CD | Configurar secretos, permisos mínimos y acceso seguro a la infraestructura | Ruben Vigil | Completada |
+| T46 | Despliegue y CI/CD | Validar despliegue, logs, persistencia y consumo de recursos | Ruben Vigil | Completada |
 | T47 | Frontend y simulación visual | Crear aplicación Next.js con navegación entre las vistas de la demo | Ruben Vigil | Pendiente |
 | T48 | Frontend y simulación visual | Implementar chat estilo WhatsApp para que el cliente simule un pedido | Ruben Vigil | Pendiente |
 | T49 | Frontend y simulación visual | Implementar panel del negocio para ver pedidos y cambiar su estado | Ruben Vigil | Pendiente |
@@ -1242,3 +1242,24 @@ el run falló al buscar la IP con margen previo de 60 s. Se amplía a 180 s para
 futuras entregas sin redesplegar esta tarea. Nuevo /32 solicitado al usuario.
 El fallo del indicador no se oculta como run verde: validación de HTTP/modelos/
 persistencia sigue pendiente. No se reintenta el job para evitar otra rotación.
+
+## Cierre autorizado — T45–T46: AWS verificado
+
+Responsable: Ruben Vigil. Rama docs/T45-T46-despliegue-verificado desde origin/main
+a88633c actualizado. Autorizaciones persistentes de integración y explícita AWS.
+T45 completada: proveedor/roles reales, OIDC efectivo, secreto fuera de Git/estado,
+entorno main/aprobación, URI inyectada y acceso Atlas confirmado tras /32 del usuario.
+T46 completada: HTTP health y predicción v2 200 con model_source=s3; creación y
+consulta de negocio SIMULADO por HTTP, lectura independiente Atlas y borrado de
+fixture verificados. Logs de arranque/predicción y series CPU/memoria CloudWatch
+reales comprobados; no se afirma capacidad bajo carga. Revisión activa :5, imagen
+17d4a75 y tarea 69922685c0654ffc8117f8620856c646 en 3.231.221.94, espera 0.
+
+Recibos ignorados cloud_functional_smoke.json y cloud_runtime_verification.json.
+Sin entrenamientos, nuevas métricas ML, pruebas masivas o viajes/cobros reales.
+La demo automática de efectivo queda local; no se afirma ese flujo cloud.
+El run 41892559213 falló por margen de búsqueda de IP; tarea arrancó después y
+se comprobó manualmente. Margen de 180 s preparado para la próxima entrega;
+no se cambia ese fallo a verde ni se redespliega para un cambio documental.
+Estado completado bajo autorización de cierre con evidencia funcional real.
+Next.js T47 sigue pendiente; no se amplía el bloque a frontend por iniciativa propia.

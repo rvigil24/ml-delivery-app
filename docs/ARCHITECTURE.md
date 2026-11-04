@@ -6,7 +6,7 @@ La aplicación ejecutable es una API FastAPI con servicios de dominio, MongoDB
 para datos operativos y dos modelos v2 cargados desde un bundle propio de S3.
 Docker Compose reproduce la demo local; Atlas es la alternativa de base en la
 nube ya verificada. La infraestructura ECS/Fargate está creada y el contenedor
-cloud espera acceso Atlas para iniciar la API; validación funcional pendiente.
+cloud sirve la API con los dos modelos S3 y persistencia Atlas ya verificados.
 Next.js aún no está implementado. Los detalles de versiones previas explican compatibilidad,
 no cambian el contrato v2 descrito en esta sección.
 
@@ -1033,3 +1033,21 @@ reemplazos debidos solo al plazo; no ofrece IP fija frente a fallos/despliegues.
 El pipeline toma configuración de la revisión más reciente de la familia, que
 incluye el valor preparado por Terraform, y usa imagen del commit aprobado.
 La lista Atlas debe referirse siempre a la tarea activa, no a la IP histórica.
+
+## Validación cloud completada — 2026-11-04
+
+Ruben autorizó 3.231.221.94/32 en Atlas. Revisión activa :5, imagen 17d4a75,
+servicio Fargate con una tarea y espera 0. HTTP /health y /predict/delivery 200;
+respuesta model_source=s3, versión meituan-eta-risk-v2. Escritura/consulta de un
+negocio SIMULADO por HTTP y lectura con conexión independiente Atlas aprobadas;
+fixture eliminada y ausencia comprobada. No se crean etiquetas/datos ML nuevos.
+Logs confirman arranque y predicción 200. CloudWatch devuelve CPU/memoria reales
+de arranque/actividad puntual; sin prueba de carga o afirmación de capacidad.
+Swagger actual: http://3.231.221.94:8000/docs, restringido a la IP del presentador.
+
+La evidencia de demostración completa de efectivo anterior sigue siendo local;
+el chequeo cloud fue predicción y CRUD Atlas. El endpoint de demo automática
+sigue deshabilitado en cloud. El run correctivo de entrega agotó su margen de
+IP aunque la tarea arrancó después; margen ampliado a 180 s en código para la
+próxima entrega, sin reiniciar esta tarea. No se registra ese run como aprobado.
+La IP no es fija, no hay HTTPS/ALB/alta disponibilidad; Next.js sigue pendiente.
