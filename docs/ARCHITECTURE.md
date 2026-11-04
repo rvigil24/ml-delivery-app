@@ -157,9 +157,10 @@ Los avances requieren validar cotización/asignación y contexto según correspo
 T20 exige un `TransitionRequirements` que consulte fuentes autoritativas; sin
 validador, o si este rechaza, el avance falla sin escribir. Cotizar/confirmar
 requiere cotización válida del pedido; asignar/recoger/entregar requiere la
-asignación válida correspondiente. Implementar esos requisitos comerciales y
-su conexión sigue en las tareas de cotización/asignación, sin un validador
-permisivo de producción. Cancelar antes de asignar no crea cobros ni asignaciones.
+asignación válida correspondiente. T26 conecta asignación/progreso en memoria;
+la evidencia comercial de cotización sigue siendo una dependencia explícita,
+sin un validador permisivo de producción. Cancelar antes de asignar no crea
+cobros ni asignaciones.
 
 Se rechazan saltos, retrocesos y estados repetidos; no se añaden eventos por
 reintentos rechazados. La actualización exige el estado esperado y cambia
@@ -221,6 +222,63 @@ métricas del modelo. Las rutas de archivos y el driver de MongoDB quedan fuera
 de las entidades de dominio.
 
 ### Organización prevista del código
+
+**Contrato T27 — mensajes simulados:** `WhatsAppSimulationService.request(order)`
+delega el registro a `OrderService.register` y devuelve `SimulatedConversation`.
+`conversation(order_id)` consulta el snapshot actual mediante OrderService.
+La conversación es una proyección reconstruida: texto del cliente tomado de
+`Order.details`, acuse de solicitud y un mensaje de sistema por cambio de estado
+aceptado, con las fechas UTC del historial. No representa mensajes enviados o
+recibidos por una red real. Consultar otra vez no añade mensajes ni eventos.
+Se identifica con `simulated=True`, `reconstructed=True` y canal
+`whatsapp_simulado`; no necesita otro repositorio ni contratos HTTP anticipados.
+
+Los errores del servicio de pedidos se propagan sin acuses de éxito inventados.
+El acuse inicial indica que cotización y cobertura están pendientes; las
+actualizaciones solo informan el estado registrado. No calcula importes/tiempos,
+autoriza avances, interpreta lenguaje natural o captura teléfonos/credenciales.
+La vista también puede reconstruirse para pedidos registrados por otros medios;
+no demuestra el canal original. Chat visual y sincronización quedan en T48/T53.
+
+**Asignación simulada T26 aprobada:** `AssignmentService.assign(assignment_id,
+courier_id, order_ids, start, loads_kg)` exige políticas T24/T23 completas,
+cargas Decimal positivas en kg para exactamente esos pedidos y un
+`ConfirmedQuoteRequirements.validate_confirmed(order)` que acredite cotización
+validada de cada pedido confirmado. Sin esa fuente, falla con
+`MissingPrerequisite`; T21/T22 no la sustituyen. El repartidor se elige por ID,
+debe existir, estar aprobado y disponible; no se inventa su posición ni se
+selecciona uno automáticamente.
+
+Se genera una ruta T24 con snapshots confirmados. Inicio y extremos deben
+cumplir las zonas configuradas; se comprueba el vehículo T23, la distancia
+Haversine de **toda la ruta**, incluyendo aproximaciones, y el máximo de carga
+acumulada al recoger/entregar en el orden sugerido. Igualdad con los límites
+está permitida. La capacidad comprobada corresponde a ese plan y configuración;
+no acredita viabilidad vial, tiempos reales o seguridad operativa.
+
+`DispatchRepository` extiende el puerto de pedidos con consulta de repartidor/
+asignación, `commit_assignment(assignment, expected_records)`, validación de
+progreso y liberación. `InMemoryDispatchRepository` usa un único RLock para
+pedidos, asignaciones y disponibilidad; debe ser **la misma instancia** usada
+por OrderService y AssignmentService. Antes de escribir revalida snapshots,
+estados y repartidor; reserva el grupo, añade eventos UTC de asignación y ocupa
+al repartidor como una sola operación. Conflictos/duplicados no escriben nada;
+es atomicidad local de un proceso, no una transacción MongoDB o distribuida.
+
+`SimulatedAssignment` conserva ID, repartidor previo, ruta, políticas, cargas,
+pico calculado, creación/liberación UTC y banderas de simulación/ruta vial no
+validada. Los snapshots T24 mantienen sus banderas originales. No se permite
+asignar mediante una transición aislada de pedidos. `DispatchOrderRequirements`
+conecta OrderService con la asignación activa para recoger/entregar: solo admite
+la siguiente parada del plan. El adapter lo revalida dentro del lock para
+preservar la capacidad calculada frente a concurrencia. Cotizar/confirmar exige
+un validador externo explícito, sin implementación comercial ficticia.
+
+`AssignmentService.get(id)` consulta el registro inmutable y `release(id)`
+libera explícitamente al repartidor solo cuando **todos** los pedidos estén
+entregados. No completa pedidos implícitamente; liberar de nuevo o reutilizar
+un ID produce conflicto. No hay API, catálogo mutable, GPS, WhatsApp, pagos ni
+persistencia; T27/T28/T30/T32 conservan sus alcances.
 
 **Comparación académica T25 aprobada:** `CostComparisonService.compare(order_ids,
 start, individual_costs, grouped_costs)` requiere políticas T24/T22 explícitas.
@@ -432,10 +490,10 @@ definitivos.
 |---|---|---|
 | Fuente real, licencia y duración objetivo observada | T05–T07 y [DATA_ML.md](DATA_ML.md) | Entrenamiento válido y esquema definitivo de `/predict`. |
 | Features disponibles al cotizar y representatividad geográfica/vehículo | T07/T13/T19 | Prometer una predicción aplicable al escenario local o diferenciada por vehículo. |
-| Valores reales de zona/límites/carga, seguridad y método vial/comercial | [SPEC.md](SPEC.md), T21/T23 | Haversine y criterios configurables T23 aprobados; valores concretos, cobertura comercial y asignación siguen pendientes. |
+| Valores reales de zona/límites/carga, seguridad y método vial/comercial | [SPEC.md](SPEC.md), T21/T23/T26 | Criterios y asignación simulada configurables aprobados; faltan valores concretos, cobertura comercial y viabilidad vial. |
 | Valores de tarifas/costos y reglas adicionales de combustible/comisiones | [SPEC.md](SPEC.md), T22/T25/T29 | Fórmulas T22 y supuestos de comparación T25 aprobados; faltan importes concretos y acuerdos para cotización comercial/análisis financiero. No se sustituyen pendientes por cero. |
 | Integración de requisitos, recotización y traducción de errores | T20/T26/T30/T32 y contratos de este documento | Conectar la base T20 aprobada con cotización/asignación, MongoDB y HTTP sin omitir requisitos. |
-| Agrupación operativa, capacidad, asignación y efectivo ficticio | T24/T26/T28 | Heurística T24 aprobada; faltan viabilidad, reserva/asignación y contabilidad simulada. |
+| Agrupación operativa y efectivo ficticio | T24/T26/T28 | T26 reserva en memoria y comprueba carga del plan; faltan viabilidad operativa, persistencia y contabilidad simulada. |
 | Driver MongoDB, esquemas OpenAPI, errores y carga del modelo | T19/T30–T33 | Integración operativa API/storage/inferencia; no requiere resolverlos con código en T03. |
 | Topología de despliegue, presupuesto e IAM | T41–T46 | Despliegue AWS. Next.js junto al backend o separado sigue pendiente; S3 ya existe y no se recrea. |
 

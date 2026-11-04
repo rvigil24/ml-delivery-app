@@ -563,6 +563,63 @@ prueba son fixtures; no son costos observados ni recomendaciones comerciales.
 Verificación T25: **46 pruebas del backend aprobadas en Python 3.12** y las cinco
 nuevas también en Python 3.9; pruebas/entrenamientos ML intactos no se repiten.
 
+## Asignación simulada de repartidores — T26
+
+`AssignmentService.assign(assignment_id, courier_id, order_ids, start, loads_kg)`
+reserva un grupo confirmado con un repartidor elegido por ID, aprobado y
+disponible. Exige políticas T23/T24, cargas Decimal en kg y un validador explícito
+de cotizaciones confirmadas. **Sin ese validador queda bloqueado**; los borradores
+académicos no son cotizaciones comerciales válidas.
+
+Comprueba zona, km Haversine de toda la ruta y pico de carga acumulada. Guarda
+snapshots, políticas, cargas e historial UTC; no inventa posiciones o límites.
+`InMemoryDispatchRepository` debe compartirse entre `OrderService` y
+`AssignmentService`: una sola operación reserva todos los pedidos y ocupa al
+repartidor, sin cambios parciales o duplicados. Para progresar se compone
+`OrderService` con `DispatchOrderRequirements`; las recogidas/entregas siguen
+las paradas planificadas. `release(id)` solo libera cuando todos estén entregados.
+La atomicidad es local a un proceso; no hay persistencia ni viabilidad vial validada.
+
+```bash
+uv run --locked pytest backend/tests/test_assignments.py -q
+```
+
+Verificación T26: **53 pruebas del backend aprobadas en Python 3.12**, incluidas
+siete nuevas, que también pasaron en Python 3.9. Los tests utilizan evidencia de
+cotización y valores sintéticos exclusivamente como fixtures. Sin dependencias
+nuevas, API, WhatsApp real, pagos ni AWS; ML y notebooks permanecen intactos.
+
+## Solicitudes y mensajes simulados — T27
+
+`WhatsAppSimulationService(orders)` recibe un `OrderService` ya configurado.
+`request(order)` registra una solicitud estructurada con las validaciones T20;
+`conversation(order_id)` devuelve el pedido y mensajes inmutables: detalles del
+cliente, acuse y una actualización por cambio de estado aceptado. Usa las fechas
+UTC del historial; consultar no agrega mensajes ni modifica pedidos.
+
+```python
+from delivery.services.whatsapp import WhatsAppSimulationService
+
+chat = WhatsAppSimulationService(orders)  # OrderService con su repositorio y negocios.
+conversation = chat.request(order)       # Order inicialmente solicitado, con ID único.
+messages = chat.conversation(order.id).messages
+```
+
+La conversación se identifica como `whatsapp_simulado`, simulada y reconstruida
+del historial; no es una bitácora de mensajes de red ni acredita el canal original.
+No interpreta texto libre ni envía mensajes. Un registro inválido/duplicado falla
+sin acuse de éxito. El acuse inicial deja cotización/cobertura pendientes y las
+actualizaciones solo informan estados registrados, sin fabricar tarifas o tiempos.
+La interfaz visual y sincronización se implementan en T48/T53.
+
+```bash
+uv run --locked pytest backend/tests/test_whatsapp.py -q
+```
+
+Verificación T27: **58 pruebas del backend aprobadas en Python 3.12**, incluidas
+cinco nuevas; estas también pasan en Python 3.9. Sin nuevas dependencias,
+credenciales, canales reales, API o infraestructura.
+
 ## Notebooks para estudiar y exponer
 
 [`notebooks/01_datos_y_procesamiento.ipynb`](notebooks/01_datos_y_procesamiento.ipynb)
