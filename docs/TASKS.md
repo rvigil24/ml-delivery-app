@@ -1314,3 +1314,10 @@ y preparación offline. Next.js marcado pendiente; sin inventar ALB/NAT/EC2 o
 funciones futuras. Diseño vectorial revisado visualmente, dimensiones/XML y
 paquete verificados. ZIP suma las dos imágenes; guía personal actualizada.
 No se modifica backend, AWS, IP, métricas o responsables. Publicación autorizada.
+
+Ajuste visual solicitado por Ruben: se reemplaza la primera composición por una
+vista técnica de infraestructura con iconos oficiales AWS, región/VPC/subred/SG
+anidados y conectores ortogonales. Activos embebidos en SVG para uso offline;
+atribución AWS incluida. Se corrigen puertos de conexión para no cruzar etiquetas.
+No se añaden servicios inexistentes ni se modifica infraestructura. PNG 4K y
+SVG sustituidos en el mismo PR/paquete, con nueva revisión visual y hashes.
