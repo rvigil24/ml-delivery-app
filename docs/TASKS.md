@@ -1051,7 +1051,7 @@ fuentes actualizados. Sin modificar Excel, borrar ramas o iniciar despliegue.
 | T48 | Frontend y simulación visual | Implementar chat estilo WhatsApp para que el cliente simule un pedido | Ruben Vigil | Completada |
 | T49 | Frontend y simulación visual | Implementar panel del negocio para ver pedidos y cambiar su estado | Ruben Vigil | Completada |
 | T50 | Frontend y simulación visual | Implementar panel del repartidor para consultar rutas y confirmar entregas | Ruben Vigil | Completada |
-| T51 | Frontend y simulación visual | Implementar panel de operaciones con tarifas, costos, efectivo y márgenes | Ruben Vigil | Pendiente |
+| T51 | Frontend y simulación visual | Implementar panel de operaciones con tarifas, costos, efectivo y márgenes | Ruben Vigil | Completada |
 | T52 | Frontend y simulación visual | Conectar las vistas de Next.js con los endpoints reales de FastAPI | Ruben Vigil | Pendiente |
 | T53 | Frontend y simulación visual | Sincronizar actualizaciones de estados entre las vistas sin WhatsApp real | Ruben Vigil | Pendiente |
 | T54 | Frontend y simulación visual | Preparar demo end-to-end de entrega individual, agrupada y pago en efectivo | Ruben Vigil | Pendiente |
@@ -1405,7 +1405,7 @@ capturas válidas y sin correcciones materiales. Cierre autorizado persistente
 condicionado a CI aprobada; sin despliegue AWS.
 
 
-## Bloque activo — T50: panel del repartidor
+## Bloque cerrado — T50: panel del repartidor
 
 Responsable: Ruben Vigil. Rama feat/T50-panel-repartidor desde origin/main actualizado.
 Dependencias:T26/T32 (asignación/progreso/liberación persistidos), T47 y contratos
@@ -1433,3 +1433,22 @@ desarrollo (.next) y producción (.next-production), y se deja de versionar
 next-env.d.ts generado. Se verificó build con dev activo: proxies courier,
 business y food siguieron devolviendo200; preview producción3001 también200.
 Sin cambio de UI, contratos, responsables, AWS o IP.
+
+
+## Bloque activo — T51: panel de Operaciones
+
+Responsable: Ruben Vigil. Rama feat/T51-operaciones desde origin/main actualizado.
+Dependencias: T47, consulta T20/T32, cálculo T22/T31 y registro de efectivo T28.
+Alcance: pedidos/efectivo persistidos y formulario para tarifa, pago, costos y
+margen calculados por el backend; sin inventar importes ni omitir configuración.
+GET /operations/orders y proxy Next server-only, consulta hasta100, actualización
+manual. Sin registrar cotizaciones, cobros, asignaciones o sincronización T53.
+La ausencia de políticas sigue bloqueando el cálculo, no la consulta operativa.
+
+Comprobaciones: una prueba API para efectivo presente/ausente, límite y ausencia
+de cambios; tipos/build aprobados. Navegador1440/390: lectura real sin escrituras
+Atlas, error503 y desglose controlado con margen negativo (fixture de UI, no
+resultado real). Sin desborde. Detector sin hallazgos. Revisión visual independiente: ship, seis capturas válidas, sin correcciones
+materiales. Cierre autorizado condicionado a CI e integración normal aprobadas.
+El cálculo real devolvió503 por configuración ausente; el desglose visual se
+verificó con fixture aislada, sin afirmar tarifas configuradas.

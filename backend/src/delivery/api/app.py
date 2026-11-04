@@ -239,6 +239,8 @@ def create_app(model_directory: Optional[Path] = None,
     application.include_router(storage_router())
     from .courier_routes import courier_routes_router
     application.include_router(courier_routes_router())
+    from .operations import operations_router
+    application.include_router(operations_router())
     from .delivery_predictions import delivery_prediction_router
     application.include_router(delivery_prediction_router())
     if os.environ.get("DELIVERY_DEMO_ENABLED") == "1":

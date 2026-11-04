@@ -188,6 +188,11 @@ td strong { font-weight: 600; }
 .courier-profile { display: flex; align-items: center; gap: 10px; font-size: 13px; color: var(--primary); margin: -8px 0 24px; flex-wrap: wrap; }
 .courier-panel .form-error { margin-bottom: 20px; }
 .courier-panel button:disabled { opacity: .55; }
+.operations-form { display: grid; gap: 16px; margin: 20px 0; }
+.operations-table { min-width: 0; table-layout: fixed; }
+.operations-table td, .operations-table th { overflow-wrap: anywhere; }
+.operations-table .text-button { white-space: normal; text-align: left; overflow-wrap: anywhere; }
+.operations-panel .business-toolbar p { flex: 1; color: var(--muted); font-size: 13px; }
 .courier-empty { padding: 48px 28px; text-align: center; }
 .courier-empty > svg { width: 30px; height: 30px; color: var(--primary); margin-bottom: 18px; }
 .courier-empty p { margin: 12px auto 0; color: var(--muted); font-size: 14px; }

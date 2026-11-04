@@ -64,3 +64,7 @@ los controles y cada parada conserva lectura sin desborde. No cambia la identida
 Cierre T50: revisión independiente ship; seis capturas full-page válidas de
 vacío real y rutas activas/cerradas con fixtures aisladas en ambos tamaños.
 Sin correcciones materiales; la lectura de API/servicio confirmó el dictamen.
+
+T51: Operaciones consulta pedidos/efectivo y solicita desglose a FastAPI.
+Mantiene la identidad existente; distingue registro ausente y previsualización
+sin guardar. Revisión final ship, escritorio/móvil. No altera DESIGN.md ni tokens.
