@@ -990,3 +990,17 @@ Terraform y Compose de despliegue corresponden a tareas posteriores.
 
 Referencias de implementación: [uv en Docker](https://docs.astral.sh/uv/guides/integration/docker/)
 y [orden de arranque en Compose](https://docs.docker.com/compose/how-tos/startup-order/).
+
+
+## Verificación mínima de pruebas unitarias — T35
+
+```bash
+uv run --locked pytest backend/tests/test_domain.py -q
+```
+
+Las 14 pruebas existentes de dominio cubren entidades, coordenadas, estados
+iniciales, inmutabilidad, procedencia de duración, precisión monetaria y
+validaciones de cotizaciones. Superan el mínimo académico de diez; no requieren
+MongoDB, AWS, modelos entrenados ni datasets. Resultado comprobado en T35:
+**14 aprobadas**. Los valores de prueba son fixtures sintéticos. Esta selección
+no equivale a repetir la suite completa ni al flujo integrado de T36.

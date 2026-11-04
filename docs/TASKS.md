@@ -34,8 +34,8 @@ corresponden al reparto previo y deben interpretarse con esta actualización.
 - **T26–T27:** completadas por cierre autorizado, con evidencia abajo; integración verificable en el PR y la guía externa.
 - **T28–T29:** completadas por cierre autorizado, con evidencia abajo; integración verificable en el PR y la guía externa.
 - **T30–T31:** completadas por cierre autorizado con alcance académico, con evidencia abajo; integración verificable en el PR y la guía externa.
-- **T32–T33:** completadas por cierre autorizado con evidencia local, Atlas y S3 indicada abajo; integración verificable en el PR del bloque y la guía externa. T34 completada por cierre autorizado con evidencia abajo. Sin bloque activo; siguiente tarea: T35 (pruebas unitarias).
-- **T35–T40:** continuar según dependencias y criterios de aceptación.
+- **T32–T33:** completadas por cierre autorizado con evidencia local, Atlas y S3 indicada abajo; integración verificable en el PR del bloque y la guía externa. T34 completada por cierre autorizado con evidencia abajo. T35 completada por cierre autorizado con evidencia abajo. Sin bloque activo; siguiente tarea: T36 (flujo integrado simulado).
+- **T36–T40:** continuar según dependencias y criterios de aceptación.
 - **T41–T54:** asignadas a Ruben Vigil; despliegue y gastos siguen requiriendo autorización explícita.
 
 Cada agente trabaja una tarea por iteración, informa resultados y evita hacer
@@ -437,6 +437,24 @@ cloud ni cambios en dependencias del proyecto. Cierre Git autorizado por Ruben;
 el resultado efectivo del PR y merge se registra en la guía externa.
 
 
+### Cierre autorizado: T35 — pruebas unitarias existentes
+
+**Responsable:** Ruben Vigil. Rama `test/T35-unitarias`, desde origin/main
+`3bd57fb` (T34 integrada). **Dependencia:** dominio implementado en T04.
+
+**Criterio de aceptación:** al menos diez pruebas unitarias pytest del producto,
+con resultados reales. Se reutilizan las pruebas existentes, sin añadir casos
+redundantes ni ejecutar la suite completa, por solicitud de Ruben.
+
+**Evidencia — 2026-11-04:** `uv run --locked pytest backend/tests/test_domain.py -q`
+produjo **14 passed in 0.02s**. Comprueba negocios, coordenadas, pedidos,
+repartidores, procedencia/duración, precisión monetaria y cotizaciones. Son
+fixtures sintéticos explícitos, sin servicios externos, datasets o entrenamiento.
+T35 satisface el mínimo; no fue necesario modificar código o añadir pruebas.
+README y guía externa actualizados. Cierre autorizado por Ruben: se marca T35
+completada y se publica un PR, verificando su integración en origin/main.
+Sin modificar Excel ni iniciar T36; no se repiten pruebas sin cambios de código.
+
 ## Instrucciones concretas y criterios de aceptación: T01–T33
 
 ### T01 — Crear repositorio Git y estructura modular del proyecto
@@ -807,7 +825,7 @@ el resultado efectivo del PR y merge se registra en la guía externa.
 | T32 | API, almacenamiento e infraestructura | Configurar MongoDB con CRUD, índices y validaciones | Ruben Vigil | Completada |
 | T33 | API, almacenamiento e infraestructura | Integrar almacenamiento de objetos con S3 o MinIO | Ruben Vigil | Completada |
 | T34 | API, almacenamiento e infraestructura | Contenerizar los servicios mediante Docker y Docker Compose | Ruben Vigil | Completada |
-| T35 | Pruebas, documentación y entrega | Implementar al menos 10 pruebas unitarias con pytest | Ruben Vigil | Pendiente |
+| T35 | Pruebas, documentación y entrega | Implementar al menos 10 pruebas unitarias con pytest | Ruben Vigil | Completada |
 | T36 | Pruebas, documentación y entrega | Probar el flujo completo: solicitud → cotización → asignación → entrega → efectivo | Ruben Vigil | Pendiente |
 | T37 | Pruebas, documentación y entrega | Preparar README con instalación, ejecución y ejemplos | Ruben Vigil | Pendiente |
 | T38 | Pruebas, documentación y entrega | Documentar arquitectura, resultados, experimentos y limitaciones | Ruben Vigil | Pendiente |
