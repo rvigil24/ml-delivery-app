@@ -1247,3 +1247,21 @@ Operaciones consulta efectivo/desgloses. T52 no sustituye los requisitos de
 cotización/configuración/asignación aún necesarios para avanzar un pedido ni
 crea dinero, asignaciones o productos con precios. Actualización manual (T53
 pendiente). Nuevas rutas locales sin despliegue AWS.
+
+
+### Corrección T52 — resultados ML en Cliente
+
+Next `/api/food/estimate` reenvía origen/destino a POST `/predict/delivery` con
+fecha actual del servidor; promised_minutes ahora es opcional. Sin plazo el
+predictor ejecuta sólo ETA y devuelve late_probability/promised_minutes null;
+con plazo positivo conserva inferencia de ambos modelos. No se modifica ningún
+peso, bundle, métrica o entrenamiento. El control de rango considera sólo
+variables usadas por la inferencia solicitada.
+
+Cliente consulta automáticamente al revisar la comida, muestra duración total
+solicitud–entrega redondeada hacia arriba a minutos enteros y distancia en línea
+recta con un decimal. La comparación opcional expone riesgo porcentual respecto
+al plazo ingresado explícitamente. Conserva la estimación al confirmar; no la
+guarda como cotización ni la presenta como garantía. Cambiar negocio/destino y
+volver a revisar recalcula; solicitudes obsoletas se abortan. Estado de error y
+reintento sin cifras ficticias. API local actualizada, sin despliegue AWS.

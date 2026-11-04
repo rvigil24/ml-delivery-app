@@ -1472,3 +1472,19 @@ Operaciones. Enlace al negocio correcto verificado. Revisión visual independien
 ship, cuatro capturas válidas sin correcciones materiales. Cierre autorizado
 condicionado a CI e integración normal. No se despliega AWS ni se inventan
 políticas para sortear requisitos de cotización/asignación.
+
+
+### Corrección explícita T52 — estimación visible en Cliente
+
+Ruben detectó que el chat guardaba pedidos pero omitía resultados del modelo.
+Rama fix/T52-estimacion-cliente desde origin/main actualizado. Se conecta revisión
+con predictor v2 existente mediante proxy; tiempo total/distancia automáticos,
+riesgo opcional con plazo explícito. Sin plazo el predictor sólo ejecuta ETA;
+no se inventan plazos, tarifas, rutas, garantías o salidas. No inicia T53.
+Ocho pruebas focalizadas API/variables/predicción aprobadas, tipos y build
+aprobados. Navegador1440/390: inferencia real S3 para ETA/distancia y riesgo con
+plazo30 introducido para la comprobación, error503 controlado y reintento
+visible. Sin nuevas escrituras Atlas. Detector sin hallazgos. Revisión visual
+independiente ship: seis capturas válidas, sin correcciones materiales; permanencia
+en confirmación verificada en código. Cierre condicionado a CI e integración
+normal. Sin despliegue AWS.

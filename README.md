@@ -52,7 +52,14 @@ menú permite pasar a Cliente, Negocio y Repartidor. Cliente representa una
 1. Dirección de entrega y ubicación (GPS, coordenadas manuales o destino de ejemplo).
 2. Negocios ordenados por distancia aproximada desde la API.
 3. Menú del negocio consultado en la API, productos y cantidades.
-4. Revisión y registro del pedido de prueba en la API y MongoDB.
+4. Revisión con tiempo estimado y distancia del modelo; registro del pedido en la API y MongoDB.
+
+Al revisar el pedido se consulta `/predict/delivery`: muestra minutos estimados
+de solicitud a entrega y distancia aproximada en línea recta. La estimación se
+conserva en la pantalla al confirmar; no es una promesa de entrega ni una ruta
+por calles. «Ver modelo y comparación de plazo» permite ingresar minutos y ver
+el riesgo de superarlos. Sin plazo no se inventa riesgo ni compromiso. Si falla
+el modelo, aparece el error con reintento; no hay resultados de respaldo ficticios.
 
 El texto de la dirección no se geocodifica automáticamente: la cercanía usa
 el punto seleccionado, que debe corresponder a la dirección. La API devuelve

@@ -189,6 +189,9 @@ td strong { font-weight: 600; }
 .courier-panel .form-error { margin-bottom: 20px; }
 .courier-panel button:disabled { opacity: .55; }
 .operations-form { display: grid; gap: 16px; margin: 20px 0; }
+.delivery-estimate { padding: 20px 0; margin-bottom: 20px; border-bottom: 1px solid var(--line); }
+.delivery-estimate h4 { margin: 0 0 12px; font-size: 16px; }
+.delivery-estimate .manual-location { margin-top: 16px; }
 .operations-table { min-width: 0; table-layout: fixed; }
 .operations-table td, .operations-table th { overflow-wrap: anywhere; }
 .operations-table .text-button { white-space: normal; text-align: left; overflow-wrap: anywhere; }

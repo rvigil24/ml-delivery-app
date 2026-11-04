@@ -78,15 +78,18 @@ class DeliveryPredictorV2:
         context = pd.DataFrame({"request_hour_utc": [stamp.hour], "request_weekday_utc": [stamp.weekday()],
                                 "distance_km": [distance], "promised_minutes": [promised_minutes]})
         # Mismo contrato de validación independientemente del algoritmo seleccionado.
-        risk_features(context)
+        eta_features(context)
+        if promised_minutes is not None:
+            risk_features(context)
         minutes = float(self.eta.predict(context[CONTEXT])[0])
-        risk = float(self.risk.predict_proba(context[RISK_CONTEXT])[0, 1])
-        if not np.isfinite(minutes) or minutes < 0 or not np.isfinite(risk) or not 0 <= risk <= 1:
+        risk = float(self.risk.predict_proba(context[RISK_CONTEXT])[0, 1]) if promised_minutes is not None else None
+        if not np.isfinite(minutes) or minutes < 0 or (risk is not None and (not np.isfinite(risk) or not 0 <= risk <= 1)):
             raise ValueError("Salida del modelo fuera de dominio")
         outside = any(not bounds[0] <= float(context[name].iloc[0]) <= bounds[1]
-                      for name, bounds in self.metadata["training_input_ranges"].items())
+                      for name, bounds in self.metadata["training_input_ranges"].items()
+                      if name != "promised_minutes" or promised_minutes is not None)
         return {"model_version": self.metadata["model_version"], "estimated_minutes": minutes,
-                "late_probability": risk, "promised_minutes": float(promised_minutes),
+                "late_probability": risk, "promised_minutes": float(promised_minutes) if promised_minutes is not None else None,
                 "distance_km": distance, "eta_algorithm": self.metadata["eta_algorithm"],
                 "risk_algorithm": self.metadata["risk_algorithm"], "outside_training_range": outside,
                 "academic_only": True, "local_validation": False,

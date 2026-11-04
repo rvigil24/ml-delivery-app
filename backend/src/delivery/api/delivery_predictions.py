@@ -1,6 +1,7 @@
 """Predicción de duración y riesgo de retraso a partir de un recorrido."""
 
 from fastapi import APIRouter, Body, Request
+from typing import Optional
 from pydantic import Field
 
 from delivery.domain.models import Location
@@ -11,8 +12,8 @@ from .storage import LocationInput, valid
 class DeliveryPredictionRequest(PredictRequest):
     origin: LocationInput
     destination: LocationInput
-    promised_minutes: float = Field(gt=0, allow_inf_nan=False, strict=True,
-                                    description="Tiempo previsto para completar la entrega, en minutos.")
+    promised_minutes: Optional[float] = Field(default=None, gt=0, allow_inf_nan=False, strict=True,
+                                    description="Plazo opcional para calcular riesgo de superarlo, en minutos. Sin plazo sólo se estima duración y distancia.")
 
 
 PRESENTATION_EXAMPLES = {
@@ -53,7 +54,7 @@ def delivery_prediction_router():
     router = APIRouter(tags=["Predicciones"])
 
     @router.post("/predict/delivery", summary="Estimar la duración de una entrega",
-                 description="Usa origen, destino, fecha y plazo previsto para estimar la duración y la probabilidad de retraso.",
+                 description="Estima duración y distancia con origen, destino y fecha. Con un plazo opcional también calcula la probabilidad de superarlo.",
                  responses={code: {"model": ErrorResponse} for code in (422, 503, 500)})
     def predict_delivery(request: Request,
                          body: DeliveryPredictionRequest = Body(..., openapi_examples=PRESENTATION_EXAMPLES)):

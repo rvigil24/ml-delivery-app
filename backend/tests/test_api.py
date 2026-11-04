@@ -32,6 +32,20 @@ class FixturePredictor:
                 "academic_only": True, "local_validation": False, "limitations": ["Fixture de prueba"]}
 
 
+def test_delivery_accepts_no_deadline_for_eta_only(monkeypatch, tmp_path):
+    class ETAOnly:
+        def predict(self, stamp, origin, destination, promised):
+            assert promised is None
+            return {"model_version": "fixture", "estimated_minutes": 12.5, "distance_km": 0,
+                    "late_probability": None, "promised_minutes": None}
+    configure_model(monkeypatch, tmp_path, lambda path: ETAOnly())
+    payload = {key: value for key, value in PAYLOAD.items() if key != "promised_minutes"}
+    with TestClient(create_app()) as client:
+        result = client.post("/predict/delivery", json=payload)
+        assert result.status_code == 200
+        assert result.json()["late_probability"] is None and result.json()["estimated_minutes"] == 12.5
+
+
 def configure_model(monkeypatch, tmp_path, factory):
     monkeypatch.setenv("DELIVERY_MODEL_V2_DIR", str(tmp_path))
     monkeypatch.setattr("delivery.adapters.delivery_model_v2.LocalDeliveryModelV2", factory)
