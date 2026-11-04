@@ -1504,3 +1504,17 @@ formulario, pausa oculta y ninguna inferencia nueva por polling. Sin escrituras
 Atlas. Revisión visual independiente ship: seis capturas desktop/móvil válidas.
 Cierre autorizado condicionado a CI e integración normal. No se despliega AWS
 ni inicia T54.
+
+
+## Solicitud explícita — refactor de backend y diez pruebas
+
+Responsable:Ruben Vigil. Rama refactor/backend-legible desde origin/main.
+Antes deT54, Ruben pidió una estructura clara, nombres
+concretos y exactamente10 pruebas unitarias. No se iniciaT54 ni se modifican
+responsables o estados de tareas por este refactor. API separada por entidad,
+arranque/errores/contratos separados y MongoDB dividido por responsabilidad;
+comportamiento y contratos preservados. Suite backend103→10 pruebas existentes,
+con nombres breves en tests/unit, selección predeterminada y CI actualizadas.
+OpenAPI normal/demo idéntico; clases MongoDB idénticas por AST; diez pruebas
+aprobadas. Arranque local y lecturas health/negocios/menú200 verificados.
+Dominio y servicios intactos; integración condicionada a CI. Sin despliegue AWS.

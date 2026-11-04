@@ -1,19 +1,27 @@
 """Predicción de duración y riesgo de retraso a partir de un recorrido."""
 
-from fastapi import APIRouter, Body, Request
 from typing import Optional
+
+from fastapi import APIRouter, Body, Request
 from pydantic import Field
 
 from delivery.domain.models import Location
-from .schemas import ErrorResponse, PredictRequest
-from .storage import LocationInput, valid
+
+from .request_models import LocationInput, PredictRequest
+from .response_models import ErrorResponse
+from .validation import valid
 
 
 class DeliveryPredictionRequest(PredictRequest):
     origin: LocationInput
     destination: LocationInput
-    promised_minutes: Optional[float] = Field(default=None, gt=0, allow_inf_nan=False, strict=True,
-                                    description="Plazo opcional para calcular riesgo de superarlo, en minutos. Sin plazo sólo se estima duración y distancia.")
+    promised_minutes: Optional[float] = Field(
+        default=None,
+        gt=0,
+        allow_inf_nan=False,
+        strict=True,
+        description="Plazo opcional para calcular riesgo de superarlo, en minutos. Sin plazo sólo se estima duración y distancia.",
+    )
 
 
 PRESENTATION_EXAMPLES = {
@@ -53,12 +61,25 @@ PRESENTATION_EXAMPLES = {
 def delivery_prediction_router():
     router = APIRouter(tags=["Predicciones"])
 
-    @router.post("/predict/delivery", summary="Estimar la duración de una entrega",
-                 description="Estima duración y distancia con origen, destino y fecha. Con un plazo opcional también calcula la probabilidad de superarlo.",
-                 responses={code: {"model": ErrorResponse} for code in (422, 503, 500)})
-    def predict_delivery(request: Request,
-                         body: DeliveryPredictionRequest = Body(..., openapi_examples=PRESENTATION_EXAMPLES)):
-        return valid(lambda: request.app.state.delivery_estimates.predict(body.requested_at,
-            Location(**body.origin.model_dump()), Location(**body.destination.model_dump()), body.promised_minutes))
+    @router.post(
+        "/predict/delivery",
+        summary="Estimar la duración de una entrega",
+        description="Estima duración y distancia con origen, destino y fecha. Con un plazo opcional también calcula la probabilidad de superarlo.",
+        responses={code: {"model": ErrorResponse} for code in (422, 503, 500)},
+    )
+    def predict_delivery(
+        request: Request,
+        body: DeliveryPredictionRequest = Body(
+            ..., openapi_examples=PRESENTATION_EXAMPLES
+        ),
+    ):
+        return valid(
+            lambda: request.app.state.delivery_estimates.predict(
+                body.requested_at,
+                Location(**body.origin.model_dump()),
+                Location(**body.destination.model_dump()),
+                body.promised_minutes,
+            )
+        )
 
     return router

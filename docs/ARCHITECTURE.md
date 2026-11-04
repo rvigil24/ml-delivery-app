@@ -1286,3 +1286,25 @@ la vista. Acciones logísticas mantienen estado esperado y validación del backe
 no se habilitan con datos cuya actualización falló. Se mantienen límites de100
 registros y actualización manual. No es notificación instantánea ni snapshot
 transaccional entre vistas. Estimación ML permanece independiente del polling.
+
+
+### Refactor de presentación del backend — solicitado por Ruben
+
+No modifica reglas, rutas, métodos, códigos HTTP, esquemas, operationId ni
+arranque público `delivery.api.app:app`. Se separan composición (app), ciclo de
+vida (lifespan), errores, contratos de entrada/salida y routers explícitos por
+entidad. Se retiran api/storage.py y api/schemas.py; el código interno importa
+los módulos concretos. Los routers conservan el orden original, incluidos los
+estáticos anteriores a parámetros dinámicos.
+
+MongoDB se organiza en adapters/mongodb: connection, documents, catalogs, orders
+y cash. Pedidos y asignaciones permanecen juntos por compartir las transacciones.
+MongoStorage sigue agrupando conexión/repositorios; adapters/mongo.py conserva
+imports públicos y CLI de bootstrap. No cambia esquema, índices o codificación.
+Los cuerpos de las cuatro clases originales coinciden por AST tras moverlos.
+
+Por instrucción expresa, la suite predeterminada del proyecto contiene exactamente
+10 pruebas unitarias existentes del backend, agrupadas en tests/unit. Se eliminaron
+las otras93, sin ocultarlas con skips o wrappers. CI ejecuta esas10; comprobaciones
+ML separadas conservadas fuera de la selección predeterminada. El refactor se
+contrasta además con OpenAPI normal/demo capturado antes: idéntico en ambos casos.

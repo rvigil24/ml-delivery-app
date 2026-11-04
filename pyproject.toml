@@ -40,7 +40,7 @@ dev = [
 packages = ["backend/src/delivery", "ml/src/delivery_ml"]
 
 [tool.pytest.ini_options]
-testpaths = ["backend/tests", "ml/tests"]
+testpaths = ["backend/tests/unit"]
 addopts = "--strict-config --strict-markers"
 
 [tool.uv.sources]

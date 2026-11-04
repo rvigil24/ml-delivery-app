@@ -7,7 +7,8 @@ from pydantic import BaseModel
 
 from delivery.domain.cash import CashNotFound, CashRecord
 from delivery.domain.order_lifecycle import OrderRecord
-from .storage import service
+
+from .dependencies import service
 
 
 class OperationRow(BaseModel):
@@ -18,9 +19,12 @@ class OperationRow(BaseModel):
 def operations_router():
     router = APIRouter(tags=["Operaciones"])
 
-    @router.get("/operations/orders", response_model=Tuple[OperationRow, ...],
-                summary="Consultar pedidos y efectivo",
-                description="Reúne cada pedido y su registro de efectivo, si existe. No duplica cobros como ingresos.")
+    @router.get(
+        "/operations/orders",
+        response_model=Tuple[OperationRow, ...],
+        summary="Consultar pedidos y efectivo",
+        description="Reúne cada pedido y su registro de efectivo, si existe. No duplica cobros como ingresos.",
+    )
     def listing(request: Request, limit: int = Query(100, ge=1, le=100)):
         storage = service(request, "mongo_storage")
         rows = []

@@ -1,24 +1,12 @@
-"""T30–T31: contratos JSON separados de las entidades de dominio."""
+"""Datos y descripciones de las respuestas HTTP."""
 
-from typing import Literal, Tuple
 from decimal import Decimal
+from typing import Literal, Tuple
 
-from pydantic import AwareDatetime, BaseModel, ConfigDict, Field, field_validator
+from pydantic import AwareDatetime, BaseModel, Field
 
 from delivery.domain.models import VehicleType
 from delivery.domain.vehicle_rules import VehicleRejection
-
-
-class PredictRequest(BaseModel):
-    model_config = ConfigDict(extra="forbid")
-    requested_at: AwareDatetime = Field(description="Fecha y hora del pedido, con zona horaria.")
-
-    @field_validator("requested_at", mode="before")
-    @classmethod
-    def require_iso_string(cls, value):
-        if not isinstance(value, str) or "T" not in value:
-            raise ValueError("Se requiere una fecha ISO 8601 con zona horaria")
-        return value
 
 
 class PredictResponse(BaseModel):
@@ -39,7 +27,9 @@ class PredictResponse(BaseModel):
 
 class HealthResponse(BaseModel):
     status: Literal["ok"] = "ok"
-    model_available: bool = Field(description="Indica si los modelos de duración y retraso están cargados.")
+    model_available: bool = Field(
+        description="Indica si los modelos de duración y retraso están cargados."
+    )
 
 
 class ErrorDetail(BaseModel):
@@ -49,20 +39,6 @@ class ErrorDetail(BaseModel):
 
 class ErrorResponse(BaseModel):
     detail: ErrorDetail
-
-
-class OperatorCostsRequest(BaseModel):
-    model_config = ConfigDict(extra="forbid")
-    currency: str = Field(pattern=r"^[A-Z]{3}$")
-    variable_cost: Decimal = Field(ge=0, allow_inf_nan=False)
-    attributable_cost: Decimal = Field(ge=0, allow_inf_nan=False)
-
-
-class QuotePreviewRequest(BaseModel):
-    model_config = ConfigDict(extra="forbid")
-    quote_id: str = Field(min_length=1)
-    load_kg: Decimal = Field(gt=0, allow_inf_nan=False)
-    costs: OperatorCostsRequest
 
 
 class QuoteAmountsResponse(BaseModel):

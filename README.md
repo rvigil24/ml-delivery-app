@@ -309,10 +309,30 @@ una garantía de entrega ni una probabilidad calibrada para el entorno local.
 - [Datos y ML](docs/DATA_ML.md): fuentes/licencia, metodología y entrenamiento reproducible.
 - [Arquitectura](docs/ARCHITECTURE.md) y [especificación](docs/SPEC.md).
 
-Verificación unitaria mínima existente, si instalaste el entorno Python:
+## Organización del backend
+
+Para explicar el recorrido de una solicitud: `api/orders.py` →
+`services/orders.py` → `ports/orders.py` → `adapters/mongodb/orders.py`.
+Las reglas independientes de HTTP y MongoDB viven en `domain/`.
+
+- `api/app.py`: crea FastAPI y registra rutas.
+- `api/lifespan.py`: carga modelos, conecta MongoDB y cierra recursos.
+- `api/businesses.py`, `couriers.py`, `orders.py`: rutas por entidad.
+- `api/request_models.py` y `response_models.py`: contratos HTTP.
+- `api/errors.py`, `dependencies.py`, `validation.py`: errores y servicios HTTP.
+- `adapters/mongodb/`: conexión, catálogos, pedidos/asignaciones y efectivo.
+- `adapters/mongo.py`: conserva imports y comando de preparación anteriores.
+
+La suite principal contiene **exactamente 10 pruebas unitarias**, conservadas
+por su cobertura de registro, estados, concurrencia, precios, vehículos, rutas,
+asignación, efectivo, proyección y distancia. Está en `backend/tests/unit/`;
+se eliminaron las demás pruebas del backend. Las verificaciones de experimentos
+ML permanecen separadas en `ml/tests/` y no forman parte de la suite predeterminada.
+
+Ejecutar las diez pruebas:
 
 ```bash
-uv run --locked pytest backend/tests/test_domain.py -q
+uv run --locked pytest backend/tests/unit -q
 ```
 
 Datos, pesos, recibos de demo y ZIP de fuentes se guardan en directorios ignorados

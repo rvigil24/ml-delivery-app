@@ -10,8 +10,11 @@ from pydantic import BaseModel, Field
 from delivery.domain.models import Location, OrderStatus
 from delivery.domain.order_lifecycle import OrderRecord
 from delivery.domain.routing import RouteStop
-from .schemas import ErrorResponse
-from .storage import Input, service, valid
+
+from .dependencies import service
+from .request_models import Input
+from .response_models import ErrorResponse
+from .validation import valid
 
 
 class CourierRouteResponse(BaseModel):
@@ -35,21 +38,50 @@ class ProgressInput(Input):
 
 
 def courier_routes_router():
-    router = APIRouter(tags=["Repartidores"], responses={status: {"model": ErrorResponse} for status in (404, 409, 422, 503, 500)})
+    router = APIRouter(
+        tags=["Repartidores"],
+        responses={
+            status: {"model": ErrorResponse} for status in (404, 409, 422, 503, 500)
+        },
+    )
 
-    @router.get("/couriers/{courier_id}/assignments", response_model=Tuple[CourierRouteResponse, ...],
-                summary="Consultar las rutas de un repartidor", description="Devuelve sus asignaciones, paradas y estados actuales de los pedidos.")
-    def listing(courier_id: str, request: Request, limit: int = Query(100, ge=1, le=100)):
+    @router.get(
+        "/couriers/{courier_id}/assignments",
+        response_model=Tuple[CourierRouteResponse, ...],
+        summary="Consultar las rutas de un repartidor",
+        description="Devuelve sus asignaciones, paradas y estados actuales de los pedidos.",
+    )
+    def listing(
+        courier_id: str, request: Request, limit: int = Query(100, ge=1, le=100)
+    ):
         return service(request, "courier_routes").list(courier_id, limit)
 
-    @router.post("/couriers/{courier_id}/assignments/{assignment_id}/progress", response_model=CourierRouteResponse,
-                 summary="Registrar una recogida o entrega", description="Avanza la siguiente parada de la ruta si coincide con el estado esperado del pedido.")
-    def progress(courier_id: str, assignment_id: str, body: ProgressInput, request: Request):
-        return valid(lambda: service(request, "courier_routes").progress(courier_id, assignment_id, body.order_id, body.expected, body.target))
+    @router.post(
+        "/couriers/{courier_id}/assignments/{assignment_id}/progress",
+        response_model=CourierRouteResponse,
+        summary="Registrar una recogida o entrega",
+        description="Avanza la siguiente parada de la ruta si coincide con el estado esperado del pedido.",
+    )
+    def progress(
+        courier_id: str, assignment_id: str, body: ProgressInput, request: Request
+    ):
+        return valid(
+            lambda: service(request, "courier_routes").progress(
+                courier_id, assignment_id, body.order_id, body.expected, body.target
+            )
+        )
 
-    @router.post("/couriers/{courier_id}/assignments/{assignment_id}/complete", response_model=CourierRouteResponse,
-                 summary="Finalizar una ruta entregada", description="Cierra la asignación y libera al repartidor cuando todos los pedidos están entregados.")
+    @router.post(
+        "/couriers/{courier_id}/assignments/{assignment_id}/complete",
+        response_model=CourierRouteResponse,
+        summary="Finalizar una ruta entregada",
+        description="Cierra la asignación y libera al repartidor cuando todos los pedidos están entregados.",
+    )
     def complete(courier_id: str, assignment_id: str, request: Request):
-        return valid(lambda: service(request, "courier_routes").complete(courier_id, assignment_id))
+        return valid(
+            lambda: service(request, "courier_routes").complete(
+                courier_id, assignment_id
+            )
+        )
 
     return router
