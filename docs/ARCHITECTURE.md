@@ -9,13 +9,15 @@ para datos operativos y dos modelos v2 cargados desde un bundle propio de S3.
 Docker Compose reproduce la demo local; Atlas es la alternativa de base en la
 nube ya verificada. La infraestructura ECS/Fargate está creada y el contenedor
 cloud sirve la API con los dos modelos S3 y persistencia Atlas ya verificados.
-Next.js aún no está implementado. Los detalles de versiones previas explican compatibilidad,
+Next.js cuenta con un layout local de cuatro vistas (T47), sin conexión HTTP
+al backend todavía; las acciones e integración siguen en T48–T54.
+Los detalles de versiones previas explican compatibilidad,
 no cambian el contrato v2 descrito en esta sección.
 
 ```mermaid
 flowchart LR
     Client[Swagger o cliente Python] --> API[FastAPI]
-    UI[Next.js pendiente] -. HTTP .-> API
+    UI[Next.js: layout local] -. HTTP pendiente T52 .-> API
     API --> Estimate[Servicio de estimación]
     Estimate --> ETA[Modelo de duración]
     Estimate --> Risk[Modelo de retraso]
@@ -743,7 +745,7 @@ backend/
 ml/
   data/              # adquisición/ETL reproducibles
   experiments/       # entrenamiento, evaluación, artefactos
-frontend/            # Next.js (futuro)
+frontend/            # Next.js: layout y navegación local
 infra/terraform/      # IaC (futuro)
 docs/                # este diseño y acuerdos
 ```
@@ -759,7 +761,7 @@ Los módulos se organizan por responsabilidad; los contratos HTTP y los puertos 
 | Importes y rentabilidad | Fórmulas implementadas; costos, demanda e inversión reales pendientes. Los ejemplos no los sustituyen. |
 | Cotizaciones generales | La demo acepta su cotización solo durante un recorrido; los endpoints generales no adquieren esa autorización. |
 | Operación pública | Faltan autenticación/autorización, topología/presupuesto, permisos del servicio y validación del despliegue. |
-| Interfaz visual | Next.js pendiente; hoy se usa API/Swagger y el comando de demo. |
+| Interfaz visual | Layout Next.js local con cuatro vistas; acciones, conexión a la API y despliegue de la interfaz pendientes. |
 
 ## Persistencia y AWS S3
 
@@ -1091,3 +1093,25 @@ model_available=true, /predict 404, /predict/delivery 200 con model_source=s3
 y experimental=true. OpenAPI conserva tres ejemplos y ofrece títulos,
 descripciones y grupos en español sin etiquetas académicas. Los tres pedidos
 de exposición permanecen guardados. Workflow 41910071604 completado con éxito.
+
+
+## T47 — layout y navegación de la interfaz
+
+Next.js App Router y TypeScript en `frontend/`, sin librería de componentes ni
+servicios de terceros adicionales. `/` redirige a `/operaciones`; `/cliente`,
+`/negocio` y `/repartidor` comparten navegación y tokens CSS. En escritorio se
+usa barra lateral; en móvil, navegación horizontal con contenido apilado.
+
+La vista Cliente representa WhatsApp y muestra explícitamente «Simulación de
+WhatsApp» y una conversación ficticia. Decisión de Ruben: flujo guiado sin LLM,
+con selección de negocio, descripción del pedido, destino, revisión y seguimiento.
+T47 solo prepara el layout: enviar mensajes permanece deshabilitado; el flujo
+interactivo corresponde a T48 y la conexión HTTP a T52. Los perfiles y pedidos
+visibles usan `examples/exposicion.json`; los estados se muestran «Sin consultar»
+y no se deducen de esos fixtures. No hay accesos al backend, Atlas ni S3.
+
+El cliente de navegador no usa secretos ni calcula tarifas o inferencias.
+No se añaden endpoints, despliegues, puertos AWS o recursos a Terraform. Las
+cuatro vistas son perspectivas de una demo, no un sistema de autenticación.
+PRODUCT.md, DESIGN.md y el contexto de Impeccable documentan el diseño; no son
+dependencias de ejecución. Reproducción y comprobaciones en README.

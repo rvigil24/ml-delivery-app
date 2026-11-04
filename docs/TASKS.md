@@ -1047,7 +1047,7 @@ fuentes actualizados. Sin modificar Excel, borrar ramas o iniciar despliegue.
 | T44 | Despliegue y CI/CD | Crear pipeline CI/CD en GitHub Actions para pruebas, build y despliegue | Ruben Vigil | Completada |
 | T45 | Despliegue y CI/CD | Configurar secretos, permisos mínimos y acceso seguro a la infraestructura | Ruben Vigil | Completada |
 | T46 | Despliegue y CI/CD | Validar despliegue, logs, persistencia y consumo de recursos | Ruben Vigil | Completada |
-| T47 | Frontend y simulación visual | Crear aplicación Next.js con navegación entre las vistas de la demo | Ruben Vigil | Pendiente |
+| T47 | Frontend y simulación visual | Crear aplicación Next.js con navegación entre las vistas de la demo | Ruben Vigil | Completada |
 | T48 | Frontend y simulación visual | Implementar chat estilo WhatsApp para que el cliente simule un pedido | Ruben Vigil | Pendiente |
 | T49 | Frontend y simulación visual | Implementar panel del negocio para ver pedidos y cambiar su estado | Ruben Vigil | Pendiente |
 | T50 | Frontend y simulación visual | Implementar panel del repartidor para consultar rutas y confirmar entregas | Ruben Vigil | Pendiente |
@@ -1332,3 +1332,24 @@ lugar de academic_only; se mantienen las limitaciones y validaciones existentes.
 Health informa la carga de los modelos v2. Sin cambios de responsables ni de
 alcance de T47. Verificación: contrato OpenAPI, ruta retirada 404 y pruebas
 focalizadas de API, arranque S3 y cotizaciones.
+
+
+## Bloque activo — T47: layout Next.js
+
+Responsable: Ruben Vigil. Rama feat/T47-layout-nextjs desde origin/main actualizado.
+Alcance confirmado: Operaciones al entrar, menú para Cliente/Negocio/Repartidor,
+chat similar a WhatsApp identificado como simulación y futuro flujo guiado sin LLM.
+Dependencias: alcance de las cuatro vistas en SPEC y backend T30–T46 disponible;
+esta base visual no depende de conectividad cloud. Criterio de aceptación T47:
+aplicación Next.js ejecutable y navegación entre las cuatro vistas en móvil y
+escritorio. Sin iniciar acciones de T48–T54 por este bloque.
+
+Implementación: App Router, TypeScript, CSS compartido e iconos SVG de trazo
+consistente; fixtures de exposición reutilizados sin copiar datasets o secretos.
+Estados operativos «Sin consultar», mensajes de muestra y envío deshabilitado.
+Comprobaciones locales: tipos y build de producción aprobados; cuatro rutas
+navegables a 1440 y 390 px sin desborde del documento ni errores JavaScript;
+404 correcto. Detector Impeccable sin hallazgos. Revisión visual independiente: disposition ship, ocho capturas válidas y sin
+correcciones materiales para T47. Tokens documentados con Impeccable; publicación
+bajo autorización persistente de Ruben, condicionada a CI aprobada.
+T48–T54 permanecen pendientes; no se despliega la interfaz en AWS.
