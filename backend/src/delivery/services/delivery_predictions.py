@@ -12,4 +12,9 @@ class DeliveryEstimationService:
         if self.predictor is None:
             raise PredictionUnavailable("Modelo ETA/riesgo no disponible")
         result = self.predictor.predict(requested_at, origin, destination, promised_minutes)
-        return {**result, "model_source": self.source}
+        labels = {
+            "Datos chinos: sin validación para El Salvador o por vehículo":
+                "Modelo experimental: validación local y por vehículo pendiente."
+        }
+        return {**result, "model_source": self.source,
+                "limitations": [labels.get(text, text) for text in result.get("limitations", [])]}

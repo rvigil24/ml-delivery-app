@@ -1,0 +1,123 @@
+{
+  "simulated": true,
+  "description": "Datos ficticios exclusivos para exposición; no son dataset, etiquetas, observaciones o resultados de entrenamiento.",
+  "businesses": [
+    {
+      "id": "demo-expo-business-1",
+      "name": "Comedor Demo A · SIMULADO",
+      "location": {
+        "latitude": 13.6929,
+        "longitude": -89.2182
+      }
+    },
+    {
+      "id": "demo-expo-business-2",
+      "name": "Cafetería Demo B · SIMULADO",
+      "location": {
+        "latitude": 13.6929,
+        "longitude": -89.2182
+      }
+    },
+    {
+      "id": "demo-expo-business-3",
+      "name": "Tienda Demo C · SIMULADO",
+      "location": {
+        "latitude": 13.6929,
+        "longitude": -89.2182
+      }
+    }
+  ],
+  "couriers": [
+    {
+      "id": "demo-expo-courier-1",
+      "vehicle": "bicicleta",
+      "approved": true,
+      "available": true
+    },
+    {
+      "id": "demo-expo-courier-2",
+      "vehicle": "motocicleta",
+      "approved": true,
+      "available": true
+    }
+  ],
+  "orders": [
+    {
+      "id": "demo-expo-order-1",
+      "business_id": "demo-expo-business-1",
+      "origin": {
+        "latitude": 13.6929,
+        "longitude": -89.2182
+      },
+      "destination": {
+        "latitude": 13.7,
+        "longitude": -89.2
+      },
+      "details": "Pedido SIMULADO de exposición 1; sin viaje o cobro real."
+    },
+    {
+      "id": "demo-expo-order-2",
+      "business_id": "demo-expo-business-2",
+      "origin": {
+        "latitude": 13.6929,
+        "longitude": -89.2182
+      },
+      "destination": {
+        "latitude": 13.7,
+        "longitude": -89.2
+      },
+      "details": "Pedido SIMULADO de exposición 2; sin viaje o cobro real."
+    },
+    {
+      "id": "demo-expo-order-3",
+      "business_id": "demo-expo-business-3",
+      "origin": {
+        "latitude": 13.6929,
+        "longitude": -89.2182
+      },
+      "destination": {
+        "latitude": 13.725,
+        "longitude": -89.245
+      },
+      "details": "Pedido SIMULADO de exposición 3; sin viaje o cobro real."
+    }
+  ],
+  "predictions": {
+    "recorrido_corto": {
+      "requested_at": "2026-11-04T12:00:00-06:00",
+      "origin": {
+        "latitude": 13.6929,
+        "longitude": -89.2182
+      },
+      "destination": {
+        "latitude": 13.7,
+        "longitude": -89.2
+      },
+      "promised_minutes": 30.0
+    },
+    "plazo_amplio": {
+      "requested_at": "2026-11-04T12:00:00-06:00",
+      "origin": {
+        "latitude": 13.6929,
+        "longitude": -89.2182
+      },
+      "destination": {
+        "latitude": 13.7,
+        "longitude": -89.2
+      },
+      "promised_minutes": 60.0
+    },
+    "recorrido_largo": {
+      "requested_at": "2026-11-04T12:00:00-06:00",
+      "origin": {
+        "latitude": 13.6929,
+        "longitude": -89.2182
+      },
+      "destination": {
+        "latitude": 13.725,
+        "longitude": -89.245
+      },
+      "promised_minutes": 45.0
+    }
+  }
+}
