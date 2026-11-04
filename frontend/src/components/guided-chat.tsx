@@ -4,6 +4,7 @@ import { useEffect, useRef, useState, type FormEvent, type ReactNode } from "rea
 import { coordinates, orders } from "@/lib/demo-data";
 import { createLocalRequest, readDestination, selectedItems, type BusinessChoice, type FoodProduct, type LocalRequest, type RequestFields, type SelectedItem } from "@/lib/request-draft";
 import { Icon } from "./icon";
+import { DeliveryEstimate } from "./delivery-estimate";
 import { statusLabels, type OrderStatus } from "@/lib/business-orders";
 
 type Step = "location" | "business" | "menu" | "review" | "complete";
@@ -125,6 +126,7 @@ export function GuidedChat() {
     </div>
     <div className="chat-action-area" aria-busy={busy}>
       <h3 ref={stepHeading} tabIndex={-1} className="step-heading">{labels[step]}</h3>
+      {(step === "review" || step === "complete") && selected && destination && <DeliveryEstimate origin={selected.location} destination={destination}/>}
       {step === "business" ? <><p className="form-help">Distancias aproximadas en línea recta. La cobertura se confirma por separado.</p><div className="business-options">{nearby.map(({ business, distance_km }) => <button key={business.id} type="button" className="business-choice" disabled={busy} onClick={() => chooseBusiness(business)}><Icon name="store"/><span>{displayName(business.name)}<small className="business-distance">Aprox. {distance_km.toFixed(1)} km · Ver menú</small></span><Icon name="arrow"/></button>)}</div>{!nearby.length && <p className="form-help">No hay negocios registrados para mostrar.</p>}<button type="button" className="text-button" disabled={busy} onClick={() => go("location")}>Cambiar dirección</button></>
       : step === "complete" && request ? <>{summary}<p className="form-help local-reference">Referencia: {request.id}</p><p className="form-help">Estado al guardar: {statusLabels[request.status]}. El registro se conserva al recargar; la conversación se reinicia. Todavía no hay cotización ni cobro.</p><a className="text-button" href={`/negocio?business_id=${encodeURIComponent(request.business_id)}`}>Consultar en Negocio</a><button type="button" className="button button-primary" onClick={restart}>Preparar otro pedido</button></>
       : <form onSubmit={submit} noValidate>

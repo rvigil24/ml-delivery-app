@@ -72,3 +72,7 @@ sin guardar. Revisión final ship, escritorio/móvil. No altera DESIGN.md ni tok
 T52: el chat confirma sólo tras guardar por API; muestra referencia/estado y
 enlace al negocio correspondiente. Error recuperable conserva referencia.
 Revisión final ship: cuatro capturas escritorio/móvil. Mundo visual conservado.
+
+Corrección T52: Cliente muestra ETA/distancia reales antes de guardar y conserva
+la estimación al confirmar. Comparación de riesgo con plazo explícito opcional.
+Sin nuevo mundo visual. Revisión ship: seis capturas válidas escritorio/móvil.

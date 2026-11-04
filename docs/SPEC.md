@@ -334,3 +334,12 @@ de superar un plazo prometido explícito. El riesgo es una salida aprendida de
 entregas/plazos reales, sin umbral comercial inventado. El modelo no calcula
 precio, elige vehículo o garantiza cumplimiento. La mejora en test se documenta
 junto a la ausencia de validación local y la reutilización exploratoria del test.
+
+
+### Corrección de presentación T52 solicitada por Ruben
+
+Antes de guardar, Cliente muestra el tiempo estimado por ML y distancia del
+recorrido. El riesgo se calcula sólo si se ingresa un plazo para comparar;
+ese valor no representa una promesa comercial. Sin plazo se ejecuta ETA sin
+inventar un valor para el clasificador. Resultados orientativos con validación
+local pendiente, sin sumar tiempos de preparación o conducción inventados.
