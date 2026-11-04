@@ -28,8 +28,9 @@ corresponden al reparto previo y deben interpretarse con esta actualización.
 - **T15–T16:** completadas con la evidencia de cierre indicada abajo; integración verificable en el PR del bloque y la guía externa.
 - **T17–T18:** completadas con la evidencia de cierre indicada abajo; integración verificable en el PR del bloque y la guía externa.
 - **T19:** completada con la evidencia de cierre indicada abajo; integración verificable en su PR y la guía externa.
-- **Siguiente tarea:** T20, pendiente; el próximo bloque aún no se ha iniciado.
-- **T20–T40:** continuar según dependencias y criterios de aceptación.
+- **T20–T21:** completadas con la evidencia de cierre indicada abajo; integración verificable en su PR y la guía externa.
+- **Siguiente tarea:** T22, pendiente; el próximo bloque aún no se ha iniciado.
+- **T22–T40:** continuar según dependencias y criterios de aceptación.
 - **T41–T54:** asignadas a Ruben Vigil; despliegue y gastos siguen requiriendo autorización explícita.
 
 Cada agente trabaja una tarea por iteración, informa resultados y evita hacer
@@ -224,7 +225,29 @@ no se publica el modelo ni se acredita uso operativo. La revisión de términos 
 autorización antes de subir artefactos a S3 sigue pendiente en T33; el desarrollo
 local continúa conforme a DATA_ML. T20 y contratos HTTP quedan fuera del alcance.
 
-## Instrucciones concretas y criterios de aceptación: T01–T19
+### Cierre autorizado: T20–T21 — pedidos y cotizaciones
+
+Rama `backend/T20-T21-pedidos-cotizaciones`, creada desde `origin/main`
+actualizado en `a54a84b` (PR #10 integrado). Responsable: Ruben Vigil.
+
+- T20: completada sobre la base aprobada explícitamente por Ruben. Servicio de registro/consulta/transiciones, puertos y adaptador en memoria, con historial UTC inmutable y actualización condicional atómica. Cancelación solo antes de asignar; rechazos sin mutación, incluidos reintentos y estados obsoletos. Avances bloqueados sin validador de cotización/asignación. Suite de 55 pruebas aprobada en Python 3.12 y las cinco nuevas también en Python 3.9, en un entorno aislado sin dependencias ML. Contratos, README, SPEC y guía externa actualizados.
+- T21: completada con el alcance académico aprobado explícitamente por Ruben. Distancia Haversine en km, predictor local T19 cargado una vez y duración desde creación–entrega usando solo calendario UTC de creación. Devuelve borrador sin importes ni cambios de estado, marcado académico y cobertura sin validar. No convierte coordenadas raw Meituan ni inventa velocidad, zona o límite; cobertura/cotización comercial siguen pendientes. 60 pruebas aprobadas en Python 3.12, las cinco nuevas también en Python 3.9 e integración ilustrativa con el modelo real verificada sin reentrenar. Documentación, guía y fuentes actualizadas.
+
+Por orden explícita de Ruben se registran T20 y T21 como completadas en el
+backlog local, con la base de reglas y el alcance académico aprobados previamente.
+No se modifica el Excel ni se atribuye revisión independiente. Criterios y
+dependencias contrastados con código, contratos y comprobaciones reales: 60
+pruebas aprobadas en Python 3.12, las diez nuevas del bloque también en 3.9 e
+integración ilustrativa con el modelo T19 verificada sin reentrenar ni mutar
+el pedido. Fuentes/modelo y dependencias comprobados; no se repiten experimentos.
+
+El cierre publica un único PR, verifica su integración en remoto y sincroniza
+`main`; PR/commit y resultado se registran después en GitHub y la guía externa.
+La cobertura comercial, tarifas y requisitos de cotización/asignación siguen
+pendientes; T21 entrega solo un borrador académico. MongoDB sigue en T32 y API
+en T30. No se añaden dependencias, endpoints ni cambios AWS. T22 no se inicia aquí.
+
+## Instrucciones concretas y criterios de aceptación: T01–T21
 
 ### T01 — Crear repositorio Git y estructura modular del proyecto
 
@@ -416,6 +439,26 @@ local continúa conforme a DATA_ML. T20 y contratos HTTP quedan fuera del alcanc
 
 **Terminado cuando:** artefacto local recargable con predicciones equivalentes, hashes/versiones comprobados, evidencia y limitaciones conservadas, receta reproducible sin sobrescritura, pruebas/notebook. Sin elegir con test, publicar en S3, autorizar uso operativo ni implementar API.
 
+### T20 — Implementar registro y gestión de pedidos y sus estados
+
+**Responsable:** Ruben Vigil
+
+**Dependencia:** modelos T04 y contratos de ciclo de vida aprobados por Ruben.
+
+**Implementar:** servicio de registro/consulta, flujo aprobado con requisitos explícitos, historial UTC y actualizaciones condicionales; repositorio local detrás de puertos, sin adelantar MongoDB/API.
+
+**Terminado cuando:** negocio/origen/ID/estado inicial validados, historial inmutable, matriz y cancelación respetadas, rechazos sin escrituras, avances bloqueados sin requisitos, concurrencia probada y contratos/documentación/guía actualizados. Sin cotizaciones, asignaciones, tarifas o datos ML fabricados.
+
+### T21 — Implementar estimación de distancia y tiempo para cotizaciones
+
+**Responsable:** Ruben Vigil
+
+**Dependencia:** pedido/historial T20, modelo local T19 y base académica aprobada.
+
+**Implementar:** Haversine en km y predictor T19 detrás de un puerto, con procedencia/intervalo/versiones y limitaciones visibles; borrador académico sin importes ni mutación del pedido.
+
+**Terminado cuando:** geometría y unidades comprobadas, calendario de creación en UTC, modelo cargado una vez sin entrenar, fallos explícitos sin tiempos ficticios, cobertura sin validar y uso académico marcados, pruebas/integración real y documentación/guía. Sin emitir cotización comercial, inventar velocidades/zonas, cambiar estados o integrar HTTP/AWS.
+
 ## Backlog completo y asignaciones
 
 | ID | Área | Tarea | Responsable | Estado de referencia / actualización autorizada |
@@ -439,8 +482,8 @@ local continúa conforme a DATA_ML. T20 y contratos HTTP quedan fuera del alcanc
 | T17 | Machine Learning y Deep Learning | Implementar y entrenar una red neuronal MLP | Ruben Vigil | Completada |
 | T18 | Machine Learning y Deep Learning | Evaluar y comparar modelos mediante MAE, RMSE y otras métricas pertinentes | Ruben Vigil | Completada |
 | T19 | Machine Learning y Deep Learning | Seleccionar, guardar y documentar el modelo final | Ruben Vigil | Completada |
-| T20 | Lógica del negocio y simulación | Implementar registro y gestión de pedidos y sus estados | Ruben Vigil | Pendiente |
-| T21 | Lógica del negocio y simulación | Implementar estimación de distancia y tiempo para cotizaciones | Ruben Vigil | Pendiente |
+| T20 | Lógica del negocio y simulación | Implementar registro y gestión de pedidos y sus estados | Ruben Vigil | Completada |
+| T21 | Lógica del negocio y simulación | Implementar estimación de distancia y tiempo para cotizaciones | Ruben Vigil | Completada |
 | T22 | Lógica del negocio y simulación | Desarrollar cálculo de tarifas, costos operativos y remuneración del repartidor | Ruben Vigil | Pendiente |
 | T23 | Lógica del negocio y simulación | Implementar reglas para entregas en bicicleta y motocicleta | Ruben Vigil | Pendiente |
 | T24 | Lógica del negocio y simulación | Implementar sugerencia sencilla de rutas y orden de entregas | Ruben Vigil | Pendiente |

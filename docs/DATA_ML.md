@@ -1324,6 +1324,34 @@ de Git; Google Colab directamente sigue pendiente.
 Referencias: [persistencia scikit-learn](https://scikit-learn.org/1.7/model_persistence.html)
 y [pickle de Python](https://docs.python.org/3.12/library/pickle.html).
 
+## Uso académico del modelo en borradores — T21
+
+Tras aprobación explícita de Ruben, el backend T21 calcula distancia de referencia
+Haversine desde `Location` en grados y utiliza el artefacto T19 para duración.
+Son cálculos independientes: la distancia **no entra** al modelo temporal ni se
+convierte a minutos con una velocidad supuesta. No se usan coordenadas raw Meituan
+como latitud/longitud ni se calcula una ruta vial.
+
+`LocalDurationPredictor` carga/verifica una vez el pipeline local propio y recibe
+la fecha de creación del pedido T20 con zona horaria. Convierte a UTC, deriva
+hora/día y devuelve `DeliveryDuration` con fuente predicción, versión e intervalo
+`platform_order_time → arrive_time`. Esto incluye creación–entrega observada en
+el dataset; no representa solo conducción ni diferencia bicicleta/moto.
+
+El resultado `AcademicQuoteEstimate` conserva `academic_only=True`,
+`coverage_validated=False`, importes ausentes y limitaciones visibles. No se
+almacena como cotización válida ni avanza el estado de T20. Cobertura local,
+tarifas y aceptación comercial permanecen pendientes; no se atribuye desempeño
+para El Salvador. Modelo ausente/incompatible o salida inválida falla sin usar
+duraciones ficticias como fallback.
+
+Comprobaciones: 60 pruebas aprobadas en Python 3.12 y cinco nuevas en Python 3.9,
+con fixtures claramente separados del entrenamiento. Integración real con T19
+verificada en su entorno registrado, usando un pedido/coordenadas ilustrativos
+y sin modificar su estado. Los resultados de ese escenario son predicciones
+del modelo, no duraciones reales observadas ni nuevas métricas de generalización.
+No se reentrena ni cambia dataset, artefacto, notebook ML o dependencias.
+
 ## Entrenamiento y evaluación — T13 a T19
 
 - **T13:** variables predictoras, pipelines de preprocesamiento, división entrenamiento/prueba sin fuga de datos (temporal si corresponde).
