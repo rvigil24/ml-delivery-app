@@ -23,10 +23,10 @@ corresponden al reparto previo y deben interpretarse con esta actualización.
 
 ## Orden de trabajo de Ruben Vigil
 
-- **T01–T09:** completadas e integradas en `main`; T08–T09 mediante PR #5, commit `f93f833`.
-- **T10–T12:** completadas en implementación y comprobaciones; cierre e integración autorizados por Ruben.
-- **Siguiente tarea:** T13, preparar variables y conjuntos de entrenamiento/prueba; aún sin iniciar.
-- **T13–T40:** continuar según dependencias y criterios de aceptación.
+- **T01–T12:** completadas e integradas en `main`; T10–T12 mediante PR #6, commit `f504c8f`.
+- **T13–T14:** completadas con la evidencia de cierre indicada abajo; integración verificable en el PR del bloque y la guía externa.
+- **Siguiente tarea:** T15, pendiente; el próximo bloque aún no se ha iniciado.
+- **T15–T40:** continuar según dependencias y criterios de aceptación.
 - **T41–T54:** asignadas a Ruben Vigil; despliegue y gastos siguen requiriendo autorización explícita.
 
 Cada agente trabaja una tarea por iteración, informa resultados y evita hacer
@@ -135,6 +135,28 @@ El resultado posterior queda en GitHub y la guía externa, evitando un PR adicio
 solo para anotar el hash de integración. No se usa un clúster, AWS ni entrenamiento;
 las coordenadas siguen en unidades originales sin derivar distancias físicas.
 
+**Cierre verificado:** T10–T12 integradas mediante [PR #6](https://github.com/rvigil24/ml-delivery-app/pull/6), commit `f504c8f`; `main` local y remoto sincronizados antes del bloque siguiente.
+
+### Cierre autorizado: T13–T14 — preparación y baseline
+
+Rama `ml/T13-T14-preparacion-baseline`, creada desde `origin/main` actualizado
+en `f504c8f`. Responsable: Ruben Vigil. T13 y T14 se implementaron en iteraciones
+separadas; el cierre autorizado publica un solo PR y verifica su integración en remoto.
+
+- T13: completada. Variables temporales cíclicas y selección explícita de predictores; 409,083 pedidos de entrenamiento, 136,799 de prueba y 399 purgados por etiqueta no disponible al corte. Corte `2022-10-23T00:00:00Z`, IDs disjuntos y datos versionados con hashes; 38 pruebas aprobadas en Python 3.12/3.9 al implementar T13. Segundo notebook con T13 ejecutable.
+- T14: completada. `DummyRegressor(strategy="median")` ajustado solo con los 409,083 pedidos de entrenamiento; predicción constante 27.75 min. Test (136,799 pedidos): MAE 9.501230 min y RMSE 12.562496 min. Estrategia única fijada antes de evaluar, sin tuning; 40 pruebas aprobadas en Python 3.12/3.9 y resultados reproducidos en ambos intérpretes.
+
+Por orden de Ruben se actualiza el backlog local, sin modificar el Excel ni
+atribuir revisión independiente. Las dependencias y criterios de ambos IDs
+se contrastaron con código, manifiestos, hashes y resultados reales. El segundo
+notebook tiene diez celdas ejecutadas localmente sin errores y cinco pruebas
+específicas; la ejecución directamente en Google Colab sigue pendiente.
+El commit de integración y la sincronización de `main` se registran en GitHub y
+la guía externa después del merge. T15 permanece pendiente y no se inicia aquí.
+T13 solo prepara datos; T14 ajusta la referencia fija. No cambia el contrato HTTP. Coordenadas,
+rutas y vehículos quedan fuera de la versión temporal experimental; el EDA
+previo de la cohorte completa queda documentado como límite del test.
+
 La preparación de datos T08 no incluye automáticamente features geográficas no validadas.
 La confirmación de unidades geográficas queda como pendiente explícito para el
 próximo bloque antes de calcular distancia física; no debe perderse al integrar.
@@ -142,7 +164,7 @@ El uso privado de S3 y los derechos sobre publicación de artefactos Meituan que
 pendientes de revisión en T33/T19 antes de cualquier subida. La auditoría de calidad
 no resuelve esa condición ni excluye AWS del diseño; ver la corrección en DATA_ML.
 
-## Instrucciones concretas y criterios de aceptación: T01–T12
+## Instrucciones concretas y criterios de aceptación: T01–T14
 
 ### T01 — Crear repositorio Git y estructura modular del proyecto
 
@@ -264,6 +286,26 @@ no resuelve esa condición ni excluye AWS del diseño; ver la corrección en DAT
 
 **Prompt corto:** «Lee `AGENTS.md`, `docs/TASKS.md` y los documentos pertinentes. Implementa solamente T12 siguiendo su aceptación. No hagas commits ni cambies otras tareas; al terminar muestra cambios y verificaciones reales.»
 
+### T13 — Preparar variables predictoras y conjuntos de entrenamiento/prueba
+
+**Responsable:** Ruben Vigil
+
+**Dependencia:** datos/target validados y preparación T07–T12 verificable.
+
+**Implementar:** variables conocidas antes de cotizar, transformación reutilizable y partición reproducible sin mezclar pedidos ni aprender del futuro.
+
+**Terminado cuando:** predictores/target/trazabilidad separados explícitamente, train/test materializados con corte documentado y controles de aislamiento/etiquetas disponibles, pruebas reales, manifiesto y limitaciones. Sin baseline ni modelos de tareas posteriores.
+
+### T14 — Implementar un modelo baseline
+
+**Responsable:** Ruben Vigil
+
+**Dependencia:** T13, variables y particiones verificadas.
+
+**Implementar:** referencia sencilla elegida antes de evaluar test, ajustada solo con entrenamiento y evaluada con errores reales de regresión.
+
+**Terminado cuando:** receta reproducible, constante aprendida de train, MAE/RMSE en minutos con versión/hashes de datos y software, pruebas de aislamiento y explicación de limitaciones. No usar test para elegir estrategia ni implementar familias ML de T15.
+
 ## Backlog completo y asignaciones
 
 | ID | Área | Tarea | Responsable | Estado de referencia / actualización autorizada |
@@ -280,8 +322,8 @@ no resuelve esa condición ni excluye AWS del diseño; ver la corrección en DAT
 | T10 | Dataset y procesamiento de datos | Implementar transformaciones equivalentes con Dask | Ruben Vigil | Completada |
 | T11 | Dataset y procesamiento de datos | Implementar transformaciones equivalentes con PySpark local | Ruben Vigil | Completada |
 | T12 | Dataset y procesamiento de datos | Comparar tiempos y resultados de Pandas, Dask y PySpark | Ruben Vigil | Completada |
-| T13 | Machine Learning y Deep Learning | Preparar variables predictoras y conjuntos de entrenamiento/prueba | Ruben Vigil | Pendiente |
-| T14 | Machine Learning y Deep Learning | Implementar un modelo baseline | Ruben Vigil | Pendiente |
+| T13 | Machine Learning y Deep Learning | Preparar variables predictoras y conjuntos de entrenamiento/prueba | Ruben Vigil | Completada |
+| T14 | Machine Learning y Deep Learning | Implementar un modelo baseline | Ruben Vigil | Completada |
 | T15 | Machine Learning y Deep Learning | Entrenar tres algoritmos ML de distintas familias | Ruben Vigil | Pendiente |
 | T16 | Machine Learning y Deep Learning | Aplicar validación cruzada y optimización de hiperparámetros | Ruben Vigil | Pendiente |
 | T17 | Machine Learning y Deep Learning | Implementar y entrenar una red neuronal MLP | Ruben Vigil | Pendiente |

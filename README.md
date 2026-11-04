@@ -119,7 +119,7 @@ actualizar el archivo de bloqueo automáticamente; ver la
 Cuando una tarea requiera cambiar dependencias, se actualizarán deliberadamente
 `pyproject.toml` y `uv.lock` juntos.
 
-Dependencias directas actuales: **boto3**, **Pandas**, **Matplotlib**, **Dask DataFrame**, **PySpark** y **pytest** (grupo `dev`). Hatchling se
+Dependencias directas actuales: **boto3**, **Pandas**, **Matplotlib**, **Dask DataFrame**, **PySpark**, **scikit-learn** y **pytest** (grupo `dev`). Hatchling se
 usa únicamente para construir/instalar el paquete. FastAPI, el driver MongoDB,
 las demás bibliotecas de datos/ML y las herramientas de frontend se incorporarán cuando
 se implementen sus tareas.
@@ -264,11 +264,62 @@ este dataset/equipo/configuración; no prueban superioridad general.
 versiones y hardware; conserva y muestra su fecha. El comando sin esa opción
 mide nuevamente. En Colab las cifras se calcularán con su propio entorno.
 
-## Notebook para estudiar y exponer
+## Variables y partición temporal — T13
+
+```bash
+uv run --locked python ml/data/prepare_model_data.py
+```
+
+Genera `train.csv`, `test.csv`, `purged.csv` y `manifest.json` en
+`data/splits/meituan/<revision>/t13-temporal-v1/`, ignorado por Git.
+Entrenamiento: **409,083 pedidos**; prueba: **136,799**; otros **399** se registran
+aparte porque todavía no habían terminado al corte `2022-10-23T00:00:00Z`.
+Los IDs son disjuntos y todas las etiquetas de entrenamiento son anteriores al corte.
+
+Los cuatro predictores son seno/coseno de hora y día UTC, con períodos fijos de
+24 horas y 7 días. `model_xy` selecciona solo esa lista, separando target y
+trazabilidad; no incorpora llegada, IDs ni coordenadas sin unidades confirmadas.
+Es una versión experimental temporal: no describe rutas o diferencias de vehículo
+ni garantiza capacidad predictiva. El EDA previo vio la cohorte completa; el test
+no se presenta como ciego a esa exploración. T13 prepara los datos; el ajuste
+de la referencia se realiza en T14.
+
+Repetir el comando verifica las copias sin sobrescribir. Cambiar receta,
+intérprete o corte requiere una versión nueva mediante `--output`; `--test-start`
+permite un corte ISO con zona horaria explícita. Ver protocolo y controles en DATA_ML.
+
+## Modelo de referencia — T14
+
+```bash
+uv sync --locked
+uv run --locked python ml/experiments/evaluate_baseline.py
+```
+
+Ajusta `DummyRegressor(strategy="median")` solo con entrenamiento: predice
+**27.75 minutos** para todos los pedidos. La estrategia se fija antes de evaluar
+test, con MAE como métrica principal; no se elige entre alternativas por sus errores.
+
+| Conjunto | Pedidos | MAE (min) | RMSE (min) |
+|---|---:|---:|---:|
+| Entrenamiento | 409,083 | 9.260672 | 12.192908 |
+| Prueba | 136,799 | 9.501230 | 12.562496 |
+
+Informes JSON/Markdown en `data/reports/meituan/<revision>/t14_baseline.*`,
+ignorados por Git, con hashes y versiones. La referencia ignora las variables;
+sirve para comparar modelos futuros, sin prometer desempeño local ni por vehículo.
+Los errores son minutos, no porcentajes de exactitud. T19 decidirá persistencia
+del modelo final; este paso no integra API ni AWS.
+
+## Notebooks para estudiar y exponer
 
 [`notebooks/01_datos_y_procesamiento.ipynb`](notebooks/01_datos_y_procesamiento.ipynb)
 explica y ejecuta T05–T12 usando los scripts existentes. Para la sección Spark y sus
 pruebas se necesita Java 17 también en el entorno de ejecución del notebook.
+
+[`notebooks/02_modelado_y_evaluacion.ipynb`](notebooks/02_modelado_y_evaluacion.ipynb)
+incluye T13 (variables/partición) y T14 (baseline y métricas reales); T15–T19 quedan
+pendientes. Puede adquirir y preparar la fuente por sí mismo. Sus cinco pruebas
+de T13/T14 usan Pandas/scikit-learn, sin necesitar Java para ejecutarlas.
 
 ```bash
 uv sync --locked --extra notebooks
@@ -286,9 +337,13 @@ y la reproducción se conservan en este README, `docs/DATA_ML.md` y el notebook.
 Las dependencias opcionales `notebooks` permiten ejecutar y validar el cuaderno;
 no se necesitan para usar los scripts de datos. La copia con resultados de la
 validación local se guarda fuera de Git en
-`data/reports/presentation/01_datos_y_procesamiento_ejecutado.ipynb`.
+`data/reports/presentation/01_datos_y_procesamiento_ejecutado.ipynb` y
+`data/reports/presentation/02_modelado_y_evaluacion_ejecutado.ipynb`.
 
-Verificación local: quince celdas de código sin errores y 35 pruebas aprobadas.
+Verificación T12: quince celdas del primer notebook sin errores y 35 pruebas
+aprobadas al cerrar ese bloque. T13/T14: diez celdas del segundo notebook sin
+errores y suite actual de **40 pruebas aprobadas en Python 3.12/3.9**. Las
+particiones tienen los mismos hashes; constante y métricas coinciden en ambos intérpretes.
 Una ejecución aislada desde el ZIP regeneró 546,281 pedidos con el mismo hash
 de T08 antes de incorporar T09. El EDA y las equivalencias Dask/Spark–Pandas se verificaron
 en Python 3.12 y 3.9. La ejecución directamente en el servicio de Colab queda por comprobar.
