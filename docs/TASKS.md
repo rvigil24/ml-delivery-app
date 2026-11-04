@@ -1304,3 +1304,13 @@ modificadas. PPTX mantiene formas/textos editables y colores corregidos.
 ZIP incorpora JSON de fixtures, cargador y evidencia de exposición sin secretos
 ni registros de entrenamiento. Guía externa actualizada; sin cambios runtime,
 redespliegue, AWS o IP. Publicación por autorización persistente, con CI normal.
+
+## Solicitud explícita — arquitectura PNG para exposición
+
+Rama docs/arquitectura-png desde origin/main actualizado. PNG 3840×2160 (16:9)
+y SVG editable en reports/: código/CI/entrega/ECR, Fargate/FastAPI, dos modelos,
+S3 al arrancar, Atlas externo, Secrets Manager, CloudWatch, roles/red/Terraform
+y preparación offline. Next.js marcado pendiente; sin inventar ALB/NAT/EC2 o
+funciones futuras. Diseño vectorial revisado visualmente, dimensiones/XML y
+paquete verificados. ZIP suma las dos imágenes; guía personal actualizada.
+No se modifica backend, AWS, IP, métricas o responsables. Publicación autorizada.

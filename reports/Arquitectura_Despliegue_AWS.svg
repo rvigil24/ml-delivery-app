@@ -1,0 +1,88 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1920" height="1080" viewBox="0 0 1920 1080"><defs>
+<marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 Z" fill="#087E8B"/></marker>
+<style>text{font-family:"Liberation Sans",Arial,sans-serif} .title{font-weight:700} </style></defs>
+<rect width="1920" height="1080" fill="#FFFFFF"/><rect width="14" height="1080" fill="#087E8B"/>
+<text x="72" y="69" font-size="40" fill="#17324D" class="title">Arquitectura del Asistente de Delivery Económico</text>
+<text x="72" y="107" font-size="23" fill="#526577">Código, despliegue, modelos y datos: cómo se conectan las piezas que ya funcionan.</text>
+<text x="72" y="160" font-size="20" fill="#B65B10" class="title">1  PUBLICAR UNA VERSIÓN</text>
+<rect x="72" y="185" width="275" height="125" rx="16" fill="#EEF5F8" stroke="#D3E0E7" stroke-width="2"/>
+<text x="94" y="221" font-size="25" fill="#087E8B" class="title">GitHub</text>
+<text x="94" y="255" font-size="19" fill="#526577">Código del proyecto</text>
+<text x="94" y="282" font-size="19" fill="#526577">Commit identifica versión</text>
+<rect x="392" y="185" width="340" height="125" rx="16" fill="#EEF5F8" stroke="#D3E0E7" stroke-width="2"/>
+<text x="414" y="221" font-size="25" fill="#087E8B" class="title">GitHub Actions · CI</text>
+<text x="414" y="255" font-size="19" fill="#526577">Pruebas y validación</text>
+<text x="414" y="282" font-size="19" fill="#526577">Build Docker sin publicar</text>
+<rect x="777" y="185" width="280" height="125" rx="16" fill="#EEF5F8" stroke="#D3E0E7" stroke-width="2"/>
+<text x="799" y="221" font-size="25" fill="#087E8B" class="title">Entrega manual</text>
+<text x="799" y="255" font-size="19" fill="#526577">Main + CI aprobada</text>
+<text x="799" y="282" font-size="19" fill="#526577">Aprobación de despliegue</text>
+<rect x="1102" y="185" width="320" height="125" rx="16" fill="#EEF5F8" stroke="#D3E0E7" stroke-width="2"/>
+<text x="1124" y="221" font-size="25" fill="#087E8B" class="title">Amazon ECR · AWS</text>
+<text x="1124" y="255" font-size="19" fill="#526577">Imagen Docker versionada</text>
+<text x="1124" y="282" font-size="19" fill="#526577">Código + dependencias</text>
+<path d="M 347 247 H 384" fill="none" stroke="#087E8B" stroke-width="3" marker-end="url(#arrow)"/>
+<path d="M 732 247 H 769" fill="none" stroke="#087E8B" stroke-width="3" marker-end="url(#arrow)"/>
+<path d="M 1057 247 H 1094" fill="none" stroke="#087E8B" stroke-width="3" marker-end="url(#arrow)"/>
+<text x="402" y="340" font-size="18" fill="#526577">OIDC: credenciales temporales para publicar en AWS</text>
+<rect x="650" y="375" width="1120" height="560" rx="22" fill="#F6F9FC" stroke="#B9CDD9" stroke-width="2"/>
+<text x="679" y="414" font-size="23" fill="#17324D" class="title">2  EJECUCIÓN EN AWS · us-east-1</text>
+<text x="1310" y="414" font-size="19" fill="#526577">VPC · subred pública · Security Group</text>
+<path d="M 1262 310 V 449 H 960 V 477" fill="none" stroke="#087E8B" stroke-width="3" marker-end="url(#arrow)"/>
+<text x="1020" y="438" font-size="18" fill="#087E8B">Ejecutar imagen</text>
+<rect x="72" y="480" width="360" height="125" rx="16" fill="#EEF5F8" stroke="#D3E0E7" stroke-width="2"/>
+<text x="94" y="516" font-size="25" fill="#087E8B" class="title">Usuario / Swagger</text>
+<text x="94" y="550" font-size="19" fill="#526577">Peticiones y respuestas JSON</text>
+<text x="94" y="577" font-size="19" fill="#526577">IP del presentador autorizada</text>
+<path d="M 442 532 H 690" fill="none" stroke="#087E8B" stroke-width="3" marker-end="url(#arrow)" marker-start="url(#arrow)"/>
+<text x="460" y="514" font-size="19" fill="#087E8B">HTTP · puerto 8000</text>
+<rect x="72" y="625" width="360" height="48" rx="16" fill="#FFFFFF" stroke="#087E8B" stroke-width="2" stroke-dasharray="9 7"/>
+<text x="94" y="661" font-size="25" fill="#087E8B" class="title">Next.js · pendiente</text>
+<path d="M 432 649 H 555 V 588 H 690" fill="none" stroke="#087E8B" stroke-width="3" marker-end="url(#arrow)" stroke-dasharray="8 6"/>
+<rect x="700" y="485" width="520" height="300" rx="18" fill="#FFFFFF" stroke="#087E8B" stroke-width="2"/>
+<path d="M 718 485 H 1202 Q 1220 485 1220 503 V 544 H 700 V 503 Q 700 485 718 485" fill="#087E8B"/>
+<text x="724" y="524" font-size="29" fill="#FFFFFF" class="title">Amazon ECS + Fargate</text>
+<text x="724" y="581" font-size="26" fill="#17324D" class="title">Contenedor Docker · FastAPI</text>
+<rect x="724" y="603" width="222" height="83" rx="10" fill="#EEF5F8" stroke="#D5E5E9" stroke-width="2"/>
+<text x="740" y="634" font-size="19" fill="#087E8B" class="title">Modelo de duración</text>
+<text x="740" y="663" font-size="19" fill="#526577">Estima minutos</text>
+<rect x="964" y="603" width="232" height="83" rx="10" fill="#EEF5F8" stroke="#D5E5E9" stroke-width="2"/>
+<text x="980" y="634" font-size="19" fill="#087E8B" class="title">Modelo de retraso</text>
+<text x="980" y="663" font-size="19" fill="#526577">Estima probabilidad</text>
+<text x="724" y="724" font-size="21" fill="#17324D">Pesos en memoria · inferencia por petición</text>
+<text x="724" y="757" font-size="19" fill="#526577">1 tarea · 0.5 vCPU · 2 GiB</text>
+<rect x="1280" y="474" width="445" height="140" rx="16" fill="#EEF5F8" stroke="#D3E0E7" stroke-width="2"/>
+<text x="1302" y="510" font-size="25" fill="#087E8B" class="title">Amazon S3</text>
+<text x="1302" y="544" font-size="19" fill="#526577">Bucket: ml-kodigo-resources</text>
+<text x="1302" y="571" font-size="19" fill="#526577">Modelos + manifiesto · carga al iniciar</text>
+<text x="1302" y="598" font-size="19" fill="#526577">Integridad SHA-256</text>
+<path d="M 1280 530 H 1231 V 557 H 1220" fill="none" stroke="#087E8B" stroke-width="3" marker-end="url(#arrow)"/>
+<rect x="1280" y="623" width="445" height="106" rx="16" fill="#EEF5F8" stroke="#D3E0E7" stroke-width="2"/>
+<text x="1302" y="659" font-size="25" fill="#087E8B" class="title">Secrets Manager</text>
+<text x="1302" y="693" font-size="19" fill="#526577">URI de Atlas inyectada al contenedor</text>
+<text x="1302" y="720" font-size="19" fill="#526577">Acceso mediante rol IAM</text>
+<path d="M 1280 665 H 1220" fill="none" stroke="#087E8B" stroke-width="3" marker-end="url(#arrow)"/>
+<rect x="1280" y="763" width="445" height="119" rx="16" fill="#EEF5F8" stroke="#D3E0E7" stroke-width="2"/>
+<text x="1302" y="799" font-size="25" fill="#087E8B" class="title">CloudWatch</text>
+<text x="1302" y="833" font-size="19" fill="#526577">Logs y métricas de CPU / memoria</text>
+<text x="1302" y="860" font-size="19" fill="#526577">Ayuda a observar el servicio</text>
+<path d="M 1220 735 H 1250 V 817 H 1275" fill="none" stroke="#087E8B" stroke-width="3" marker-end="url(#arrow)"/>
+<rect x="72" y="714" width="360" height="140" rx="16" fill="#EEF5F8" stroke="#D3E0E7" stroke-width="2"/>
+<text x="94" y="750" font-size="25" fill="#087E8B" class="title">MongoDB Atlas</text>
+<text x="94" y="784" font-size="19" fill="#526577">Negocios, repartidores y pedidos</text>
+<text x="94" y="811" font-size="19" fill="#526577">Persistencia fuera del contenedor</text>
+<text x="94" y="838" font-size="19" fill="#526577">Permite la IP de tarea como /32</text>
+<path d="M 690 716 H 555 V 779 H 442" fill="none" stroke="#087E8B" stroke-width="3" marker-end="url(#arrow)" marker-start="url(#arrow)"/>
+<text x="451" y="810" font-size="18" fill="#087E8B">Lectura / escritura</text>
+<rect x="700" y="829" width="520" height="82" rx="12" fill="#FFFFFF" stroke="#B9CDD9" stroke-width="2"/>
+<text x="719" y="858" font-size="22" fill="#17324D" class="title">Terraform: infraestructura como código</text>
+<text x="719" y="887" font-size="19" fill="#526577">Red, ECS/ECR, roles IAM, secreto y logs</text>
+<rect x="72" y="884" width="520" height="113" rx="16" fill="#EEF5F8" stroke="#D3E0E7" stroke-width="2"/>
+<text x="94" y="920" font-size="25" fill="#087E8B" class="title">Datos y entrenamiento · offline</text>
+<text x="94" y="954" font-size="19" fill="#526577">Meituan · Pandas / Dask / PySpark</text>
+<text x="94" y="981" font-size="19" fill="#526577">Comparar modelos y generar bundle</text>
+<path d="M 592 955 H 1810 V 529 H 1730" fill="none" stroke="#087E8B" stroke-width="3" marker-end="url(#arrow)"/>
+<text x="883" y="978" font-size="19" fill="#087E8B">Publicación del bundle antes de utilizar los modelos</text>
+<text x="72" y="1041" font-size="18" fill="#526577">Ruben Vigil · Proyecto académico · 4 de noviembre de 2026</text>
+<text x="1120" y="1041" font-size="18" fill="#526577">La API no reentrena durante las solicitudes.</text>
+</svg>
