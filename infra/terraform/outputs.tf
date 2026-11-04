@@ -18,3 +18,12 @@ output "mongodb_secret_arn" {
 output "log_group" {
   value = aws_cloudwatch_log_group.api.name
 }
+
+output "github_deploy_role_arn" {
+  description = "Valor no secreto para AWS_DEPLOY_ROLE_ARN del entorno aws-demo."
+  value       = aws_iam_role.github_deploy.arn
+}
+
+output "aws_account_id" {
+  value = data.aws_caller_identity.current.account_id
+}

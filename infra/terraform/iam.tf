@@ -4,6 +4,10 @@ locals {
     Statement = [{
       Effect    = "Allow", Action = "sts:AssumeRole"
       Principal = { Service = "ecs-tasks.amazonaws.com" }
+      Condition = {
+        StringEquals = { "aws:SourceAccount" = data.aws_caller_identity.current.account_id }
+        ArnLike      = { "aws:SourceArn" = "arn:aws:ecs:us-east-1:${data.aws_caller_identity.current.account_id}:*" }
+      }
     }]
   })
 }

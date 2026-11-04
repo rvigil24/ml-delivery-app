@@ -34,7 +34,7 @@ corresponden al reparto previo y deben interpretarse con esta actualización.
 - **T26–T27:** completadas por cierre autorizado, con evidencia abajo; integración verificable en el PR y la guía externa.
 - **T28–T29:** completadas por cierre autorizado, con evidencia abajo; integración verificable en el PR y la guía externa.
 - **T30–T31:** completadas por cierre autorizado con alcance académico, con evidencia abajo; integración verificable en el PR y la guía externa.
-- **T32–T33:** completadas por cierre autorizado con evidencia local, Atlas y S3 indicada abajo; integración verificable en el PR del bloque y la guía externa. T34 completada por cierre autorizado con evidencia abajo. T35 completada por cierre autorizado con evidencia abajo. T36 y la mejora ML con arranque v2 S3 completadas por cierre autorizado, con evidencia abajo. T37 completada por cierre autorizado, con evidencia abajo. T38 completada por cierre autorizado, con reporte Word/PDF y evidencia abajo. T39 completada por cierre autorizado, con informe y paquete de evidencias. T40 completada por cierre autorizado, con presentación y demo ensayada. T41 completada por cierre autorizado con propuesta ECS/Fargate y presupuesto breve; evidencia abajo. T42 completada por cierre autorizado con Terraform validado y plan sin apply. T43 completada por cierre autorizado con arranque local verificado. T44 implementada para cierre autorizado; integración condicionada a CI aprobada en su PR.
+- **T32–T33:** completadas por cierre autorizado con evidencia local, Atlas y S3 indicada abajo; integración verificable en el PR del bloque y la guía externa. T34 completada por cierre autorizado con evidencia abajo. T35 completada por cierre autorizado con evidencia abajo. T36 y la mejora ML con arranque v2 S3 completadas por cierre autorizado, con evidencia abajo. T37 completada por cierre autorizado, con evidencia abajo. T38 completada por cierre autorizado, con reporte Word/PDF y evidencia abajo. T39 completada por cierre autorizado, con informe y paquete de evidencias. T40 completada por cierre autorizado, con presentación y demo ensayada. T41 completada por cierre autorizado con propuesta ECS/Fargate y presupuesto breve; evidencia abajo. T42 completada por cierre autorizado con Terraform validado y plan sin apply. T43 completada por cierre autorizado con arranque local verificado. T44 integrada en PR #29 con CI aprobada. Bloque activo: T45 (seguridad/OIDC; activación AWS pendiente de autorización).
 - **T40:** completada con material editable, PDF y guía; evidencia abajo.
 - **T41–T54:** asignadas a Ruben Vigil; despliegue y gastos siguen requiriendo autorización explícita.
 
@@ -1182,3 +1182,27 @@ Cierre por autorización persistente; fusionar únicamente con tests/Terraform/
 build aprobados en GitHub y registrar evidencia real en PR/guía. El workflow
 CD no se ejecuta; su validación AWS depende de infraestructura/autorización.
 No se ejecutan pruebas locales duplicadas de producto o entrenamiento.
+
+## Bloque activo — T45: seguridad, OIDC y secreto Atlas
+
+Responsable: Ruben Vigil. Rama infra/T45-seguridad-oidc desde origin/main cb58aea.
+Dependencias: T41–T44 integradas; CI PR/main aprobada (16 pruebas, Terraform, Docker).
+Criterio: confianza OIDC y permisos mínimos definidos/activados, secreto fuera de
+Git/estado, entorno protegido y acceso real comprobado. **Pendiente**: sin permiso
+para configurar IAM real, crear infraestructura o cargar el secreto no se cierra
+T45 ni se avanza a su dependiente T46.
+
+Preparación: github_oidc.tf + restricciones SourceAccount/Arn de roles ECS y salidas
+no secretas. Sub inmutable exacto confirmado por API GitHub, aud sts.amazonaws.com.
+Inventario IAM de solo lectura: ningún proveedor OIDC existente. Rol de entrega
+limitado a ECR de demo, familia ECS, servicio, tareas/red y PassRole de dos roles;
+sin URI Atlas, escritura S3 o administración IAM. GitHub aws-demo configurado y
+verificado: solo rama main y revisión de rvigil24, permite aprobación propia.
+
+Terraform fmt/validate y plan reales aprobados: 19 altas, cero cambios/bajas,
+cero tareas. Variables reales no secretas en deployment.tfvars privado (/32
+observado y tag SHA base); plan y recibos ignorados en data/reports/presentation/
+terraform/t45*. No se leyó/escribió la URI ni se ejecutó apply. El valor Atlas no
+se declara en Terraform. Código preparado se puede integrar bajo autorización
+persistente manteniendo la tarea Pendiente; activación/prueba AWS requieren orden
+explícita. No se afirman permisos efectivos o despliegue funcional sin esa prueba.
