@@ -1,0 +1,111 @@
+name: Despliegue manual ECS
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirmation:
+        description: 'Escribir DESPLEGAR solo tras autorizar recursos y gastos AWS'
+        required: true
+        type: string
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: delivery-aws-demo-deploy
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    environment: aws-demo
+    permissions:
+      contents: read
+      actions: read
+      id-token: write
+    env:
+      AWS_REGION: us-east-1
+      AWS_ROLE_ARN: ${{ vars.AWS_DEPLOY_ROLE_ARN }}
+      AWS_ACCOUNT_ID: ${{ vars.AWS_ACCOUNT_ID }}
+      CONFIRMATION: ${{ inputs.confirmation }}
+      ECS_CLUSTER: delivery-demo
+      ECS_SERVICE: delivery-demo-api
+      ECR_REPOSITORY: delivery-demo-api
+    steps:
+      - name: Exigir main, confirmación, configuración y CI aprobada
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          test "$GITHUB_REF" = refs/heads/main
+          test "$CONFIRMATION" = DESPLEGAR
+          test -n "$AWS_ROLE_ARN"
+          test -n "$AWS_ACCOUNT_ID"
+          successes=$(gh api "repos/$GITHUB_REPOSITORY/actions/workflows/ci.yml/runs?head_sha=$GITHUB_SHA&status=success" --jq '.total_count')
+          test "$successes" -gt 0
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - name: Credenciales temporales mediante OIDC
+        uses: aws-actions/configure-aws-credentials@61815dcd50bd041e203e49132bacad1fd04d2708 # v5
+        with:
+          role-to-assume: ${{ vars.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: us-east-1
+          allowed-account-ids: ${{ vars.AWS_ACCOUNT_ID }}
+          role-session-name: delivery-deploy-${{ github.run_id }}
+      - name: Publicar imagen inmutable del commit
+        run: |
+          registry="$AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com"
+          image="$registry/$ECR_REPOSITORY:$GITHUB_SHA"
+          if ! aws ecr describe-images --repository-name "$ECR_REPOSITORY" --image-ids "imageTag=$GITHUB_SHA" >/dev/null 2>&1; then
+            aws ecr get-login-password | docker login --username AWS --password-stdin "$registry"
+            docker build --tag "$image" .
+            docker push "$image"
+          fi
+          echo "DEPLOY_IMAGE=$image" >> "$GITHUB_ENV"
+      - name: Registrar revisión y actualizar servicio existente
+        run: |
+          previous=$(aws ecs describe-services --cluster "$ECS_CLUSTER" --services "$ECS_SERVICE" --query 'services[0].taskDefinition' --output text)
+          test "$previous" != None
+          aws ecs describe-task-definition --task-definition "$previous" --query taskDefinition > "$RUNNER_TEMP/task.json"
+          jq --arg image "$DEPLOY_IMAGE" '
+            {family, taskRoleArn, executionRoleArn, networkMode, containerDefinitions,
+             volumes, placementConstraints, requiresCompatibilities, cpu, memory,
+             runtimePlatform, ephemeralStorage}
+            | with_entries(select(.value != null))
+            | .containerDefinitions |= map(if .name == "api" then .image = $image else . end)
+          ' "$RUNNER_TEMP/task.json" > "$RUNNER_TEMP/register.json"
+          next=$(aws ecs register-task-definition --cli-input-json "file://$RUNNER_TEMP/register.json" --query 'taskDefinition.taskDefinitionArn' --output text)
+          aws ecs update-service --cluster "$ECS_CLUSTER" --service "$ECS_SERVICE" --task-definition "$next" --desired-count 1 >/dev/null
+          echo "DEPLOY_TASK_DEFINITION=$next" >> "$GITHUB_ENV"
+          {
+            echo "### Servicio actualizado"
+            echo "Imagen: $DEPLOY_IMAGE"
+            echo "Revisión anterior para rollback manual: $previous"
+            echo "Permití en Atlas la IPv4 /32 de la nueva tarea durante la espera de arranque."
+            echo "ECS HEALTHY no acredita API, modelo o persistencia listos."
+          } >> "$GITHUB_STEP_SUMMARY"
+      - name: Mostrar IPv4 de la nueva tarea para la lista Atlas
+        run: |
+          for attempt in $(seq 1 30); do
+            tasks=$(aws ecs list-tasks --cluster "$ECS_CLUSTER" --service-name "$ECS_SERVICE" --desired-status RUNNING --query taskArns --output text)
+            if test -n "$tasks" && test "$tasks" != None; then
+              # La CLI devuelve ARNs generados por AWS, separados por espacios.
+              read -r -a task_ids <<< "$tasks"
+              aws ecs describe-tasks --cluster "$ECS_CLUSTER" --tasks "${task_ids[@]}" > "$RUNNER_TEMP/tasks.json"
+              eni=$(jq -r --arg revision "$DEPLOY_TASK_DEFINITION" '[.tasks[] | select(.taskDefinitionArn == $revision) | .attachments[].details[] | select(.name == "networkInterfaceId") | .value][0] // empty' "$RUNNER_TEMP/tasks.json")
+              if test -n "$eni"; then
+                ip=$(aws ec2 describe-network-interfaces --network-interface-ids "$eni" --query 'NetworkInterfaces[0].Association.PublicIp' --output text)
+                if test -n "$ip" && test "$ip" != None; then
+                  echo "IPv4 de tarea para Atlas: $ip/32" >> "$GITHUB_STEP_SUMMARY"
+                  echo "IPv4 de tarea para Atlas: $ip/32"
+                  break
+                fi
+              fi
+            fi
+            sleep 2
+          done
+          test -n "${ip:-}" && test "$ip" != None
+      - name: Esperar estabilidad ECS (no valida disponibilidad funcional)
+        run: aws ecs wait services-stable --cluster "$ECS_CLUSTER" --services "$ECS_SERVICE"

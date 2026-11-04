@@ -34,7 +34,7 @@ corresponden al reparto previo y deben interpretarse con esta actualización.
 - **T26–T27:** completadas por cierre autorizado, con evidencia abajo; integración verificable en el PR y la guía externa.
 - **T28–T29:** completadas por cierre autorizado, con evidencia abajo; integración verificable en el PR y la guía externa.
 - **T30–T31:** completadas por cierre autorizado con alcance académico, con evidencia abajo; integración verificable en el PR y la guía externa.
-- **T32–T33:** completadas por cierre autorizado con evidencia local, Atlas y S3 indicada abajo; integración verificable en el PR del bloque y la guía externa. T34 completada por cierre autorizado con evidencia abajo. T35 completada por cierre autorizado con evidencia abajo. T36 y la mejora ML con arranque v2 S3 completadas por cierre autorizado, con evidencia abajo. T37 completada por cierre autorizado, con evidencia abajo. T38 completada por cierre autorizado, con reporte Word/PDF y evidencia abajo. T39 completada por cierre autorizado, con informe y paquete de evidencias. T40 completada por cierre autorizado, con presentación y demo ensayada. T41 completada por cierre autorizado con propuesta ECS/Fargate y presupuesto breve; evidencia abajo. T42 completada por cierre autorizado con Terraform validado y plan sin apply. T43 completada por cierre autorizado con arranque local verificado.
+- **T32–T33:** completadas por cierre autorizado con evidencia local, Atlas y S3 indicada abajo; integración verificable en el PR del bloque y la guía externa. T34 completada por cierre autorizado con evidencia abajo. T35 completada por cierre autorizado con evidencia abajo. T36 y la mejora ML con arranque v2 S3 completadas por cierre autorizado, con evidencia abajo. T37 completada por cierre autorizado, con evidencia abajo. T38 completada por cierre autorizado, con reporte Word/PDF y evidencia abajo. T39 completada por cierre autorizado, con informe y paquete de evidencias. T40 completada por cierre autorizado, con presentación y demo ensayada. T41 completada por cierre autorizado con propuesta ECS/Fargate y presupuesto breve; evidencia abajo. T42 completada por cierre autorizado con Terraform validado y plan sin apply. T43 completada por cierre autorizado con arranque local verificado. T44 implementada para cierre autorizado; integración condicionada a CI aprobada en su PR.
 - **T40:** completada con material editable, PDF y guía; evidencia abajo.
 - **T41–T54:** asignadas a Ruben Vigil; despliegue y gastos siguen requiriendo autorización explícita.
 
@@ -1044,7 +1044,7 @@ fuentes actualizados. Sin modificar Excel, borrar ramas o iniciar despliegue.
 | T41 | Despliegue y CI/CD | Definir arquitectura de despliegue en AWS y revisar presupuesto estimado | Ruben Vigil | Completada |
 | T42 | Despliegue y CI/CD | Implementar infraestructura como código con Terraform (ECS/Fargate, ECR, red, IAM y S3 existente) | Ruben Vigil | Completada |
 | T43 | Despliegue y CI/CD | Configurar servicio ECS/Fargate y variables para despliegue; conservar Compose local | Ruben Vigil | Completada |
-| T44 | Despliegue y CI/CD | Crear pipeline CI/CD en GitHub Actions para pruebas, build y despliegue | Ruben Vigil | Pendiente |
+| T44 | Despliegue y CI/CD | Crear pipeline CI/CD en GitHub Actions para pruebas, build y despliegue | Ruben Vigil | Completada |
 | T45 | Despliegue y CI/CD | Configurar secretos, permisos mínimos y acceso seguro a la infraestructura | Ruben Vigil | Pendiente |
 | T46 | Despliegue y CI/CD | Validar despliegue, logs, persistencia y consumo de recursos | Ruben Vigil | Pendiente |
 | T47 | Frontend y simulación visual | Crear aplicación Next.js con navegación entre las vistas de la demo | Ruben Vigil | Pendiente |
@@ -1158,3 +1158,27 @@ entrenamientos o publicación S3. Sin commit/push de T43.
 con commit, push y merge normal, y continuar sin repetir confirmación. Se mantienen
 ramas desde origin/main actualizado, comprobaciones y evidencia por tarea. No
 incluye crear recursos, configurar IAM real, desplegar o generar gastos AWS.
+
+## T44 — GitHub Actions
+
+Responsable: Ruben Vigil. Continuidad e integración autorizadas expresamente.
+Rama `ci/T44-pipeline` desde origin/main `e3eb65c` actualizado tras PR #28.
+Dependencias: T34 y T41–T43 satisfechas para definir/build/verificar pipeline.
+OIDC/IAM real, infraestructura y secreto siguen pendientes antes de ejecutar CD.
+Criterio: CI reproducible para PR/main y workflow de entrega manual documentado,
+sin despliegue implícito. No convertir la ausencia de prueba cloud en evidencia.
+
+Se crean ci.yml (dominio/arranque, Terraform estático y build Docker) y deploy.yml
+(manual main + DESPLEGAR + CI aprobada, OIDC, ECR SHA, actualización ECS y salida
+IPv4 Atlas). CI no necesita AWS o dataset. CD no crea infraestructura, modifica
+IAM, escribe secretos o ejecuta apply. Se documenta vitalidad vs readiness,
+preparación de entorno/rol y sincronización de variables Terraform tras CD.
+Acciones verificadas en sus repositorios oficiales y fijadas por SHA.
+
+Comprobaciones locales T44: actionlint 1.7.12 temporal con SHA256 verificado,
+YAML, bash -n de scripts, eventos/permisos y SHA de acciones correctos. Export
+UV bloqueado con poda offline aprobado. Propuesta sigue en dos páginas.
+Cierre por autorización persistente; fusionar únicamente con tests/Terraform/
+build aprobados en GitHub y registrar evidencia real en PR/guía. El workflow
+CD no se ejecuta; su validación AWS depende de infraestructura/autorización.
+No se ejecutan pruebas locales duplicadas de producto o entrenamiento.

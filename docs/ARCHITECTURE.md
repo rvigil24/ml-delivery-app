@@ -972,3 +972,20 @@ persistencia. Antes de una exposición deben comprobarse predicción y operació
 Mongo de forma explícita. No se añade endpoint, contrato o dependencia hacia
 archivos de agentes. Imagen ECR, valor del secreto y prueba cloud siguen pendientes
 hasta autorizar creación/despliegue; el código no los publica automáticamente.
+
+## Pipeline de integración y entrega
+
+`ci.yml` ejecuta tres jobs sin AWS en PR/main: pruebas de dominio/arranque,
+fmt/init/validate Terraform y build Docker sin push. No entrena ni requiere
+artefactos locales, .env, Mongo cloud o cuentas AWS. Acciones fijadas por SHA,
+contents:read y credenciales checkout no persistidas.
+
+`deploy.yml` es workflow_dispatch manual, main + confirmación DESPLEGAR + CI
+aprobada para el mismo SHA. Entorno GitHub aws-demo y rol OIDC pendiente de
+configurar en la etapa de seguridad; id-token:write solo en ese job. No crea
+infraestructura o secretos ni ejecuta apply. Publica imagen con tag SHA,
+registra revisión conservando la configuración actual y actualiza ECS. Muestra
+IP de tarea para Atlas; espera estabilidad ECS sin afirmar readiness funcional.
+La imagen/desired_count de variables Terraform deben sincronizarse antes de un
+plan futuro para evitar retrocesos por drift. CD no ejecutado, infraestructura
+aún no desplegada y reglas/protecciones de entorno no configuradas todavía.

@@ -18,6 +18,8 @@ y riesgo de retraso**. Next.js y el despliegue AWS están pendientes.
 Configuración de infraestructura y arranque cloud: [Terraform](infra/terraform/README.md).
 El contenedor espera acceso a Atlas antes de iniciar la API. Todavía sin desplegar.
 
+CI verifica pruebas básicas, Terraform y build Docker en cada PR. El [despliegue AWS](infra/terraform/README.md) es manual y requiere infraestructura y permisos previamente autorizados.
+
 ## Inicio rápido: demo con modelos desde S3
 
 Requisitos: Git, Docker con Compose, Python 3.9+ para el comando de demo y un

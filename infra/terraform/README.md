@@ -88,3 +88,38 @@ antes de aplicar. No se debe importar un recurso ajeno para resolver colisiones.
 Referencias: [ECS/Fargate](https://docs.aws.amazon.com/AmazonECS/latest/developerguide/AWS_Fargate.html),
 [red de tareas](https://docs.aws.amazon.com/AmazonECS/latest/developerguide/networking-outbound.html),
 [recurso Terraform ECS](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/ecs_service).
+
+## Integración y despliegue desde GitHub Actions
+
+`.github/workflows/ci.yml` ejecuta en cada PR y push a main: pruebas básicas de
+modelo de dominio/arranque (sin datasets o entrenamiento), validación estática
+Terraform sin credenciales y construcción Docker sin publicar imagen. Usa las
+versiones Python/uv/Terraform del proyecto y acciones fijadas por SHA.
+
+`.github/workflows/deploy.yml` solo admite disparo manual desde main con el
+texto DESPLEGAR. Exige CI aprobada para ese commit, variables de entorno GitHub
+`AWS_DEPLOY_ROLE_ARN` y `AWS_ACCOUNT_ID`, y el entorno `aws-demo`. Antes de usarlo
+hay que autorizar/aprovisionar infraestructura, configurar OIDC y restricciones
+del entorno (main y aprobación), publicar el valor del secreto y preparar Atlas.
+No contiene claves AWS permanentes. El rol/entorno todavía no se han configurado;
+no ejecutar el workflow como prueba mientras esos requisitos estén pendientes.
+
+El job obtiene credenciales temporales, publica una imagen etiquetada con el
+SHA del commit en el ECR existente, registra revisión de la definición actual
+cambiando solo la imagen y actualiza el servicio a una tarea. Reutiliza una
+imagen ya publicada con esa etiqueta inmutable. Muestra la IPv4 de la nueva
+tarea para permitir su /32 en Atlas mientras espera. No ejecuta Terraform apply,
+crea infraestructura, escribe el secreto o cambia políticas del bucket.
+
+Un resultado verde de despliegue solo acredita actualización/estabilidad ECS;
+no acredita API/modelos/persistencia funcionales. Esa validación se realiza
+luego desde la IP permitida. La revisión anterior queda en el resumen para un
+rollback manual autorizado; no se afirma rollback automático funcional.
+Antes de un futuro plan/apply, sincronizar `image_tag` con el SHA desplegado y
+`desired_count` con el estado acordado: CI/CD actualiza ECS fuera de Terraform y
+un plan con variables viejas puede proponer volver a la imagen o cantidad previa.
+Los permisos del rol OIDC se limitarán a ECR de demo, ECS de demo, descripción de
+sus redes y PassRole de los dos roles de tarea. No necesita leer la URI Atlas,
+modificar IAM, escribir S3 ni crear recursos. `ecr:GetAuthorizationToken` y las
+operaciones Describe/List que AWS no permite limitar por recurso necesitan
+Resource '*'; la confianza OIDC y el resto de recursos deben estar acotados.
