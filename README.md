@@ -405,6 +405,36 @@ JSON/Markdown con sesgo, P95 absoluto y errores por día en
 `t18_model_comparison.png`. T19 decidirá selección/persistencia sin retocar
 hiperparámetros con estas cifras de test.
 
+## Modelo final académico — T19
+
+```bash
+uv run --locked python ml/experiments/export_model.py
+```
+
+Selecciona **Random Forest de profundidad 6** por menor MAE de validación interna
+(8.955647 min). Se conserva esa regla aunque la MLP obtuviera MAE de test apenas
+menor. Reajusta solo con train y guarda, fuera de Git:
+
+```text
+models/delivery-duration/meituan-temporal-rf-v1/
+  pipeline.pkl       # Transformación temporal + bosque
+  metadata.json      # Versión, contrato, hashes, entorno y métricas
+  evidence.json      # Copias de evidencia T16–T18
+  model_card.md      # Selección, procedencia, uso y limitaciones
+```
+
+El pipeline recibe `request_hour_utc` y `request_weekday_utc` (lunes=0), transforma
+a las cuatro variables cíclicas y devuelve minutos. Se carga con
+`delivery_ml.artifact.load_pipeline(Path("models/delivery-duration/meituan-temporal-rf-v1"))`.
+No requiere entrenar para predecir. La recarga verifica hashes/entorno y reproduce
+las predicciones sobre train con tolerancia absoluta 1e-12 min.
+
+Una repetición verifica la misma receta sin sobrescribir; cambios requieren otra
+versión con `--output`. No añade dependencias: usa pickle de Python. Cargar solo
+artefactos propios de confianza y con el mismo código/entorno; pickle puede ejecutar
+código y los hashes no autentican su origen. El modelo conserva R² bajo y errores
+relevantes: uso académico local, sin validación operativa ni publicación en S3.
+
 ## Notebooks para estudiar y exponer
 
 [`notebooks/01_datos_y_procesamiento.ipynb`](notebooks/01_datos_y_procesamiento.ipynb)
@@ -414,7 +444,8 @@ pruebas se necesita Java 17 también en el entorno de ejecución del notebook.
 [`notebooks/02_modelado_y_evaluacion.ipynb`](notebooks/02_modelado_y_evaluacion.ipynb)
 incluye T13 (variables/partición), T14 (baseline y métricas reales) y T15
 (tres familias, resultados sobre train), T16 (validación/tuning temporal) y T17
-(MLP y curvas de aprendizaje) y T18 (comparación/errores); T19 queda pendiente.
+(MLP y curvas de aprendizaje), T18 (comparación/errores) y T19
+(selección/persistencia académica local).
 Puede adquirir y preparar la fuente por sí mismo. Sus pruebas específicas
 usan Pandas/scikit-learn, sin necesitar Java para ejecutarlas.
 
@@ -449,6 +480,9 @@ T17: **19 celdas** ejecutadas sin errores, curvas exportadas y **46 pruebas
 aprobadas en Python 3.12**; las dos nuevas pasan también en Python 3.9.
 T18: **21 celdas** ejecutadas sin errores, comparación exportada y **48 pruebas
 aprobadas en Python 3.12**; las dos nuevas pasan también en Python 3.9.
+T19: tres celdas nuevas ejecutadas sin errores, conservando las 21 ejecuciones
+previas sin cambios de código; **24 celdas verificadas en etapas**, **50 pruebas
+aprobadas en Python 3.12** y las dos nuevas también en Python 3.9.
 Una ejecución aislada desde el ZIP regeneró 546,281 pedidos con el mismo hash
 de T08 antes de incorporar T09. El EDA y las equivalencias Dask/Spark–Pandas se verificaron
 en Python 3.12 y 3.9. La ejecución directamente en el servicio de Colab queda por comprobar.

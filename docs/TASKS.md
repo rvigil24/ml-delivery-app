@@ -27,8 +27,9 @@ corresponden al reparto previo y deben interpretarse con esta actualización.
 - **T13–T14:** completadas con la evidencia de cierre indicada abajo; integración verificable en el PR del bloque y la guía externa.
 - **T15–T16:** completadas con la evidencia de cierre indicada abajo; integración verificable en el PR del bloque y la guía externa.
 - **T17–T18:** completadas con la evidencia de cierre indicada abajo; integración verificable en el PR del bloque y la guía externa.
-- **Siguiente tarea:** T19, pendiente; el próximo bloque aún no se ha iniciado.
-- **T19–T40:** continuar según dependencias y criterios de aceptación.
+- **T19:** completada con la evidencia de cierre indicada abajo; integración verificable en su PR y la guía externa.
+- **Siguiente tarea:** T20, pendiente; el próximo bloque aún no se ha iniciado.
+- **T20–T40:** continuar según dependencias y criterios de aceptación.
 - **T41–T54:** asignadas a Ruben Vigil; despliegue y gastos siguen requiriendo autorización explícita.
 
 Cada agente trabaja una tarea por iteración, informa resultados y evita hacer
@@ -204,7 +205,26 @@ verifica su integración en remoto y sincroniza `main`; PR/commit y resultado
 se registran en GitHub y la guía externa tras el merge.
 T19 y las features geográficas sin validar quedan fuera del alcance.
 
-## Instrucciones concretas y criterios de aceptación: T01–T18
+### Cierre autorizado: T19 — artefacto final académico
+
+Rama `ml/T19-modelo-final`, creada desde `origin/main` actualizado en `eac944a`
+(PR #9 integrado). Responsable: Ruben Vigil. Entrega individual para cerrar ML;
+T20 inicia lógica de negocio y no se incorpora a esta iteración.
+
+- T19: completada para uso académico local. Random Forest profundidad 6 elegido por menor MAE interno (8.955647 min), sin seleccionar por test. Pipeline con transformación temporal + bosque, metadata, evidencia T16–T18 y ficha en `models/delivery-duration/meituan-temporal-rf-v1/`, ignorado por Git. Recarga comprobada sobre 409,083 pedidos train con tolerancia absoluta 1e-12 min; receta existente verificada sin sobrescribir. 50 pruebas aprobadas en Python 3.12 y las dos nuevas también en 3.9. Tres celdas nuevas T19 ejecutadas sin repetir las 21 anteriores; notebook con 24 celdas verificadas en etapas.
+
+Por orden explícita de Ruben se registra T19 como completada en el backlog local,
+sin modificar el Excel ni atribuir revisión independiente. Dependencias y criterios
+contrastados con implementación, bundle, hashes, pruebas y evidencia del notebook.
+El cierre publica un único PR con código/documentación; el artefacto queda fuera
+de Git. Se verifica el merge y se sincroniza `main`; PR/commit y resultado se
+registran después en GitHub y la guía externa. Google Colab directamente sigue
+pendiente. No se carga test para exportar,
+no se publica el modelo ni se acredita uso operativo. La revisión de términos y
+autorización antes de subir artefactos a S3 sigue pendiente en T33; el desarrollo
+local continúa conforme a DATA_ML. T20 y contratos HTTP quedan fuera del alcance.
+
+## Instrucciones concretas y criterios de aceptación: T01–T19
 
 ### T01 — Crear repositorio Git y estructura modular del proyecto
 
@@ -386,6 +406,16 @@ T19 y las features geográficas sin validar quedan fuera del alcance.
 
 **Terminado cuando:** reportes reproducibles con MAE/RMSE/R², errores firmados/absolutos y por día, mismo conjunto para todos, procedencia de las decisiones de CV, pruebas y notebook. Sin tuning a partir del test, selección/persistencia T19 ni cambios HTTP/AWS.
 
+### T19 — Seleccionar, guardar y documentar el modelo final
+
+**Responsable:** Ruben Vigil
+
+**Dependencia:** T13–T18 verificables, selección por CV y comparación test congelada.
+
+**Implementar:** seleccionar por menor MAE interno, reajustar solo con train y persistir pipeline/transformación con versión, metadatos, procedencia y ficha de uso académico.
+
+**Terminado cuando:** artefacto local recargable con predicciones equivalentes, hashes/versiones comprobados, evidencia y limitaciones conservadas, receta reproducible sin sobrescritura, pruebas/notebook. Sin elegir con test, publicar en S3, autorizar uso operativo ni implementar API.
+
 ## Backlog completo y asignaciones
 
 | ID | Área | Tarea | Responsable | Estado de referencia / actualización autorizada |
@@ -408,7 +438,7 @@ T19 y las features geográficas sin validar quedan fuera del alcance.
 | T16 | Machine Learning y Deep Learning | Aplicar validación cruzada y optimización de hiperparámetros | Ruben Vigil | Completada |
 | T17 | Machine Learning y Deep Learning | Implementar y entrenar una red neuronal MLP | Ruben Vigil | Completada |
 | T18 | Machine Learning y Deep Learning | Evaluar y comparar modelos mediante MAE, RMSE y otras métricas pertinentes | Ruben Vigil | Completada |
-| T19 | Machine Learning y Deep Learning | Seleccionar, guardar y documentar el modelo final | Ruben Vigil | Pendiente |
+| T19 | Machine Learning y Deep Learning | Seleccionar, guardar y documentar el modelo final | Ruben Vigil | Completada |
 | T20 | Lógica del negocio y simulación | Implementar registro y gestión de pedidos y sus estados | Ruben Vigil | Pendiente |
 | T21 | Lógica del negocio y simulación | Implementar estimación de distancia y tiempo para cotizaciones | Ruben Vigil | Pendiente |
 | T22 | Lógica del negocio y simulación | Desarrollar cálculo de tarifas, costos operativos y remuneración del repartidor | Ruben Vigil | Pendiente |
