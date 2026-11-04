@@ -1023,3 +1023,13 @@ permitirse en Network Access; no hay credenciales administrativas Atlas API y se
 solicitó ese paso al usuario. No se afirma HTTP, modelos o persistencia cloud
 verificados todavía. Los recibos viven ignorados fuera de la documentación de
 producto; no se publican datos de conexión o URI.
+
+### Corrección de espera para autorización manual Atlas
+
+El plazo inicial se agotó mientras se esperaba la autorización humana, ECS
+reemplazó la tarea y su IP cambió. Para la demo se habilita explícitamente plazo
+0 (espera sin límite), manteniendo las opciones limitadas 1–3600. Esto evita
+reemplazos debidos solo al plazo; no ofrece IP fija frente a fallos/despliegues.
+El pipeline toma configuración de la revisión más reciente de la familia, que
+incluye el valor preparado por Terraform, y usa imagen del commit aprobado.
+La lista Atlas debe referirse siempre a la tarea activa, no a la IP histórica.

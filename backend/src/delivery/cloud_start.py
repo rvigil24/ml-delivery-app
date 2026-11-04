@@ -5,6 +5,7 @@ import os
 from pathlib import Path
 import sys
 import time
+from typing import Optional
 import urllib.request
 
 from delivery.adapters.mongo import MongoStorage
@@ -20,16 +21,16 @@ def healthcheck() -> bool:
         if WAIT_STATE.exists():
             state = json.loads(WAIT_STATE.read_text())
             os.kill(int(state["pid"]), 0)
-            return time.monotonic() < state["deadline"]
+            return state["deadline"] is None or time.monotonic() < state["deadline"]
         with urllib.request.urlopen("http://127.0.0.1:8000/health", timeout=2) as response:
             return response.status == 200
     except (OSError, ValueError, KeyError, TypeError):
         return False
 
 
-def wait_for_mongo(uri: str, database: str, deadline: float) -> None:
+def wait_for_mongo(uri: str, database: str, deadline: Optional[float]) -> None:
     """Solo lecturas: no crear colecciones, índices ni datos de demostración."""
-    while time.monotonic() < deadline:
+    while deadline is None or time.monotonic() < deadline:
         storage = None
         try:
             storage = MongoStorage(uri, database)
@@ -41,7 +42,7 @@ def wait_for_mongo(uri: str, database: str, deadline: float) -> None:
         finally:
             if storage is not None:
                 storage.close()
-        remaining = deadline - time.monotonic()
+        remaining = 5 if deadline is None else deadline - time.monotonic()
         if remaining > 0:
             time.sleep(min(5, remaining))
     raise TimeoutError("MongoDB no estuvo disponible dentro del plazo de arranque")
@@ -54,13 +55,13 @@ def main() -> int:
         uri = os.environ["MONGODB_URI"]
         database = os.environ["MONGODB_DATABASE"]
         timeout = int(os.environ.get("DELIVERY_CLOUD_START_TIMEOUT_SECONDS", "900"))
-        if not uri or not database or not 1 <= timeout <= 3600:
+        if not uri or not database or not 0 <= timeout <= 3600:
             raise ValueError
     except (KeyError, ValueError):
-        print("Configurar URI/base MongoDB y plazo de arranque entre 1 y 3600 segundos.", flush=True)
+        print("Configurar URI/base MongoDB y plazo 0 (sin límite) o entre 1 y 3600 segundos.", flush=True)
         return 2
 
-    deadline = time.monotonic() + timeout
+    deadline = time.monotonic() + timeout if timeout else None
     WAIT_STATE.write_text(json.dumps({"pid": os.getpid(), "deadline": deadline}))
     WAIT_STATE.chmod(0o600)
     try:

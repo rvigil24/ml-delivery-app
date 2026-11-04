@@ -68,7 +68,9 @@ jobs:
         run: |
           previous=$(aws ecs describe-services --cluster "$ECS_CLUSTER" --services "$ECS_SERVICE" --query 'services[0].taskDefinition' --output text)
           test "$previous" != None
-          aws ecs describe-task-definition --task-definition "$previous" --query taskDefinition > "$RUNNER_TEMP/task.json"
+          family=$(aws ecs describe-task-definition --task-definition "$previous" --query taskDefinition.family --output text)
+          # La última revisión incorpora cambios de configuración preparados por Terraform.
+          aws ecs describe-task-definition --task-definition "$family" --query taskDefinition > "$RUNNER_TEMP/task.json"
           jq --arg image "$DEPLOY_IMAGE" '
             {family, taskRoleArn, executionRoleArn, networkMode, containerDefinitions,
              volumes, placementConstraints, requiresCompatibilities, cpu, memory,
