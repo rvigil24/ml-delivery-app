@@ -1263,3 +1263,20 @@ se comprobó manualmente. Margen de 180 s preparado para la próxima entrega;
 no se cambia ese fallo a verde ni se redespliega para un cambio documental.
 Estado completado bajo autorización de cierre con evidencia funcional real.
 Next.js T47 sigue pendiente; no se amplía el bloque a frontend por iniciativa propia.
+
+## Ajuste explícito solicitado — presentación y datos simulados
+
+Ruben solicitó cambiar «Datos chinos» en la respuesta y disponer de datos para
+exposición. Rama feat/ejemplos-exposicion desde origin/main actualizado. No inicia
+T47 ni cambia responsables. Servicio transforma solo ese texto en respuesta;
+metadata/pesos/hashes y procedencia documentada permanecen. Tres ejemplos Swagger
+válidos con plazos 30/45/60; se evita usar como muestra principal el plazo 1 fuera
+del rango real registrado (mínimo 30).
+
+Fixture JSON y script de carga por HTTP: 3 negocios, 2 repartidores y 3 pedidos
+SIMULADOS ya creados en AWS/Atlas, confirmada repetición sin duplicados o cambios.
+Pedidos solicitados, sin cotizar/asignar/cobrar; datos excluidos de entrenamiento.
+Verificados OpenAPI (3 ejemplos), validación de entradas y conservación de valores
+numéricos mediante predictor controlado, sin suites adicionales locales. Integración
+y despliegue de la nueva imagen bajo autorizaciones persistentes; Atlas requiere
+actualizar /32 al reemplazar tarea. El script no sobrescribe datos existentes.

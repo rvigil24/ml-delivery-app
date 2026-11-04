@@ -22,6 +22,32 @@ la IP configurada del presentador; la IPv4 cambia si se reemplaza la tarea.
 
 CI verifica pruebas básicas, Terraform y build Docker en cada PR. El [despliegue AWS](infra/terraform/README.md) es manual y requiere infraestructura y permisos previamente autorizados.
 
+## Datos simulados para exposición
+
+Swagger ofrece tres ejemplos en `POST /predict/delivery`: recorrido corto,
+mismo recorrido con plazo más amplio y otro recorrido. Los plazos 30/45/60
+minutos son entradas ilustrativas, no compromisos de entrega; las predicciones
+las calculan los modelos reales. Un plazo de 1 minuto está fuera del rango de
+entrenamiento registrado (mínimo 30 minutos), por eso no conviene como ejemplo
+principal de exposición. La API mantiene el indicador de rango y validación.
+
+[exposicion.json](examples/exposicion.json) contiene 3 negocios, 2 repartidores
+y 3 pedidos ficticios, todos identificados con `demo-expo-`. Ya están cargados
+en Atlas para consultar `/businesses`, `/couriers` y `/orders`. Los pedidos
+permanecen solicitados; no se ejecutaron cotizaciones, asignaciones o cobros.
+No se usan estos registros para entrenar o evaluar ML.
+
+Para revisar o repetir la carga en la API que elijas:
+
+```bash
+uv run --locked python scripts/seed_presentation.py
+uv run --locked python scripts/seed_presentation.py --url http://<IP-de-la-API>:8000 --apply
+```
+
+El primer comando solo muestra cantidades. El segundo crea faltantes; verifica
+los existentes y falla si difieren, sin sobrescribir su historial. Los ejemplos
+no contienen respuestas o tiempos reales prefabricados.
+
 ## Inicio rápido: demo con modelos desde S3
 
 Requisitos: Git, Docker con Compose, Python 3.9+ para el comando de demo y un

@@ -1051,3 +1051,16 @@ sigue deshabilitado en cloud. El run correctivo de entrega agotó su margen de
 IP aunque la tarea arrancó después; margen ampliado a 180 s en código para la
 próxima entrega, sin reiniciar esta tarea. No se registra ese run como aprobado.
 La IP no es fija, no hay HTTPS/ALB/alta disponibilidad; Next.js sigue pendiente.
+
+## Presentación de predicciones y fixtures de exposición
+
+La respuesta v2 presenta «Modelo experimental: validación local y por vehículo
+pendiente.» en lugar de la frase de procedencia anterior. Es una transformación
+de texto en el servicio; no modifica pesos, metadata firmada, hashes, fuente
+Meituan documentada o campos/valores predictivos. El bundle original se conserva.
+
+Swagger define tres openapi_examples explícitos, con coordenadas y plazos
+ilustrativos dentro del rango observado de estas variables. examples/exposicion.json
+y scripts/seed_presentation.py usan los CRUD existentes para datos SIMULADOS con
+prefijo demo-expo-. Sin dependencia del runtime hacia archivos de ejemplos, sin
+nuevo endpoint de seed o cambios a reglas de negocio. No son registros de ML.
