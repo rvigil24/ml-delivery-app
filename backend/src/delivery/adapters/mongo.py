@@ -75,6 +75,11 @@ class MongoCatalog:
         return tuple(decode(self.kind, doc["data"]) for doc in self.collection.find().sort("_id", 1).limit(limit))
 
     @mongo_errors
+    def all(self):
+        """Lectura del catálogo pequeño para ordenar cercanía antes de paginar."""
+        return tuple(decode(self.kind, doc["data"]) for doc in self.collection.find().sort("_id", 1))
+
+    @mongo_errors
     def create(self, entity):
         if not isinstance(entity, self.kind):
             raise ValueError("Tipo de entidad incompatible")

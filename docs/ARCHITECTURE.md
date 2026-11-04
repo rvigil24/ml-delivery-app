@@ -1118,24 +1118,35 @@ PRODUCT.md, DESIGN.md y el contexto de Impeccable documentan el diseño; no son
 dependencias de ejecución. Reproducción y comprobaciones en README.
 
 
-## T48 — solicitud guiada de comida
+## T48 — dirección, cercanía y menú de comida
 
-El cliente elige negocio, escribe qué platos/productos quiere pedir con sus
-cantidades e indicaciones, introduce latitud/longitud de entrega, revisa y
-confirma una simulación. El asistente menciona el negocio elegido y pregunta
-qué quiere pedir allí. No interpreta el texto ni extrae productos mediante LLM.
-Los platos se describen libremente; no se inventa un menú, disponibilidad o precio.
+Por corrección explícita de Ruben, el recorrido comienza con dirección y punto
+de entrega. La ubicación se toma del GPS del navegador, coordenadas manuales o
+el destino de ejemplo. No hay geocodificación del texto ni proveedor de mapas.
+Después se consultan negocios por cercanía, menú, productos y cantidades;
+las indicaciones de preparación son opcionales. El usuario no inventa productos.
 
-`GuidedChat` mantiene los pasos y campos en memoria del componente; volver
-conserva datos, nueva solicitud limpia el flujo y recargar lo reinicia. La
-confirmación crea una referencia `demo-chat-...` local, protegida contra doble
-confirmación, sin declarar estado logístico, cotización o registro en MongoDB.
-Se muestra expresamente que no se envió al negocio. T52 conectará FastAPI;
-T53 implementará la sincronización entre vistas. No hay localStorage, llamadas
-HTTP, mensajes WhatsApp, secretos o cambios en AWS en esta tarea.
+| Contrato nuevo | Comportamiento |
+|---|---|
+| `GET /businesses/nearby?latitude=...&longitude=...&limit=20` | Negocios de MongoDB con menú publicado, ordenados por distancia Haversine y desempate por ID; limita después de ordenar. Sin radio, cobertura ni tiempo vial asumidos. |
+| `GET /businesses/{business_id}/menu` | Negocio registrado y productos de su menú de ejemplo. Desconocido: 404; conocido sin menú: lista vacía. Incluye `simulated=true` y precios nulos. |
+| Next.js `GET /api/food` | Proxy de sólo lectura hacia esas dos rutas. Base `DELIVERY_API_URL` sólo del servidor; sin secretos en navegador ni cambios CORS. |
 
-`request-draft.ts` valida negocio existente, detalle no vacío y coordenadas
-decimales finitas en rangos geográficos; vacío no se transforma en cero. El
-origen procede del negocio y se copia al borrador. Esto no verifica cobertura,
-no calcula rutas, tarifas, duración ni riesgo. El botón de destino de ejemplo
-reutiliza el fixture de exposición. Revisión y formularios usan el diseño T47.
+`FoodCatalogService` usa `MongoCatalog.all()` para ordenar el catálogo completo
+antes de limitar, en este catálogo pequeño. El menú es un recurso JSON de sólo
+lectura del paquete backend: `delivery/resources/food_menu.json`, con nueve
+productos ficticios repartidos entre los tres negocios de exposición existentes.
+No cambia validadores MongoDB ni crea colecciones, datos ML, precios o inventario.
+El empaquetador de fuentes incluye el recurso JSON requerido por el runtime.
+
+`GuidedChat` preserva dirección, selección y cantidades al volver. Valida
+coordenadas, negocio, productos del menú y cantidades enteras positivas antes de
+confirmar. El nombre del producto se toma del menú. La confirmación mantiene un
+borrador `demo-chat-...` en memoria con ítems, dirección y notas; recargar borra
+la prueba. No envía el pedido ni genera cotización, cobro o estado logístico.
+
+Las dos consultas HTTP se adelantan dentro de T48 por la solicitud explícita
+de Ruben de que la API tenga estas capacidades. T52 conserva las escrituras y
+el resto de integración; T53, la sincronización. No hay LLM ni WhatsApp real.
+Las nuevas rutas se verificaron localmente en puerto 8001; AWS no se redespliega
+en esta tarea y la IP actual permanece igual.

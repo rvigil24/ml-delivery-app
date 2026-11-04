@@ -9,6 +9,22 @@ export type LocalRequest = {
   details: string;
 };
 
+export type FoodProduct = { id: string; business_id: string; name: string; description: string; price: string | null; currency: string | null };
+export type SelectedItem = { product_id: string; name: string; quantity: number };
+
+export function selectedItems(products: readonly FoodProduct[], quantities: Record<string, number>, businessId: string): SelectedItem[] {
+  const items: SelectedItem[] = [];
+  for (const [id, quantity] of Object.entries(quantities)) {
+    if (!Number.isSafeInteger(quantity) || quantity < 0) throw new Error("Revisá las cantidades del pedido.");
+    if (!quantity) continue;
+    const product = products.find((item) => item.id === id && item.business_id === businessId);
+    if (!product) throw new Error("Un producto no pertenece al menú del negocio.");
+    items.push({ product_id: product.id, name: product.name, quantity });
+  }
+  if (!items.length) throw new Error("Elegí al menos un producto del menú.");
+  return items;
+}
+
 export function readDestination(latitude: string, longitude: string): Point | null {
   // No convertir una cadena vacía en 0 ni aceptar formatos no decimales.
   const decimal = /^[+-]?(?:\d+(?:\.\d*)?|\.\d+)$/;

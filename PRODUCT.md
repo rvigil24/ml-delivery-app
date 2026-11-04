@@ -24,7 +24,7 @@ La pantalla inicial es Operaciones; un menú permite cambiar entre los cuatro ro
 
 ## Capabilities and Constraints
 
-T47 cubre layout, navegación y ejecución local. T48 añade un chat guiado local para pedir comida con cantidades e indicaciones, destino, revisión y confirmación simulada; sin envío al negocio ni persistencia. T49–T54 incorporan los paneles y la integración HTTP posteriormente. No inventar cotizaciones, métricas, estados consultados, rutas viales ni datos de entrenamiento. Ejemplos claramente identificados; sin credenciales en el frontend.
+T47 cubre layout, navegación y ejecución local. T48 pide primero dirección y punto de entrega, consulta negocios por cercanía y menús en FastAPI, permite elegir productos/cantidades y prepara una confirmación local simulada; sin enviar ni persistir el pedido. El catálogo de productos es de ejemplo, versionado con la API y sin precios inventados. T49–T54 incorporan los paneles y la integración HTTP posteriormente. No inventar cotizaciones, métricas, estados consultados, rutas viales ni datos de entrenamiento. Ejemplos claramente identificados; sin credenciales en el frontend.
 
 ## Brand Commitments
 
