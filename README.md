@@ -19,7 +19,7 @@ creada; la API cloud ya fue verificada con modelos desde S3 y persistencia Atlas
 **Arquitectura para exposición:** [PNG 4K](reports/Arquitectura_Despliegue_AWS.png) · [SVG editable](reports/Arquitectura_Despliegue_AWS.svg).
 
 Configuración de infraestructura y arranque cloud: [Terraform](infra/terraform/README.md).
-API actual: [Swagger en AWS](http://100.54.11.78:8000/docs). Acceso restringido a
+API actual: [Swagger en AWS](http://3.239.189.63:8000/docs). Acceso restringido a
 la IP configurada del presentador; la IPv4 cambia si se reemplaza la tarea.
 
 CI verifica pruebas básicas, Terraform y build Docker en cada PR. El [despliegue AWS](infra/terraform/README.md) es manual y requiere infraestructura y permisos previamente autorizados.

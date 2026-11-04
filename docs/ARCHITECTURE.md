@@ -1075,9 +1075,19 @@ nuevo endpoint de seed o cambios a reglas de negocio. No son registros de ML.
 
 ### Exposición verificada en la nueva tarea
 
-API actual: http://100.54.11.78:8000/docs. Revisión :6 con imagen 106658e.
+Verificación anterior: http://100.54.11.78:8000/docs. Revisión :6 con imagen 106658e.
 Tras permitir /32 en Atlas, se verificaron por HTTP tres ejemplos OpenAPI y la
 frase «Modelo experimental: validación local y por vehículo pendiente.» con
 model_source=s3. Consultas de negocios/repartidores/pedidos confirmaron fixtures
 3/2/3 persistidas entre reemplazos de contenedor. No se redespliega por actualizar
 este enlace. Los enlaces con IP anterior corresponden a verificaciones históricas.
+
+
+### Swagger actualizado y verificado en AWS
+
+API actual: http://3.239.189.63:8000/docs. Revisión :7, imagen a24fd1c.
+Tras habilitar la IP /32 en Atlas se comprobaron por HTTP: health 200 con
+model_available=true, /predict 404, /predict/delivery 200 con model_source=s3
+y experimental=true. OpenAPI conserva tres ejemplos y ofrece títulos,
+descripciones y grupos en español sin etiquetas académicas. Los tres pedidos
+de exposición permanecen guardados. Workflow 41910071604 completado con éxito.
