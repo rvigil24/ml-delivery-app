@@ -36,3 +36,17 @@ y controles de cantidad usando la misma paleta, tipografía y componentes.
 
 Cierre revisado tras correcciones: ship; seis capturas full-page válidas de
 dirección, menú y revisión en 1440/390 px. Sin correcciones materiales.
+
+
+## Extensión T49 — panel de negocio
+
+Se conserva el sistema T47. Selector de negocio y estado, tabla de pedidos y
+panel de detalle/historial; dos columnas en escritorio y bloques apilados en
+móvil. Datos de API, carga/error/vacío reales. Confirmación/cancelación según
+estado; cancelación inline, sin modal. Nada cambia visualmente como guardado
+hasta respuesta válida del servidor; conflictos muestran error y estado actual.
+No se reemplazan tokens o identidad, ni se presenta el selector como autenticación.
+
+Cierre T49: revisión independiente ship con seis capturas full-page válidas
+en escritorio/móvil, sin correcciones materiales. La lectura Atlas se comprobó
+sin modificar registros; las escrituras probadas pertenecen a fixtures aisladas.

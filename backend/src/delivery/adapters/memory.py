@@ -46,6 +46,13 @@ class InMemoryOrderRepository:
         except KeyError:
             raise OrderNotFound(order_id) from None
 
+    def list_for_business(self, business_id: str, limit: int):
+        if isinstance(limit, bool) or not isinstance(limit, int) or not 1 <= limit <= 100:
+            raise ValueError("limit fuera de rango")
+        with self._lock:
+            return tuple(self._records[key] for key in sorted(self._records)
+                         if self._records[key].order.business_id == business_id)[:limit]
+
     def create(self, order: Order, occurred_at: datetime) -> OrderRecord:
         if order.status is not OrderStatus.REQUESTED:
             raise OrderConflict("Un pedido nuevo debe estar solicitado")

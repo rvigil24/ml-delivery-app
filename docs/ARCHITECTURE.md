@@ -1150,3 +1150,30 @@ de Ruben de que la API tenga estas capacidades. T52 conserva las escrituras y
 el resto de integración; T53, la sincronización. No hay LLM ni WhatsApp real.
 Las nuevas rutas se verificaron localmente en puerto 8001; AWS no se redespliega
 en esta tarea y la IP actual permanece igual.
+
+
+## T49 — panel de negocio conectado a pedidos
+
+`BusinessPanel` consume `/api/business` en Next.js. El proxy de servidor consulta
+`GET /businesses?limit=100` y `GET /orders?business_id=...&limit=100`. El filtro
+`business_id` es opcional y compatible con el listado existente; se aplica en
+MongoDB antes del límite usando el índice de negocio ya creado. Negocio desconocido:
+404. El repositorio en memoria soporta el mismo contrato para pruebas.
+
+La vista selecciona negocio y estado, lista pedidos, muestra detalles originales,
+ubicación e historial. Fechas presentadas en America/El_Salvador; eventos persisten
+UTC. Actualización manual con botón; todavía no hay sincronización T53.
+
+El proxy POST sólo acepta confirmar desde cotizado o cancelar desde solicitado,
+cotizado o confirmado. Comprueba pertenencia al negocio antes de llamar al
+endpoint existente `/orders/{id}/transitions` con expected/target; la API conserva
+la validación autoritativa y CAS. No se inventan estados de preparación ni se
+saltan la cotización o asignación. Confirmación sigue bloqueada si falta validar
+la cotización, aunque el estado del registro diga cotizado.
+
+Cancelar pide confirmación inline. Botones bloqueados al guardar, sin reintento
+automático de la escritura ni cambio optimista. La UI usa la respuesta persistida;
+un conflicto/error solicita y muestra el estado actual, sin afirmar éxito.
+Las cuatro perspectivas siguen siendo demo sin autenticación ni autorización
+real por negocio; el selector no es un control de acceso. T48 aún no registra sus
+borradores de cliente; esa escritura continúa en T52.

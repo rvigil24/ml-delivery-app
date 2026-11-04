@@ -66,7 +66,12 @@ por defecto apunta a `http://127.0.0.1:8001`; puede cambiarse con
 
 La confirmación aún no envía el pedido al negocio ni lo guarda en Atlas; se
 borra al recargar. Las escrituras y sincronización siguen pendientes en T52–T53.
-Los otros paneles mantienen fixtures de `examples/exposicion.json`.
+Negocio consulta pedidos e historial de la API, permite filtrar por estado y
+actualizar la consulta. Confirma pedidos cotizados o cancela antes de asignación,
+siempre sujeto a las validaciones del backend. Cancelar pide confirmación; los
+estados y el historial se actualizan solo después de guardar correctamente.
+El panel consulta hasta 100 pedidos del negocio elegido; aún no hay actualización
+en tiempo real. Operaciones y Repartidor mantienen sus vistas de muestra.
 
 Comprobación de tipos y compilación de producción:
 

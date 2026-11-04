@@ -49,6 +49,13 @@ class OrderService:
             raise ValueError("limit debe estar entre 1 y 100")
         return self._orders.list(limit)
 
+    def list_for_business(self, business_id: str, limit: int = 100):
+        if isinstance(limit, bool) or not isinstance(limit, int) or not 1 <= limit <= 100:
+            raise ValueError("limit debe estar entre 1 y 100")
+        if self._businesses.get(business_id) is None:
+            raise BusinessNotFound(business_id)
+        return self._orders.list_for_business(business_id, limit)
+
     def transition(self, order_id: str, expected: OrderStatus, target: OrderStatus) -> OrderRecord:
         record = self.get(order_id)
         if record.order.status is not expected:
