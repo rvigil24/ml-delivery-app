@@ -17,12 +17,22 @@ variable "image_tag" {
 }
 
 variable "desired_count" {
-  description = "Preparación de infraestructura: mantener cero hasta completar el arranque cloud."
+  description = "Cero por defecto; uno solo tras autorizar despliegue y preparar imagen/secreto."
   type        = number
   default     = 0
   validation {
-    condition     = var.desired_count == 0
-    error_message = "Esta etapa solo permite cero tareas. Resolver primero publicación, secreto y espera de Atlas en T43."
+    condition     = contains([0, 1], var.desired_count)
+    error_message = "La demo permite cero o una tarea."
+  }
+}
+
+variable "start_timeout_seconds" {
+  description = "Plazo para permitir la IP de tarea en Atlas y verificar su esquema antes de iniciar API."
+  type        = number
+  default     = 900
+  validation {
+    condition     = var.start_timeout_seconds >= 1 && var.start_timeout_seconds <= 3600 && floor(var.start_timeout_seconds) == var.start_timeout_seconds
+    error_message = "Indicar un entero entre 1 y 3600 segundos."
   }
 }
 

@@ -44,12 +44,14 @@ resource "aws_ecs_task_definition" "api" {
     name         = "api"
     image        = "${aws_ecr_repository.api.repository_url}:${var.image_tag}"
     essential    = true
+    command      = ["python", "-m", "delivery.cloud_start"]
     portMappings = [{ containerPort = 8000, protocol = "tcp" }]
     environment = [
       { name = "AWS_REGION", value = "us-east-1" },
       { name = "S3_BUCKET", value = data.aws_s3_bucket.resources.bucket },
       { name = "S3_ENDPOINT_URL", value = "https://s3.us-east-1.amazonaws.com" },
       { name = "MONGODB_DATABASE", value = var.mongodb_database },
+      { name = "DELIVERY_CLOUD_START_TIMEOUT_SECONDS", value = tostring(var.start_timeout_seconds) },
       { name = "DELIVERY_MODEL_V2_MANIFEST_KEY", value = "models/delivery-duration/meituan-eta-risk-v2/manifest.json" },
       { name = "DELIVERY_MODEL_V2_MANIFEST_SHA256", value = "0381a68fb7a7634823217d85718ce0efa5dad04fe3bf4f4b36358fa189d5e102" },
       { name = "DELIVERY_MODEL_V2_MANIFEST_SIZE", value = "1216" }
@@ -63,10 +65,10 @@ resource "aws_ecs_task_definition" "api" {
         awslogs-stream-prefix = "api"
       }
     }
-    # /health verifica proceso, no disponibilidad de v2 o Atlas. La validación
-    # funcional de predicción/persistencia se realiza aparte al desplegar.
+    # Vitalidad mientras se autoriza la IP en Atlas; luego proceso HTTP.
+    # HEALTHY no implica API lista ni modelo/persistencia verificados.
     healthCheck = {
-      command     = ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=2)"]
+      command     = ["CMD", "python", "-m", "delivery.cloud_start", "--healthcheck"]
       interval    = 30
       timeout     = 5
       retries     = 3
