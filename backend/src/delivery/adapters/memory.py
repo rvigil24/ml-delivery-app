@@ -2,7 +2,7 @@
 
 from dataclasses import replace
 from datetime import datetime
-from threading import Lock
+from threading import RLock
 from typing import Iterable, Optional
 
 from delivery.domain.models import Business, Order, OrderStatus
@@ -28,7 +28,7 @@ class InMemoryBusinesses:
 class InMemoryOrderRepository:
     def __init__(self) -> None:
         self._records = {}
-        self._lock = Lock()
+        self._lock = RLock()
 
     def get(self, order_id: str) -> OrderRecord:
         with self._lock:

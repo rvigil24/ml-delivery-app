@@ -31,8 +31,9 @@ corresponden al reparto previo y deben interpretarse con esta actualización.
 - **T20–T21:** completadas con la evidencia de cierre indicada abajo; integración verificable en su PR y la guía externa.
 - **T22–T23:** completadas con la evidencia de cierre indicada abajo; integración verificable en su PR y la guía externa.
 - **T24–T25:** completadas con la evidencia de cierre indicada abajo; integración verificable en su PR y la guía externa.
-- **Siguiente tarea:** T26, pendiente; el próximo bloque aún no se ha iniciado.
-- **T26–T40:** continuar según dependencias y criterios de aceptación.
+- **T26–T27:** completadas por cierre autorizado, con evidencia abajo; integración verificable en el PR y la guía externa.
+- **Siguiente tarea:** T28, pendiente; el próximo bloque aún no se ha iniciado.
+- **T28–T40:** continuar según dependencias y criterios de aceptación.
 - **T41–T54:** asignadas a Ruben Vigil; despliegue y gastos siguen requiriendo autorización explícita.
 
 Cada agente trabaja una tarea por iteración, informa resultados y evita hacer
@@ -293,7 +294,32 @@ No se inventan tamaños/límites reales, distancias viales, velocidades, costos
 o tiempos; capacidad/viabilidad siguen sin validar. No se integran API,
 persistencia o AWS. T26 no se inicia en este cierre.
 
-## Instrucciones concretas y criterios de aceptación: T01–T25
+### Cierre autorizado: T26–T27 — asignación y solicitudes simuladas
+
+Rama `backend/T26-T27-simulacion`, creada desde `origin/main` actualizado
+en `0b04fa0` (PR #13 integrado). Responsable: Ruben Vigil.
+
+- T26: completada sobre base simulada aprobada explícitamente por Ruben. Selección por ID, aprobación/disponibilidad, pedidos confirmados y validador de cotización obligatorio; políticas/cargas explícitas. Comprueba zonas, distancia total T24 y carga acumulada T23; reserva grupo y ocupa repartidor atómicamente en memoria, revalidando snapshots. Progreso según paradas; liberación explícita solo con todos entregados. Siete pruebas nuevas, incluidas concurrencia y rechazo sin escrituras; 53 del backend aprobadas en Python 3.12 y las siete nuevas también en 3.9. Contratos, README, SPEC y guía externa actualizados; fuentes para Colab regeneradas.
+- T27: completada. Servicio de solicitudes estructuradas que delega registro/consulta en T20; conversación inmutable reconstruida de detalles/historial, con acuse y actualizaciones UTC marcadas como simulación. Consultas sin escrituras, rechazos sin acuses de éxito y sin omitir requisitos de cotización/asignación. Cinco pruebas nuevas; 58 del backend aprobadas en Python 3.12 y las cinco nuevas también en 3.9. Contratos, README, SPEC, guía externa y fuentes Colab actualizados. Sin canal real, lenguaje natural, teléfonos o credenciales.
+
+Sin validador autoritativo de cotización, el servicio falla sin asignar; no se
+fabrica una cotización comercial ni se habilita el flujo completo. Catálogo de
+repartidores explícito y efímero. Sin API, MongoDB, pagos, GPS o AWS.
+
+Por orden explícita de Ruben se registran T26 y T27 como completadas en el
+backlog local. Dependencias y criterios contrastados con implementación y
+contratos; 58 pruebas del backend aprobadas en Python 3.12 y las doce nuevas
+del bloque también en Python 3.9. Las fuentes coinciden con el paquete verificado
+y los hashes del artefacto T19 permanecen intactos. Pasaron `uv lock --check`,
+`uv pip check` y `git diff --check`; no se repiten pruebas o entrenamientos ML
+sin cambios. No se modifica el Excel ni se atribuye revisión independiente.
+
+El cierre publica un único PR, verifica la inclusión del commit en `origin/main`
+y sincroniza `main` local; resultado/PR/commit se registran en GitHub y la guía
+externa. Se regenera el ZIP de fuentes desde `main` limpio. La integración
+comercial de cotizaciones sigue pendiente; T28 no se inicia en este cierre.
+
+## Instrucciones concretas y criterios de aceptación: T01–T27
 
 ### T01 — Crear repositorio Git y estructura modular del proyecto
 
@@ -545,6 +571,26 @@ persistencia o AWS. T26 no se inicia en este cierre.
 
 **Terminado cuando:** snapshots/rutas/políticas/costos trazables, componentes/totales conciliados, redondeo/moneda preservados, caso agrupado más caro y caso individual idéntico probados, entradas incompletas rechazadas y pedido/historial intactos. Sin ingresos/ROI, ahorro garantizado, asignación o capacidad/vialidad implícitas; contratos y guía actualizados.
 
+### T26 — Desarrollar simulador de asignación de repartidores aprobados
+
+**Responsable:** Ruben Vigil
+
+**Dependencias:** pedidos/estados T20, reglas T23, rutas T24 y base simulada aprobada. La ejecución requiere evidencia explícita de cotización confirmada; sin ella queda bloqueada.
+
+**Implementar:** selección por ID, comprobaciones de aprobación/disponibilidad, zona, distancia total y carga acumulada; reserva atómica local con historial, progreso y liberación controlados.
+
+**Terminado cuando:** estados/snapshots se revalidan antes de reservar todo el grupo y ocupar al repartidor; rechazos, duplicados y concurrencia no producen cambios parciales; solo se ejecutan paradas en orden y se libera tras todas las entregas. Configuración/cargas explícitas, límites inclusivos, registro inmutable UTC, contratos/guía/pruebas. Sin cotizaciones, posiciones, tiempos o datos ML fabricados; sin canales reales ni persistencia anticipada.
+
+### T27 — Implementar simulación de mensajes y solicitudes por WhatsApp
+
+**Responsable:** Ruben Vigil
+
+**Dependencia:** registro, consulta e historial de pedidos T20. Sin requerir canal real o API/UI anticipadas.
+
+**Implementar:** solicitud estructurada mediante OrderService y representación inmutable de mensajes simulados del cliente/sistema, reconstruida del historial existente.
+
+**Terminado cuando:** solicitud válida registrada con acuse; errores/duplicados sin éxito ficticio; actualizaciones solo de eventos aceptados con fechas UTC; consultas repetidas sin escrituras. Simulación/reconstrucción explícitas, requisitos T20/T26 intactos, pruebas/contratos/guía. Sin tarifas, tiempos, cotizaciones o mensajes externos fabricados; UI y sincronización mantienen su alcance posterior.
+
 ## Backlog completo y asignaciones
 
 | ID | Área | Tarea | Responsable | Estado de referencia / actualización autorizada |
@@ -574,8 +620,8 @@ persistencia o AWS. T26 no se inicia en este cierre.
 | T23 | Lógica del negocio y simulación | Implementar reglas para entregas en bicicleta y motocicleta | Ruben Vigil | Completada |
 | T24 | Lógica del negocio y simulación | Implementar sugerencia sencilla de rutas y orden de entregas | Ruben Vigil | Completada |
 | T25 | Lógica del negocio y simulación | Comparar costos de entregas individuales y agrupadas | Ruben Vigil | Completada |
-| T26 | Lógica del negocio y simulación | Desarrollar simulador de asignación de repartidores aprobados | Ruben Vigil | Pendiente |
-| T27 | Lógica del negocio y simulación | Implementar simulación de mensajes y solicitudes por WhatsApp | Ruben Vigil | Pendiente |
+| T26 | Lógica del negocio y simulación | Desarrollar simulador de asignación de repartidores aprobados | Ruben Vigil | Completada |
+| T27 | Lógica del negocio y simulación | Implementar simulación de mensajes y solicitudes por WhatsApp | Ruben Vigil | Completada |
 | T28 | Lógica del negocio y simulación | Simular pagos en efectivo y estados contables | Ruben Vigil | Pendiente |
 | T29 | Lógica del negocio y simulación | Elaborar análisis financiero: márgenes, costos fijos, punto de equilibrio y ROI estimado | Ruben Vigil | Pendiente |
 | T30 | API, almacenamiento e infraestructura | Implementar API FastAPI con /health, /predict y documentación OpenAPI | Ruben Vigil | Pendiente |

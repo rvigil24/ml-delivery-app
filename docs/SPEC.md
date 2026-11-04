@@ -144,6 +144,44 @@ automáticamente agrupar. No se comparan tarifas al cliente, ingresos, margen o
 ROI. Capacidad, tiempos y viabilidad vial siguen sin validar; no cambia estados,
 reserva o asigna pedidos. Es una comparación de supuestos, no rentabilidad medida.
 
+## Asignación de repartidores — base simulada aprobada T26
+
+Ruben aprobó seleccionar un repartidor por ID y exigir aprobación,
+disponibilidad y pedidos confirmados con cotización validada por una fuente
+explícita. No se usa el borrador académico como autorización comercial.
+Sin validador, la asignación queda bloqueada.
+
+Inicio, grupo, cargas en kg y políticas de zona/distancia/capacidad son entradas
+explícitas. Se usa la ruta T24, con límites T23 del vehículo elegido aplicados
+a toda su distancia y a la carga máxima acumulada entre paradas; se acepta
+igualdad con los límites. Se conserva la secuencia al recoger/entregar para
+mantener esa comprobación. No se inventan coordenadas del repartidor, velocidades
+ni límites reales; Haversine sigue sin representar calles o tiempos viales.
+
+La reserva del grupo y la ocupación del repartidor son atómicas en memoria:
+un cambio concurrente o reintento duplicado falla sin asignaciones parciales.
+La liberación es explícita y solo se permite tras entregar todos los pedidos,
+sin generar entregas ni pagos implícitos. Se conserva registro inmutable con
+políticas, ruta, cargas, pico de carga y fechas UTC. La garantía es local a un
+proceso; MongoDB y los canales/mensajes continúan en tareas posteriores.
+
+## Solicitudes y mensajes simulados — T27
+
+La solicitud del chat es estructurada: ID, negocio, origen/destino y detalles
+del pedido T04; se registra mediante T20, sin interpretar lenguaje natural.
+Se devuelve una conversación inmutable con el texto de los detalles como mensaje
+del cliente, un acuse de registro y actualizaciones derivadas exclusivamente de
+los cambios de estado aceptados. Cada mensaje usa la fecha UTC del evento.
+Consultar de nuevo no crea mensajes ni estados adicionales; un rechazo no se
+presenta como operación exitosa.
+
+Es una vista reconstruida y marcada como simulación, incluso para pedidos que
+se registraron por otros medios: no acredita envío, recepción o canal original.
+El acuse inicial indica cotización/cobertura pendientes y no promete tarifa,
+duración, asignación o cobro. Se conservan los requisitos T20/T26; el chat no los
+autoriza ni los omite. No hay WhatsApp Business, teléfonos, tokens o mensajes
+externos. La interfaz visual, HTTP y sincronización siguen en T48/T30/T53.
+
 ## Prioridad de producto
 
 1. Evidencia académica: datos reales, ETL, tres ML + MLP, evaluación reproducible, FastAPI, MongoDB, S3, Docker, pruebas.
@@ -160,7 +198,7 @@ Marketplace de repartidores, validación automática de identidad, GPS continuo,
 - Dataset real/variable objetivo final, etiquetas, representatividad para El Salvador y vehículos.
 - Región/zona de demostración y método vial/comercial; Haversine de referencia académica ya fue aprobado en T21.
 - Valores reales de límites/capacidades y seguridad; los criterios configurables T23 ya fueron aprobados.
-- Agrupación operativa, capacidad y asignación simulada; la sugerencia geográfica/precedencia T24 ya fue aprobada.
+- Viabilidad operativa y persistencia de agrupaciones; T24 y la reserva/carga simuladas T26 ya fueron aprobadas.
 - Valores de tarifas/costos y reglas adicionales de combustible/comisiones/ROI; las fórmulas básicas configurables T22 ya fueron aprobadas.
 - Integración de requisitos, recotización, errores y contratos REST adicionales; la matriz básica T20 ya fue aprobada.
 
