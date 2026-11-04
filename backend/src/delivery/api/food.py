@@ -1,12 +1,27 @@
-"""Consultas de comida sin modificar pedidos ni inventar disponibilidad."""
+"""Catálogo de comida y registro de solicitudes sin inventar disponibilidad."""
 
 from fastapi import APIRouter, Query, Request
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from typing import Literal, Optional, Tuple
 
 from delivery.domain.models import Business, Location
+from delivery.domain.order_lifecycle import OrderRecord
 from .schemas import ErrorResponse
-from .storage import service, valid
+from .storage import Input, LocationInput, service, valid
+
+
+class FoodItemInput(Input):
+    product_id: str = Field(min_length=1)
+    quantity: int = Field(gt=0, strict=True)
+
+
+class FoodOrderInput(Input):
+    id: str = Field(pattern=r"^demo-chat-.+", min_length=1)
+    business_id: str = Field(min_length=1)
+    destination: LocationInput
+    delivery_address: str = Field(min_length=1)
+    items: Tuple[FoodItemInput, ...] = Field(min_length=1)
+    notes: str = ""
 
 
 class ProductResponse(BaseModel):
@@ -39,7 +54,16 @@ class MenuResponse(BaseModel):
 
 def food_router():
     router = APIRouter(tags=["Negocios"],
-        responses={status: {"model": ErrorResponse} for status in (404, 422, 503, 500)})
+        responses={status: {"model": ErrorResponse} for status in (404, 409, 422, 503, 500)})
+
+    @router.post("/food/orders", response_model=OrderRecord, tags=["Pedidos"],
+                 summary="Registrar un pedido del menú",
+                 description="Valida los productos y guarda la solicitud con dirección y cantidades. Repetir la misma referencia y contenido devuelve el pedido existente.")
+    def register(body: FoodOrderInput, request: Request):
+        return valid(lambda: service(request, "food_catalog").register(
+            service(request, "order_service"), body.id, body.business_id,
+            Location(**body.destination.model_dump()), body.delivery_address,
+            tuple((item.product_id, item.quantity) for item in body.items), body.notes))
 
     @router.get("/businesses/nearby", response_model=NearbyResponse, summary="Buscar negocios por cercanía",
                 description="Ordena los negocios con menú por distancia aproximada al punto de entrega. No confirma cobertura ni disponibilidad.")

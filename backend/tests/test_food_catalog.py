@@ -45,3 +45,43 @@ def test_food_http_routes_are_not_shadowed_and_reject_invalid_locations(monkeypa
         response = client.get("/businesses/demo-expo-business-2/menu")
         assert response.status_code == 200 and response.json()["products"][0]["name"] == "Sándwich de pollo"
         assert client.get("/businesses/missing/menu").status_code == 404
+
+
+def test_food_order_is_validated_persisted_and_retried_without_duplicate_events(monkeypatch):
+    for name in ("DELIVERY_MODEL_DIR", "DELIVERY_MODEL_MANIFEST_KEY", "DELIVERY_MODEL_V2_DIR", "DELIVERY_MODEL_V2_MANIFEST_KEY"):
+        monkeypatch.delenv(name, raising=False)
+    businesses = FixtureBusinesses()
+    repository = InMemoryOrderRepository()
+    storage = SimpleNamespace(businesses=businesses, couriers=businesses, orders=repository)
+    payload = {"id": "demo-chat-fixture", "business_id": "demo-expo-business-1",
+               "destination": {"latitude": 13.7, "longitude": -89.2},
+               "delivery_address": "Dirección ficticia", "notes": "Sin cebolla",
+               "items": [{"product_id": "demo-expo-business-1-product-1", "quantity": 2}]}
+    with TestClient(create_app(mongo_storage=storage)) as client:
+        result = client.post("/food/orders", json=payload)
+        assert result.status_code == 200
+        saved = result.json()
+        assert saved["order"]["status"] == "solicitado"
+        assert saved["order"]["origin"] == {"latitude": 0, "longitude": 2}
+        assert saved["order"]["details"] == "2 × Almuerzo de pollo\nDirección: Dirección ficticia\nIndicaciones: Sin cebolla"
+        assert client.post("/food/orders", json=payload).json() == saved
+        assert len(repository.list(100)) == 1 and len(repository.get(payload["id"]).events) == 1
+        assert client.get("/orders?business_id=demo-expo-business-1").json() == [saved]
+        assert client.post("/food/orders", json={**payload, "notes": "Otro contenido"}).status_code == 409
+        cancelled = client.post(f"/orders/{payload['id']}/transitions", json={"expected": "solicitado", "target": "cancelado"}).json()
+        assert client.post("/food/orders", json=payload).json() == cancelled
+
+
+def test_food_order_rejects_foreign_products_duplicates_and_invalid_quantities(monkeypatch):
+    for name in ("DELIVERY_MODEL_DIR", "DELIVERY_MODEL_MANIFEST_KEY", "DELIVERY_MODEL_V2_DIR", "DELIVERY_MODEL_V2_MANIFEST_KEY"):
+        monkeypatch.delenv(name, raising=False)
+    businesses, repository = FixtureBusinesses(), InMemoryOrderRepository()
+    storage = SimpleNamespace(businesses=businesses, couriers=businesses, orders=repository)
+    payload = {"id": "demo-chat-invalid", "business_id": "demo-expo-business-1",
+               "destination": {"latitude": 13.7, "longitude": -89.2}, "delivery_address": "Dirección ficticia"}
+    product = {"product_id": "demo-expo-business-1-product-1", "quantity": 1}
+    with TestClient(create_app(mongo_storage=storage)) as client:
+        for items in ([], [product, product], [{**product, "quantity": 0}], [{**product, "quantity": True}],
+                      [{**product, "quantity": 1.5}], [{"product_id": "demo-expo-business-2-product-1", "quantity": 1}]):
+            assert client.post("/food/orders", json={**payload, "items": items}).status_code == 422
+        assert repository.list(100) == ()

@@ -1,10 +1,13 @@
 """Catálogo de comida de ejemplo y descubrimiento por distancia, sin precios ficticios."""
 
 import json
+from dataclasses import replace
 from pathlib import Path
 
 from delivery.domain.catalogs import CatalogNotFound
 from delivery.domain.estimation import haversine_km
+from delivery.domain.models import Order
+from delivery.domain.order_lifecycle import DuplicateOrder, OrderConflict
 
 
 class FoodCatalogService:
@@ -29,3 +32,27 @@ class FoodCatalogService:
         return {"business": business, "products": [product for product in self.catalog["products"]
                                                    if product["business_id"] == business_id],
                 "simulated": True, "catalog_version": self.catalog["version"], "prices_configured": False}
+
+    def register(self, orders, identifier, business_id, destination, address, items, notes):
+        """Validar contra el menú del servidor y registrar una sola solicitud por ID."""
+        menu = self.menu(business_id)
+        products = {product["id"]: product for product in menu["products"]}
+        if not address.strip() or not items:
+            raise ValueError("Faltan dirección o productos")
+        seen, lines = set(), []
+        for product_id, quantity in items:
+            if product_id in seen or product_id not in products or type(quantity) is not int or quantity <= 0:
+                raise ValueError("Producto o cantidad inválidos")
+            seen.add(product_id)
+            lines.append(f"{quantity} × {products[product_id]['name']}")
+        lines.append(f"Dirección: {address.strip()}")
+        if notes.strip():
+            lines.append(f"Indicaciones: {notes.strip()}")
+        order = Order(identifier, business_id, menu["business"].location, destination, "\n".join(lines))
+        try:
+            return orders.register(order)
+        except DuplicateOrder:
+            existing = orders.get(identifier)
+            if replace(existing.order, status=order.status) != order:
+                raise OrderConflict("La referencia ya corresponde a otro pedido") from None
+            return existing

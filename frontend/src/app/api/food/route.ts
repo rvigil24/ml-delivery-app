@@ -1,5 +1,21 @@
 import { NextRequest, NextResponse } from "next/server";
 
+export async function POST(request: NextRequest) {
+  try {
+    const body = await request.json();
+    const base = (process.env.DELIVERY_API_URL || "http://127.0.0.1:8001").replace(/\/$/, "");
+    const response = await fetch(`${base}/food/orders`, { method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body), cache: "no-store", signal: AbortSignal.timeout(15000) });
+    if (!response.ok) return NextResponse.json({ message: response.status === 409
+      ? "La referencia ya tiene otro contenido. Revisá el pedido antes de continuar."
+      : response.status === 422 ? "Revisá los productos, las cantidades y la dirección."
+      : "No pudimos confirmar el registro. Intentá de nuevo; conservaremos la misma referencia." }, { status: response.status });
+    return NextResponse.json(await response.json());
+  } catch {
+    return NextResponse.json({ message: "No pudimos confirmar el registro. Intentá de nuevo; conservaremos la misma referencia." }, { status: 503 });
+  }
+}
+
 export async function GET(request: NextRequest) {
   const query = request.nextUrl.searchParams;
   const base = (process.env.DELIVERY_API_URL || "http://127.0.0.1:8001").replace(/\/$/, "");

@@ -10,7 +10,7 @@ export default function Client() {
   return <>
     <PageHeading title="Pedí tu comida" clientLink={false}>Indicá tu dirección, elegí un negocio y armá tu pedido.</PageHeading>
     <div className="chat-grid"><GuidedChat/>
-    <aside className="chat-context"><h2>Así funciona</h2><p>Primero tu dirección, después la comida.</p><ol className="simple-steps"><li>Indicá dónde querés recibirla.</li><li>Elegí un negocio por cercanía.</li><li>Agregá productos del menú y sus cantidades.</li><li>Revisá y confirmá la simulación.</li></ol><p>Los negocios y los menús se consultan en el sistema. La confirmación todavía queda solo en esta pestaña.</p>
+    <aside className="chat-context"><h2>Así funciona</h2><p>Primero tu dirección, después la comida.</p><ol className="simple-steps"><li>Indicá dónde querés recibirla.</li><li>Elegí un negocio por cercanía.</li><li>Agregá productos del menú y sus cantidades.</li><li>Revisá y guardá el pedido de prueba.</li></ol><p>Los negocios y menús se consultan en la API. Al confirmar, la solicitud queda guardada y aparece en Negocio y Operaciones.</p>
       <Link href="/negocio" className="text-link">Ver el lado del negocio <Icon name="arrow"/></Link>
     </aside></div>
   </>;
