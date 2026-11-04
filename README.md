@@ -310,6 +310,53 @@ sirve para comparar modelos futuros, sin prometer desempeño local ni por vehíc
 Los errores son minutos, no porcentajes de exactitud. T19 decidirá persistencia
 del modelo final; este paso no integra API ni AWS.
 
+## Tres familias ML — T15
+
+```bash
+uv run --locked python ml/experiments/train_models.py
+```
+
+Entrena regresión lineal, Random Forest y LinearSVR sobre los **409,083 pedidos
+de train**, con las mismas cuatro variables T13. Los pipelines ajustan el
+escalado solo con train. LinearSVR permite usar todo train con kernel lineal;
+no equivale a SVR con kernel RBF. No se cargan ni evalúan las etiquetas de test.
+
+| Modelo | MAE train (min) | RMSE train (min) |
+|---|---:|---:|
+| Regresión lineal | 9.326470 | 12.032238 |
+| Random Forest | 8.876510 | 11.531344 |
+| LinearSVR | 9.327745 | 12.032244 |
+
+Son **errores de entrenamiento**, no evidencia de generalización ni selección
+de un ganador. Informes con parámetros, versiones y hashes en
+`data/reports/meituan/<revision>/t15_models.{json,md}`, fuera de Git.
+T16 aplica validación/tuning dentro de train; T18 comparará generalización
+y T19 decidirá la persistencia final. No se añadieron dependencias.
+
+## Validación temporal y tuning — T16
+
+```bash
+uv run --locked python ml/experiments/tune_models.py
+```
+
+Tres folds diarios (20, 21 y 22 de octubre de 2022, UTC) dentro de train.
+Cada ajuste utiliza solo pedidos anteriores cuya entrega ya se conocía al corte;
+el escalado se aprende dentro de cada fold. Búsqueda pequeña: profundidad 6/12
+del bosque y C=0.1/1 de LinearSVR. Regresión lineal y mediana son controles.
+
+| Modelo | MAE medio CV (min) | RMSE medio CV (min) |
+|---|---:|---:|
+| Baseline | 9.335848 | 12.350835 |
+| Regresión lineal | 9.337751 | 12.115916 |
+| Random Forest (profundidad 6) | 8.955647 | 11.658948 |
+| LinearSVR (C=0.1) | 9.338523 | 12.115426 |
+
+Se eligen parámetros por MAE medio con igual peso por día. Son resultados de
+validación usados para seleccionar, no una evaluación independiente del modelo
+elegido. Informes con todos los candidatos/folds y hashes en
+`data/reports/meituan/<revision>/t16_validation.{json,md}`. Test no se carga;
+la comparación posterior y persistencia final siguen en T18/T19.
+
 ## Notebooks para estudiar y exponer
 
 [`notebooks/01_datos_y_procesamiento.ipynb`](notebooks/01_datos_y_procesamiento.ipynb)
@@ -317,9 +364,11 @@ explica y ejecuta T05–T12 usando los scripts existentes. Para la sección Spar
 pruebas se necesita Java 17 también en el entorno de ejecución del notebook.
 
 [`notebooks/02_modelado_y_evaluacion.ipynb`](notebooks/02_modelado_y_evaluacion.ipynb)
-incluye T13 (variables/partición) y T14 (baseline y métricas reales); T15–T19 quedan
-pendientes. Puede adquirir y preparar la fuente por sí mismo. Sus cinco pruebas
-de T13/T14 usan Pandas/scikit-learn, sin necesitar Java para ejecutarlas.
+incluye T13 (variables/partición), T14 (baseline y métricas reales) y T15
+(tres familias, resultados sobre train) y T16 (validación/tuning temporal);
+T17–T19 quedan pendientes.
+Puede adquirir y preparar la fuente por sí mismo. Sus pruebas específicas
+usan Pandas/scikit-learn, sin necesitar Java para ejecutarlas.
 
 ```bash
 uv sync --locked --extra notebooks
@@ -342,8 +391,12 @@ validación local se guarda fuera de Git en
 
 Verificación T12: quince celdas del primer notebook sin errores y 35 pruebas
 aprobadas al cerrar ese bloque. T13/T14: diez celdas del segundo notebook sin
-errores y suite actual de **40 pruebas aprobadas en Python 3.12/3.9**. Las
+errores y suite de **40 pruebas aprobadas en Python 3.12/3.9** al cerrar el bloque. Las
 particiones tienen los mismos hashes; constante y métricas coinciden en ambos intérpretes.
+T15: segundo notebook completo con **13 celdas** ejecutadas sin errores;
+**42 pruebas aprobadas en Python 3.12** y las dos nuevas también en Python 3.9.
+T16: notebook ampliado a **16 celdas** ejecutadas sin errores y suite de
+**44 pruebas aprobadas en Python 3.12**; sus dos pruebas nuevas pasan también en 3.9.
 Una ejecución aislada desde el ZIP regeneró 546,281 pedidos con el mismo hash
 de T08 antes de incorporar T09. El EDA y las equivalencias Dask/Spark–Pandas se verificaron
 en Python 3.12 y 3.9. La ejecución directamente en el servicio de Colab queda por comprobar.

@@ -25,8 +25,9 @@ corresponden al reparto previo y deben interpretarse con esta actualización.
 
 - **T01–T12:** completadas e integradas en `main`; T10–T12 mediante PR #6, commit `f504c8f`.
 - **T13–T14:** completadas con la evidencia de cierre indicada abajo; integración verificable en el PR del bloque y la guía externa.
-- **Siguiente tarea:** T15, pendiente; el próximo bloque aún no se ha iniciado.
-- **T15–T40:** continuar según dependencias y criterios de aceptación.
+- **T15–T16:** completadas con la evidencia de cierre indicada abajo; integración verificable en el PR del bloque y la guía externa.
+- **Siguiente tarea:** T17, pendiente; el próximo bloque aún no se ha iniciado.
+- **T17–T40:** continuar según dependencias y criterios de aceptación.
 - **T41–T54:** asignadas a Ruben Vigil; despliegue y gastos siguen requiriendo autorización explícita.
 
 Cada agente trabaja una tarea por iteración, informa resultados y evita hacer
@@ -164,7 +165,26 @@ El uso privado de S3 y los derechos sobre publicación de artefactos Meituan que
 pendientes de revisión en T33/T19 antes de cualquier subida. La auditoría de calidad
 no resuelve esa condición ni excluye AWS del diseño; ver la corrección en DATA_ML.
 
-## Instrucciones concretas y criterios de aceptación: T01–T14
+### Cierre autorizado: T15–T16 — modelos y validación
+
+Rama `ml/T15-T16-modelos-validacion`, creada desde `origin/main` actualizado
+en `9954b65` (T13–T14 integradas mediante PR #7). Responsable: Ruben Vigil.
+
+- T15: completada y entrenada con los 409,083 pedidos de train, sin cargar ni evaluar test. Regresión lineal, Random Forest y LinearSVR; configuraciones iniciales fijas y escalado dentro de los pipelines cuando corresponde. Informes JSON/Markdown, notebook completo con 13 celdas ejecutadas sin errores y guía de estudio con evidencia real. 42 pruebas aprobadas en Python 3.12 y las dos nuevas también en 3.9.
+- T16: completada y ejecutada; tres folds diarios crecientes dentro de train, con purga de etiquetas desconocidas al corte. GridSearchCV compara profundidades 6/12 del bosque y C=0.1/1 en LinearSVR, con regresión lineal y baseline como controles. Selección por MAE medio, RMSE diagnóstico; reajuste solo con train y test sin evaluar. Evidencia en `t16_validation.json`/Markdown y guía externa; notebook completo con 16 celdas ejecutadas sin errores. 44 pruebas aprobadas en Python 3.12 y las dos nuevas también en 3.9.
+
+Por orden explícita de Ruben se registran T15 y T16 como completadas en el
+backlog local, sin modificar el Excel ni atribuir revisión independiente.
+Sus dependencias y criterios se contrastaron con implementación, reportes reales,
+hashes y las comprobaciones anteriores: suite de 44 pruebas aprobada y 16 celdas
+del notebook completo sin errores. Las dos pruebas nuevas de cada tarea también
+pasaron en Python 3.9. La ejecución directamente en Google Colab sigue pendiente.
+El cierre publica un único PR, verifica su integración en remoto y sincroniza
+`main`; el resultado y el commit se registran en GitHub y la guía externa.
+Las métricas de T15 son errores de entrenamiento y no seleccionan un modelo.
+T17–T19 y las features geográficas no validadas quedan fuera del bloque.
+
+## Instrucciones concretas y criterios de aceptación: T01–T16
 
 ### T01 — Crear repositorio Git y estructura modular del proyecto
 
@@ -306,6 +326,26 @@ no resuelve esa condición ni excluye AWS del diseño; ver la corrección en DAT
 
 **Terminado cuando:** receta reproducible, constante aprendida de train, MAE/RMSE en minutos con versión/hashes de datos y software, pruebas de aislamiento y explicación de limitaciones. No usar test para elegir estrategia ni implementar familias ML de T15.
 
+### T15 — Entrenar tres algoritmos ML de distintas familias
+
+**Responsable:** Ruben Vigil
+
+**Dependencia:** variables/particiones T13 y baseline T14 verificadas e integradas.
+
+**Implementar:** regresión lineal, ensamble de árboles y regresión por vectores de soporte; ajustar únicamente con train y registrar configuraciones reproducibles.
+
+**Terminado cuando:** tres modelos entrenados con datos reales y predictores permitidos, transformaciones ajustadas solo en train, parámetros/semillas y procedencia verificables, resultados de entrenamiento claramente identificados, pruebas de aislamiento y reproducción en notebook. Sin tuning T16, selección por test, MLP ni persistencia final.
+
+### T16 — Aplicar validación cruzada y optimización de hiperparámetros
+
+**Responsable:** Ruben Vigil
+
+**Dependencia:** modelos T15 entrenados y particiones T13 verificadas.
+
+**Implementar:** validación interna temporal con etiquetas disponibles en cada corte y búsqueda acotada de hiperparámetros, usando los mismos folds por candidato y familia.
+
+**Terminado cuando:** cortes/conteos/purgas verificables, escaladores ajustados dentro de cada fold, candidatos y criterio de selección explícitos, métricas por fold y parámetros elegidos reproducibles, pruebas de aislamiento y notebook. Sin consultar test para tuning, entrenar MLP ni seleccionar/persistir el modelo final.
+
 ## Backlog completo y asignaciones
 
 | ID | Área | Tarea | Responsable | Estado de referencia / actualización autorizada |
@@ -324,8 +364,8 @@ no resuelve esa condición ni excluye AWS del diseño; ver la corrección en DAT
 | T12 | Dataset y procesamiento de datos | Comparar tiempos y resultados de Pandas, Dask y PySpark | Ruben Vigil | Completada |
 | T13 | Machine Learning y Deep Learning | Preparar variables predictoras y conjuntos de entrenamiento/prueba | Ruben Vigil | Completada |
 | T14 | Machine Learning y Deep Learning | Implementar un modelo baseline | Ruben Vigil | Completada |
-| T15 | Machine Learning y Deep Learning | Entrenar tres algoritmos ML de distintas familias | Ruben Vigil | Pendiente |
-| T16 | Machine Learning y Deep Learning | Aplicar validación cruzada y optimización de hiperparámetros | Ruben Vigil | Pendiente |
+| T15 | Machine Learning y Deep Learning | Entrenar tres algoritmos ML de distintas familias | Ruben Vigil | Completada |
+| T16 | Machine Learning y Deep Learning | Aplicar validación cruzada y optimización de hiperparámetros | Ruben Vigil | Completada |
 | T17 | Machine Learning y Deep Learning | Implementar y entrenar una red neuronal MLP | Ruben Vigil | Pendiente |
 | T18 | Machine Learning y Deep Learning | Evaluar y comparar modelos mediante MAE, RMSE y otras métricas pertinentes | Ruben Vigil | Pendiente |
 | T19 | Machine Learning y Deep Learning | Seleccionar, guardar y documentar el modelo final | Ruben Vigil | Pendiente |
