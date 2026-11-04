@@ -29,8 +29,9 @@ corresponden al reparto previo y deben interpretarse con esta actualización.
 - **T17–T18:** completadas con la evidencia de cierre indicada abajo; integración verificable en el PR del bloque y la guía externa.
 - **T19:** completada con la evidencia de cierre indicada abajo; integración verificable en su PR y la guía externa.
 - **T20–T21:** completadas con la evidencia de cierre indicada abajo; integración verificable en su PR y la guía externa.
-- **Siguiente tarea:** T22, pendiente; el próximo bloque aún no se ha iniciado.
-- **T22–T40:** continuar según dependencias y criterios de aceptación.
+- **T22–T23:** completadas con la evidencia de cierre indicada abajo; integración verificable en su PR y la guía externa.
+- **Siguiente tarea:** T24, pendiente; el próximo bloque aún no se ha iniciado.
+- **T24–T40:** continuar según dependencias y criterios de aceptación.
 - **T41–T54:** asignadas a Ruben Vigil; despliegue y gastos siguen requiriendo autorización explícita.
 
 Cada agente trabaja una tarea por iteración, informa resultados y evita hacer
@@ -247,7 +248,29 @@ La cobertura comercial, tarifas y requisitos de cotización/asignación siguen
 pendientes; T21 entrega solo un borrador académico. MongoDB sigue en T32 y API
 en T30. No se añaden dependencias, endpoints ni cambios AWS. T22 no se inicia aquí.
 
-## Instrucciones concretas y criterios de aceptación: T01–T21
+### Cierre autorizado: T22–T23 — tarifas y vehículos
+
+Rama `backend/T22-T23-tarifas-vehiculos`, creada desde `origin/main`
+actualizado en `78650aa` (PR #11 integrado). Responsable: Ruben Vigil.
+
+- T22: completada; reglas configurables aprobadas explícitamente por Ruben e implementadas con Decimal/ROUND_HALF_UP. Política versionada con moneda/unidad/bases/precios por km obligatorios, costos del operador explícitos por envío y margen conciliado (puede ser negativo). Desglose académico inmutable sin modificar T21 ni cambiar estados; sin importes reales predeterminados. 31 pruebas del backend aprobadas en Python 3.12 y las cinco nuevas también en Python 3.9. Documentación y guía actualizadas.
+- T23: completada; base configurable aprobada explícitamente por Ruben e implementada. Zona rectangular y máximos de distancia/carga para ambos vehículos, sin valores predeterminados; incluye bordes y límites iguales al máximo. Devuelve todas las opciones y motivos de rechazo, sin elección/asignación ni mutar pedido/historial, precios o modelo ML. 36 pruebas del backend aprobadas en Python 3.12 y las cinco nuevas también en Python 3.9. Documentación, guía y fuentes actualizadas.
+
+Por orden explícita de Ruben se registran T22 y T23 como completadas en el
+backlog local, con fórmulas y criterios configurables aprobados previamente.
+No se modifica el Excel ni se atribuye revisión independiente. Dependencias y
+criterios contrastados con código, contratos y comprobaciones reales: 36 pruebas
+del backend aprobadas en Python 3.12 y las diez nuevas del bloque también en 3.9.
+Código/artefactos ML sin cambios: sus pruebas, entrenamientos y notebooks no se
+repiten. Fuentes y modelo comprobados; dependencias compatibles y sin adiciones.
+
+El cierre publica un único PR, verifica su integración en remoto y sincroniza
+`main`; PR/commit y resultado se registran después en GitHub y la guía externa.
+No se fijan valores reales de tarifas, costos, zonas o límites. La emisión
+comercial y los avances de T20 siguen sujetos a los requisitos pendientes;
+no se añaden API, persistencia o infraestructura. T24 no se inicia en este cierre.
+
+## Instrucciones concretas y criterios de aceptación: T01–T23
 
 ### T01 — Crear repositorio Git y estructura modular del proyecto
 
@@ -459,6 +482,26 @@ en T30. No se añaden dependencias, endpoints ni cambios AWS. T22 no se inicia a
 
 **Terminado cuando:** geometría y unidades comprobadas, calendario de creación en UTC, modelo cargado una vez sin entrenar, fallos explícitos sin tiempos ficticios, cobertura sin validar y uso académico marcados, pruebas/integración real y documentación/guía. Sin emitir cotización comercial, inventar velocidades/zonas, cambiar estados o integrar HTTP/AWS.
 
+### T22 — Desarrollar cálculo de tarifas, costos operativos y remuneración
+
+**Responsable:** Ruben Vigil
+
+**Dependencia:** modelos monetarios T04, borrador T21 y reglas aprobadas por Ruben.
+
+**Implementar:** fórmulas aprobadas con configuración/costos explícitos, Decimal, redondeo y trazabilidad; solo desglose académico.
+
+**Terminado cuando:** componentes/margen conciliados, moneda/unidad/versión preservadas, pérdida visible, entradas inválidas o configuración ausente rechazadas, sin precios predeterminados ni duplicar costos del repartidor; pruebas, contratos y guía. Sin emitir/cobrar cotización ni adelantar T23/HTTP/DB.
+
+### T23 — Implementar reglas para bicicleta y motocicleta
+
+**Responsable:** Ruben Vigil
+
+**Dependencia:** modelos T04, distancia T21 y criterios configurables aprobados por Ruben.
+
+**Implementar:** política versionada de zona/límites explícitos, comprobación inclusiva de extremos/distancia/carga y motivos por vehículo, sin selección automática.
+
+**Terminado cuando:** ambos vehículos configurados, entradas válidas/unidades explícitas, bordes y límites probados, todos/uno/ninguno como opciones, pedido/historial y ML intactos, snapshot reproducible, pruebas/contratos/guía. Sin valores comerciales inventados, tiempos por vehículo ni asignación T26.
+
 ## Backlog completo y asignaciones
 
 | ID | Área | Tarea | Responsable | Estado de referencia / actualización autorizada |
@@ -484,8 +527,8 @@ en T30. No se añaden dependencias, endpoints ni cambios AWS. T22 no se inicia a
 | T19 | Machine Learning y Deep Learning | Seleccionar, guardar y documentar el modelo final | Ruben Vigil | Completada |
 | T20 | Lógica del negocio y simulación | Implementar registro y gestión de pedidos y sus estados | Ruben Vigil | Completada |
 | T21 | Lógica del negocio y simulación | Implementar estimación de distancia y tiempo para cotizaciones | Ruben Vigil | Completada |
-| T22 | Lógica del negocio y simulación | Desarrollar cálculo de tarifas, costos operativos y remuneración del repartidor | Ruben Vigil | Pendiente |
-| T23 | Lógica del negocio y simulación | Implementar reglas para entregas en bicicleta y motocicleta | Ruben Vigil | Pendiente |
+| T22 | Lógica del negocio y simulación | Desarrollar cálculo de tarifas, costos operativos y remuneración del repartidor | Ruben Vigil | Completada |
+| T23 | Lógica del negocio y simulación | Implementar reglas para entregas en bicicleta y motocicleta | Ruben Vigil | Completada |
 | T24 | Lógica del negocio y simulación | Implementar sugerencia sencilla de rutas y orden de entregas | Ruben Vigil | Pendiente |
 | T25 | Lógica del negocio y simulación | Comparar costos de entregas individuales y agrupadas | Ruben Vigil | Pendiente |
 | T26 | Lógica del negocio y simulación | Desarrollar simulador de asignación de repartidores aprobados | Ruben Vigil | Pendiente |

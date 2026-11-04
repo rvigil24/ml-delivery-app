@@ -222,6 +222,58 @@ de las entidades de dominio.
 
 ### Organización prevista del código
 
+**Reglas de vehículos T23 aprobadas:** `ServiceArea(id, southwest, northeast)`
+describe un rectángulo en grados, con sur < norte y oeste < este, sin cruzar el
+antimeridiano. `contains` incluye bordes; deben estar dentro origen y destino.
+No geocodifica direcciones ni valida un recorrido vial. No hay zona prefijada.
+
+`VehiclePolicy(version, area, bicycle, motorcycle)` exige `VehicleLimits` para
+ambos tipos, con `max_distance_km` y `max_load_kg` Decimal finitos positivos.
+`VehicleRulesService.evaluate(order_id, load_kg)` lee un snapshot y calcula la
+misma distancia Haversine de T21, capturada con Decimal(str(...)). La carga es
+un dato explícito positivo en kg: no se infiere de detalles, ML o cantidad de
+productos. Se admiten distancia/carga iguales al máximo y no se redondea la
+distancia ni se añade un margen de tolerancia comercial.
+
+Devuelve `VehicleEvaluation` inmutable con pedido, política completa, carga,
+distancia/método, `within_configured_area` y decisiones de ambos vehículos.
+Los motivos son `outside_service_area`, `distance_limit_exceeded` y
+`load_limit_exceeded`; se conservan todos los que correspondan. `eligible_vehicles`
+puede contener ambos, uno o ninguno. El orden de presentación no expresa prioridad.
+
+Resultado siempre académico, sin elegir/reservar/asignar repartidor, cambiar
+estado/historial, calcular precios ni alterar duración ML. La comprobación
+rectangular no cambia `coverage_validated=False` del borrador T21 ni habilita
+el validador T20. T26 debe validar aprobación/disponibilidad y estado al asignar;
+este resultado solo describe criterios de tipo de vehículo para el snapshot.
+`VehicleConfigurationMissing` indica ausencia de política; configuración parcial,
+carga ausente/inválida o geometría invertida fallan sin valores de reemplazo.
+
+**Cálculo académico T22 aprobado:** `PricingPolicy` exige versión, moneda,
+unidad de cuantización y bases/importes por km de cliente y repartidor, sin
+valores predeterminados. `OperatorCosts` exige moneda y costos variable/atribuible
+por envío; son del operador y excluyen lo incluido en el pago al repartidor.
+No se hace conversión monetaria. Ambos modelos son inmutables.
+
+`calculate_amounts(distance_km: Decimal, policy, costs)` aplica:
+tarifa = base cliente + precio/km × distancia;
+pago = base repartidor + pago/km × distancia;
+margen = tarifa − pago − costo variable − costo atribuible.
+Redondea componentes con ROUND_HALF_UP y luego obtiene el margen de los importes
+redondeados; admite pérdida. La unidad monetaria debe ser una potencia de diez
+positiva explícita. El contexto local tiene 28 dígitos y rechaza pérdida de
+precisión antes del redondeo monetario; un error numérico no genera un importe
+aproximado como si fuera válido. Referencia: [Decimal](https://docs.python.org/3.12/library/decimal.html).
+
+`PricingService.calculate(estimate, costs)` recibe `AcademicQuoteEstimate`,
+captura su distancia mediante `Decimal(str(distance_km))` y devuelve
+`AcademicPriceBreakdown` con estimación original, política completa/versionada,
+costos, distancia usada e importes. Mantiene `academic_only=True` y
+`coverage_validated=False`. El Quote original conserva amounts=None.
+`PricingConfigurationMissing` indica falta de política/costos, sin reemplazarlos
+por cero. No persiste, cobra, cambia estados ni habilita el validador de T20.
+No usa duración ML, vehículo, tarifas ocultas o reglas de combustible inventadas.
+
 **Contratos internos T20 aprobados:** `delivery.ports.orders` define
 `BusinessReader.get(business_id)`, `OrderRepository.get/create/transition` y
 `TransitionRequirements.validate(order, target)`. Este último falla con una
@@ -324,8 +376,8 @@ definitivos.
 |---|---|---|
 | Fuente real, licencia y duración objetivo observada | T05–T07 y [DATA_ML.md](DATA_ML.md) | Entrenamiento válido y esquema definitivo de `/predict`. |
 | Features disponibles al cotizar y representatividad geográfica/vehículo | T07/T13/T19 | Prometer una predicción aplicable al escenario local o diferenciada por vehículo. |
-| Zona de demo, método vial/comercial y reglas de vehículo/carga | [SPEC.md](SPEC.md), T21/T23 | Haversine académico aprobado en T21; cobertura local, uso comercial y selección logística siguen pendientes. |
-| Fórmulas de tarifas, pago, combustible, comisiones y costos | [SPEC.md](SPEC.md), T22/T25/T29 | Cotización comercial y análisis financiero completos. No se usan ceros como sustituto de valores pendientes. |
+| Valores reales de zona/límites/carga, seguridad y método vial/comercial | [SPEC.md](SPEC.md), T21/T23 | Haversine y criterios configurables T23 aprobados; valores concretos, cobertura comercial y asignación siguen pendientes. |
+| Valores de tarifas/costos y reglas adicionales de combustible/comisiones | [SPEC.md](SPEC.md), T22/T25/T29 | Fórmulas básicas T22 aprobadas; faltan importes concretos y acuerdos adicionales para cotización comercial/análisis financiero. No se sustituyen pendientes por cero. |
 | Integración de requisitos, recotización y traducción de errores | T20/T26/T30/T32 y contratos de este documento | Conectar la base T20 aprobada con cotización/asignación, MongoDB y HTTP sin omitir requisitos. |
 | Agrupación, secuencia de paradas, selección y efectivo ficticio | T24/T26/T28 | Cierre del flujo de asignación/contabilidad simulada. |
 | Driver MongoDB, esquemas OpenAPI, errores y carga del modelo | T19/T30–T33 | Integración operativa API/storage/inferencia; no requiere resolverlos con código en T03. |

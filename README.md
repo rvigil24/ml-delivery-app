@@ -480,6 +480,51 @@ Verificación: **60 pruebas aprobadas en Python 3.12**, las cinco nuevas tambié
 en Python 3.9, e integración con el modelo real usando entradas ilustrativas
 separadas de los experimentos ML, sin reentrenar ni modificar el pedido.
 
+## Desglose académico de importes — T22
+
+`PricingService` recibe el borrador T21, una `PricingPolicy` versionada y
+`OperatorCosts` explícitos. Calcula tarifa/pago como base + importe por km ×
+distancia; margen = tarifa − pago − costos variable/atribuible del operador.
+No incluye nuevamente costos ya cubiertos por el pago al repartidor.
+
+Todos los importes, moneda y unidad monetaria se suministran como configuración;
+no hay tarifas reales predeterminadas. Usa Decimal/ROUND_HALF_UP, redondea
+componentes y obtiene el margen de esos importes finales. Permite pérdidas.
+Faltan política/costos → error, sin reemplazarlos por cero. La duración ML
+no interviene en el cálculo.
+
+```bash
+uv run --locked pytest backend/tests/test_pricing.py -q
+```
+
+El resultado conserva política, costos, distancia y borrador originales,
+`academic_only=True` y `coverage_validated=False`. No emite cotización ni cambia
+estados. Los valores de las pruebas son fixtures, no tarifas o costos aprobados.
+Verificación T22: **31 pruebas del backend aprobadas en Python 3.12** y las cinco
+nuevas también en Python 3.9. Las pruebas ML no se repitieron porque su código
+y artefactos no cambiaron.
+
+## Reglas configurables de vehículos — T23
+
+`VehicleRulesService` evalúa un pedido con carga explícita en kg y una
+`VehiclePolicy` versionada. Requiere zona rectangular y máximos de km/kg para
+bicicleta y moto, sin valores predeterminados. Ambos extremos deben estar dentro;
+se incluyen bordes y valores iguales a los máximos. Usa distancia Haversine de
+referencia, sin convertirla a tiempos por vehículo.
+
+Devuelve ambos vehículos, uno o ninguno con motivos de rechazo, sin preferencia
+ni asignación automática. Conserva pedido, política, carga y distancia usados;
+no modifica estado/historial, precios ni el modelo ML. La zona configura una regla
+académica para extremos, sin demostrar cobertura comercial o rutas por calles.
+
+```bash
+uv run --locked pytest backend/tests/test_vehicles.py -q
+```
+
+Verificación T23: **36 pruebas del backend aprobadas en Python 3.12** y las cinco
+nuevas también en Python 3.9. Zonas/cargas/límites de tests son fixtures, no valores
+recomendados. T26 sigue a cargo de asignar repartidores aprobados/disponibles.
+
 ## Notebooks para estudiar y exponer
 
 [`notebooks/01_datos_y_procesamiento.ipynb`](notebooks/01_datos_y_procesamiento.ipynb)
