@@ -34,7 +34,7 @@ Con Node.js 22 o superior (CI usa Node 24), iniciar primero la API local
 con el `.env` privado ya configurado para MongoDB:
 
 ```bash
-uv run --locked --env-file .env uvicorn delivery.main:app --host 127.0.0.1 --port 8001
+DELIVERY_DEMO_ENABLED=1 uv run --locked --env-file .env uvicorn delivery.main:app --host 127.0.0.1 --port 8001
 ```
 
 En otra terminal, desde la raíz:
@@ -108,6 +108,37 @@ Desarrollo usa `.next/`; la compilación y el servidor de producción usan
 `next-env.d.ts` se genera automáticamente y no se versiona.
 
 Detener con `Ctrl+C`. La interfaz local aún no se ha desplegado en AWS.
+
+## Demo final desde Operaciones
+
+Abrir **Demostración completa: entregas y efectivo** y ejecutar los dos controles:
+
+1. **Probar entrega individual**: un pedido hasta entrega, registro del efectivo y liberación del repartidor.
+2. **Probar dos entregas agrupadas**: dos pedidos en una sola ruta, efectivo separado y comparación de costos del operador frente a recorridos individuales.
+
+Usan modelos reales cargados desde S3 y guardan estados en MongoDB. Los precios,
+cargas, coordenadas y límites son los ejemplos explícitos de
+`examples/demo_delivery.json` y `examples/demo_grouped_delivery.json`; no son
+tarifas reales. ETA es por pedido: no estima las demoras adicionales al agrupar.
+La comparación usa una base por recorrido y muestra diferencias con signo.
+
+Cada clic inicia un escenario nuevo con IDs propios. Descargar el recibo JSON
+para conservar entradas, predicciones, ruta, costos e historiales. **No reintenta
+escrituras automáticamente**: si falla, puede haber pasos guardados. Revisar
+Operaciones antes de iniciar otro escenario. Estos controles no cotizan ni
+asignan los pedidos normales del chat: usan sus propios pedidos de prueba y
+aceptación de simulación. Los requisitos generales siguen vigentes.
+
+Requiere `DELIVERY_DEMO_ENABLED=1` en la API local. En consola:
+
+```bash
+python scripts/demo_delivery.py --url http://127.0.0.1:8001
+python scripts/demo_delivery.py --url http://127.0.0.1:8001 --grouped
+```
+
+Los recibos predeterminados se guardan en `data/reports/presentation/` como
+`demo_result.json` y `demo_grouped_result.json`. La [guía PDF de exposición](reports/Guia_Exposicion_y_Demo.pdf)
+contiene el recorrido actualizado. Los controles nuevos no se desplegaron en AWS.
 
 ## Datos simulados para exposición
 

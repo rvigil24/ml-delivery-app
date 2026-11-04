@@ -2,7 +2,7 @@
   "simulated": true,
   "business": {
     "id": "demo-business",
-    "name": "Negocio SIMULADO",
+    "name": "Comedor SIMULADO · entrega individual",
     "location": {
       "latitude": 0.0,
       "longitude": 0.0
@@ -25,7 +25,7 @@
       "latitude": 0.0,
       "longitude": 0.01
     },
-    "details": "Envío SIMULADO para exposición",
+    "details": "1 × Almuerzo de pollo · SIMULADO, no preparar comida real",
     "status": "solicitado"
   },
   "pricing": {
