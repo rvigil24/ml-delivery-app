@@ -87,6 +87,10 @@ resource "aws_ecs_service" "api" {
   deployment_minimum_healthy_percent = 0
   deployment_maximum_percent         = 100
   wait_for_steady_state              = true
+  # CI/CD administra la revisión activa; Terraform crea la base inicial.
+  lifecycle {
+    ignore_changes = [task_definition]
+  }
   deployment_circuit_breaker {
     enable   = true
     rollback = true

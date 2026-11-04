@@ -166,3 +166,21 @@ La validación funcional del rol OIDC, la inyección del secreto y el acceso Atl
 siguen pendientes hasta autorizar recursos y arrancar la demo. No sustituirlas
 por fmt/validate o una CI verde. La activación de Fargate a una tarea mediante
 el workflow manual constituye un despliegue adicional y debe estar autorizado.
+
+### Activación autorizada y permisos comprobados
+
+Ruben autorizó el 2026-11-04 crear los 19 recursos, cargar la URI Atlas y arrancar
+una tarea. Apply inicial completado: 19 altas, cero cambios/bajas; valor del
+secreto cargado fuera de Terraform, variables GitHub no secretas configuradas.
+El pipeline autenticó OIDC y publicó ECR. Su primer intento detectó que
+`ecs:DescribeTaskDefinition` requiere Resource '*': se corrigió únicamente esa
+lectura con restricción de región. No confundir la consulta global con permisos
+para desplegar fuera del servicio/familia autorizados. El reintento reutiliza la
+misma imagen inmutable, sin reconstruirla o exponer credenciales.
+
+El pipeline administra la revisión ECS activa. Terraform ignora cambios de
+`task_definition` en el servicio para no revertir una entrega; mantiene la
+configuración inicial como base. `desired_count` sigue bajo Terraform: el archivo
+privado de despliegue ahora usa uno para coincidir con el servicio autorizado.
+Para parar costos de cómputo se puede llevar explícitamente a cero; no hacerlo
+implícitamente aplicando el archivo de ejemplo. S3 no fue recreado ni modificado.

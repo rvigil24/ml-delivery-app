@@ -39,7 +39,7 @@ resource "aws_iam_role_policy" "github_deploy" {
     Statement = [
       {
         Effect    = "Allow"
-        Action    = ["ecr:GetAuthorizationToken", "ec2:DescribeNetworkInterfaces"]
+        Action    = ["ecr:GetAuthorizationToken", "ec2:DescribeNetworkInterfaces", "ecs:DescribeTaskDefinition"]
         Resource  = "*"
         Condition = { StringEquals = { "aws:RequestedRegion" = "us-east-1" } }
       },
@@ -54,7 +54,7 @@ resource "aws_iam_role_policy" "github_deploy" {
       },
       {
         Effect   = "Allow"
-        Action   = ["ecs:RegisterTaskDefinition", "ecs:DescribeTaskDefinition"]
+        Action   = ["ecs:RegisterTaskDefinition"]
         Resource = local.task_family_arn
       },
       {

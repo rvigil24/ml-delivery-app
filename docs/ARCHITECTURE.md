@@ -5,8 +5,9 @@
 La aplicación ejecutable es una API FastAPI con servicios de dominio, MongoDB
 para datos operativos y dos modelos v2 cargados desde un bundle propio de S3.
 Docker Compose reproduce la demo local; Atlas es la alternativa de base en la
-nube ya verificada. Next.js y la infraestructura de despliegue aún no están
-implementados. Los detalles de versiones previas explican compatibilidad,
+nube ya verificada. La infraestructura ECS/Fargate está creada y el contenedor
+cloud espera acceso Atlas para iniciar la API; validación funcional pendiente.
+Next.js aún no está implementado. Los detalles de versiones previas explican compatibilidad,
 no cambian el contrato v2 descrito en esta sección.
 
 ```mermaid
@@ -1006,3 +1007,19 @@ servicio con cero tareas. No aplicado; no proveedor, roles o secreto creados en
 AWS. No se ha probado asumir el rol, inyectar el secreto o desplegar en cloud.
 La preparación de código no equivale a habilitar acceso AWS; la tarea de seguridad
 permanece abierta hasta activación autorizada y comprobación real.
+
+## Estado de activación AWS — 2026-11-04
+
+Autorización explícita de Ruben: aplicar 19 recursos, cargar el valor Atlas y
+arrancar una tarea. Apply completado, rol OIDC efectivo en GitHub y ECR publicado;
+secreto cargado fuera de estado/Git. Servicio delivery-demo-api con una tarea y
+revisión :2. Se corrigió una lectura IAM: DescribeTaskDefinition necesita
+Resource '*', acotado a us-east-1. Ningún permiso de escritura adicional.
+Terraform ignora la revisión activa del servicio (pertenece al pipeline) y el
+archivo privado sincroniza desired_count a uno; plan posterior sin cambios.
+
+El contenedor registra espera de acceso/esquema Atlas. La /32 18.214.26.83 debe
+permitirse en Network Access; no hay credenciales administrativas Atlas API y se
+solicitó ese paso al usuario. No se afirma HTTP, modelos o persistencia cloud
+verificados todavía. Los recibos viven ignorados fuera de la documentación de
+producto; no se publican datos de conexión o URI.
