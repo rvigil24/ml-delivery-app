@@ -5,6 +5,8 @@ Machine Learning entrenados con datos reales de Meituan. La demo actual permite
 recorrer un pedido hasta la entrega del efectivo y consultar **duración estimada
 y riesgo de retraso**. Next.js y el despliegue AWS están pendientes.
 
+**Reporte para lectura y entrega:** [PDF](reports/Reporte_Tecnico_Asistente_Delivery.pdf) · [Word editable](reports/Reporte_Tecnico_Asistente_Delivery.docx).
+
 ## Inicio rápido: demo con modelos desde S3
 
 Requisitos: Git, Docker con Compose, Python 3.9+ para el comando de demo y un
