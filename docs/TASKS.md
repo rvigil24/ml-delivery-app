@@ -34,8 +34,8 @@ corresponden al reparto previo y deben interpretarse con esta actualización.
 - **T26–T27:** completadas por cierre autorizado, con evidencia abajo; integración verificable en el PR y la guía externa.
 - **T28–T29:** completadas por cierre autorizado, con evidencia abajo; integración verificable en el PR y la guía externa.
 - **T30–T31:** completadas por cierre autorizado con alcance académico, con evidencia abajo; integración verificable en el PR y la guía externa.
-- **T32–T33:** completadas por cierre autorizado con evidencia local, Atlas y S3 indicada abajo; integración verificable en el PR del bloque y la guía externa. T34 completada por cierre autorizado con evidencia abajo. T35 completada por cierre autorizado con evidencia abajo. T36 y la mejora ML con arranque v2 S3 completadas por cierre autorizado, con evidencia abajo. T37 completada por cierre autorizado, con evidencia abajo. T38 completada por cierre autorizado, con reporte Word/PDF y evidencia abajo. T39 completada por cierre autorizado, con informe y paquete de evidencias. Sin bloque activo; siguiente tarea: T40 (presentación y demostración).
-- **T40:** continuar según dependencias y criterios de aceptación.
+- **T32–T33:** completadas por cierre autorizado con evidencia local, Atlas y S3 indicada abajo; integración verificable en el PR del bloque y la guía externa. T34 completada por cierre autorizado con evidencia abajo. T35 completada por cierre autorizado con evidencia abajo. T36 y la mejora ML con arranque v2 S3 completadas por cierre autorizado, con evidencia abajo. T37 completada por cierre autorizado, con evidencia abajo. T38 completada por cierre autorizado, con reporte Word/PDF y evidencia abajo. T39 completada por cierre autorizado, con informe y paquete de evidencias. T40 completada por cierre autorizado, con presentación y demo ensayada. Sin bloque activo; siguiente tarea: T41 (arquitectura AWS y presupuesto, sin desplegar).
+- **T40:** completada con material editable, PDF y guía; evidencia abajo.
 - **T41–T54:** asignadas a Ruben Vigil; despliegue y gastos siguen requiriendo autorización explícita.
 
 Cada agente trabaja una tarea por iteración, informa resultados y evita hacer
@@ -643,6 +643,28 @@ Cierre autorizado por Ruben: T39 Completada en backlog local, commit/push y
 un PR con merge normal y verificación del commit en origin/main. Guía y ZIP
 de fuentes actualizados. Sin modificar Excel, borrar ramas o iniciar T40.
 
+### Cierre autorizado: T40 — presentación y demostración de defensa
+
+Responsable Ruben Vigil. Rama docs/T40-presentacion desde origin/main 17ad73d.
+Dependencias: reporte y evidencias, modelos y demo integrada. Criterio: material
+proyectable/editable, guion y secuencia reproducible de demostración con límites
+claros y sin resultados inventados.
+
+Presentacion_Defensa.pptx: 12 diapositivas editables con 12 notas; PDF exportado
+desde el PPTX real para comprobar compatibilidad. Guia_Exposicion_y_Demo.docx/pdf:
+cuatro páginas de guion, comandos, preguntas y respaldo ante fallos. ZIP de
+entrega actualizado a 23 archivos con presentación/guía y registro real del ensayo.
+
+Verificaciones: XML PPTX/Word, páginas, cifras y render visual. Se corrigió una
+conversión de colores en las formas nativas y se revisó de nuevo el PPTX/PDF.
+Un ensayo del simulador completó entrega/efectivo y liberó repartidor con
+model_source=s3; no se reentrenó ni se repitieron suites. Los escenarios guardados
+se identifican como ilustrativos y los resultados previos no se simulan en vivo.
+Hash/tamaños/CRC del ZIP comprobados, sin CSV, pesos o credenciales. README enlaza
+material. Cierre autorizado por Ruben: T40 Completada en backlog local,
+commit/push y PR con merge normal verificado en origin/main. Guía y ZIP de
+fuentes actualizados. Sin modificar Excel, borrar ramas o iniciar despliegue.
+
 ## Instrucciones concretas y criterios de aceptación: T01–T33
 
 ### T01 — Crear repositorio Git y estructura modular del proyecto
@@ -1018,7 +1040,7 @@ de fuentes actualizados. Sin modificar Excel, borrar ramas o iniciar T40.
 | T37 | Pruebas, documentación y entrega | Preparar README con instalación, ejecución y ejemplos | Ruben Vigil | Completada |
 | T38 | Pruebas, documentación y entrega | Documentar arquitectura, resultados, experimentos y limitaciones | Ruben Vigil | Completada |
 | T39 | Pruebas, documentación y entrega | Preparar informe técnico y evidencias de los hitos | Ruben Vigil | Completada |
-| T40 | Pruebas, documentación y entrega | Preparar presentación y demostración para la defensa | Ruben Vigil | Pendiente |
+| T40 | Pruebas, documentación y entrega | Preparar presentación y demostración para la defensa | Ruben Vigil | Completada |
 | T41 | Despliegue y CI/CD | Definir arquitectura de despliegue en AWS y revisar presupuesto estimado | Ruben Vigil | Pendiente |
 | T42 | Despliegue y CI/CD | Implementar infraestructura como código con Terraform (EC2, red, IAM y S3) | Ruben Vigil | Pendiente |
 | T43 | Despliegue y CI/CD | Configurar Docker Compose y variables para el entorno de despliegue | Ruben Vigil | Pendiente |
