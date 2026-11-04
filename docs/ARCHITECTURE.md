@@ -1064,3 +1064,12 @@ ilustrativos dentro del rango observado de estas variables. examples/exposicion.
 y scripts/seed_presentation.py usan los CRUD existentes para datos SIMULADOS con
 prefijo demo-expo-. Sin dependencia del runtime hacia archivos de ejemplos, sin
 nuevo endpoint de seed o cambios a reglas de negocio. No son registros de ML.
+
+### Exposición verificada en la nueva tarea
+
+API actual: http://100.54.11.78:8000/docs. Revisión :6 con imagen 106658e.
+Tras permitir /32 en Atlas, se verificaron por HTTP tres ejemplos OpenAPI y la
+frase «Modelo experimental: validación local y por vehículo pendiente.» con
+model_source=s3. Consultas de negocios/repartidores/pedidos confirmaron fixtures
+3/2/3 persistidas entre reemplazos de contenedor. No se redespliega por actualizar
+este enlace. Los enlaces con IP anterior corresponden a verificaciones históricas.
