@@ -924,3 +924,69 @@ aprobadas en Python 3.12** y las dos nuevas también en Python 3.9.
 Una ejecución aislada desde el ZIP regeneró 546,281 pedidos con el mismo hash
 de T08 antes de incorporar T09. El EDA y las equivalencias Dask/Spark–Pandas se verificaron
 en Python 3.12 y 3.9. La ejecución directamente en el servicio de Colab queda por comprobar.
+
+
+## Docker y Compose local — T34
+
+Requisitos: Docker con Compose. Desde la raíz:
+
+```bash
+docker compose build api
+docker compose up -d --wait
+curl http://127.0.0.1:8000/health
+curl http://127.0.0.1:8000/businesses
+docker compose logs mongo-init api
+docker compose down
+```
+
+Compose usa MongoDB local, independientemente de la URI Atlas guardada en
+`.env`; no importa ese archivo al contenedor. MongoDB no publica puertos y
+comparte una red interna con la API. Su réplica de un nodo permite las
+transacciones T32. `mongo-init` prepara réplica/esquema/índices antes de la API;
+el volumen `mongo-data` conserva la información después de `down`.
+No hay autenticación en esta base aislada de demostración local; este Compose
+no es una configuración de despliegue público. `down --volumes` elimina los
+datos locales del proyecto y debe usarse únicamente si se desea reiniciar la demo.
+
+El puerto HTTP solo se publica en 127.0.0.1. Si está ocupado:
+`DELIVERY_API_PORT=8001 docker compose up -d --wait`. `/docs` muestra OpenAPI.
+La imagen ejecuta un usuario sin privilegios; no contiene `.env`, perfiles
+AWS, datasets ni modelos. Usa versiones del lock y excluye Spark, PyTorch,
+Dask, Matplotlib, notebooks y herramientas de desarrollo. El entorno completo
+para experimentos sigue disponible con `uv sync` fuera del contenedor.
+
+El directorio local ignorado `models/` se monta en lectura. Con el bundle T19
+en `models/delivery-duration/meituan-temporal-rf-v1/`, `/health` debe informar
+`model_available: true` y `/predict` puede estimar una fecha ilustrativa:
+
+```bash
+curl -X POST http://127.0.0.1:8000/predict \
+  -H 'Content-Type: application/json' \
+  -d '{"requested_at":"2022-10-22T12:00:00-06:00"}'
+```
+
+Sin un bundle propio compatible, la API sigue disponible y `/predict` devuelve
+503. No descarga datos ni entrena modelos. Para otra ruta dentro del montaje,
+configurar `DELIVERY_LOCAL_MODEL_DIR`; las tarifas comerciales siguen pendientes.
+
+Para ejecutar la misma imagen contra Atlas y recuperar el modelo de S3,
+usar explícitamente la configuración privada existente, fuera del Compose local:
+
+```bash
+docker run --rm --init --name delivery-atlas \
+  --user "$(id -u):$(id -g)" \
+  --env-file .env \
+  --mount type=bind,src="$HOME/.aws",dst=/home/delivery/.aws,readonly \
+  -p 127.0.0.1:8000:8000 ml-delivery-api:local
+```
+
+Este comando requiere permisos de lectura del perfil AWS para el usuario del
+contenedor y Atlas debe admitir la IP de salida del equipo. Si se usa un rol
+en lugar de un perfil, omitir el montaje. El modelo local tiene prioridad si
+`DELIVERY_MODEL_DIR` está configurado; para S3 dejarlo vacío. No se copian
+credenciales a la imagen ni se cambia IAM o Atlas desde Docker. El esquema
+Atlas debe estar preparado como se documentó en T32. Next.js se incorpora en T47;
+Terraform y Compose de despliegue corresponden a tareas posteriores.
+
+Referencias de implementación: [uv en Docker](https://docs.astral.sh/uv/guides/integration/docker/)
+y [orden de arranque en Compose](https://docs.docker.com/compose/how-tos/startup-order/).

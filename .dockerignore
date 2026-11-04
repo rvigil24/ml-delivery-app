@@ -1,0 +1,17 @@
+# Contexto explícito: nunca enviar credenciales, datos o modelos al builder.
+**
+!Dockerfile
+!pyproject.toml
+!uv.lock
+!README.md
+!backend/
+!backend/src/
+!backend/src/**
+!ml/
+!ml/src/
+!ml/src/**
+!infra/
+!infra/docker/
+!infra/docker/init_mongo.py
+**/__pycache__/
+**/*.pyc
