@@ -1,5 +1,7 @@
 # ARCHITECTURE — Arquitectura del Asistente de Delivery Económico
 
+Exportación para exposición: [PNG 4K](../reports/Arquitectura_Despliegue_AWS.png) · [SVG editable](../reports/Arquitectura_Despliegue_AWS.svg).
+
 ## Arquitectura actual
 
 La aplicación ejecutable es una API FastAPI con servicios de dominio, MongoDB
