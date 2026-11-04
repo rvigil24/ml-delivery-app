@@ -823,19 +823,47 @@ Los identificadores entre `< >` son marcadores de posición y **no** nombres ya 
 
 Para el detalle metodológico, ver [`DATA_ML.md`](DATA_ML.md).
 
-## Despliegue objetivo (no implementarlo ahora)
+## Despliegue objetivo — ECS con Fargate (propuesto)
+
+Decisión de Ruben del 2026-11-04: descartar EC2 y usar **ECS con Fargate**.
+Docker Compose queda para ejecución local. Esta arquitectura todavía no está
+implementada; no cambia los contratos de API ni los modelos existentes.
 
 ```text
-GitHub → GitHub Actions (test/build) → Docker image
-                                        |
-                              EC2 + Docker Compose
-                              FastAPI + MongoDB
-                                        |
-                                       S3
-                     Terraform: EC2, red, IAM y configuración
+Build Docker → ECR → Servicio ECS / Fargate → MongoDB Atlas existente
+                           ↑       ↓
+                  S3 existente    CloudWatch Logs
+                  (bundle v2)
+Terraform: ECR, ECS, red, roles, secreto y logs (pendiente)
 ```
 
-Next.js puede desplegarse junto al backend o por separado, según costos y facilidad demostrable. La decisión final se toma en T41. **Terraform debe consultar/referenciar el bucket ya existente**, no declararlo como recurso nuevo ni ejecutar cambios sobre él sin autorización. Un recurso de datos (`data`) sería una opción si su compatibilidad y permisos se comprueban cuando llegue T42. Antes de ejecutar `terraform apply`: revisar `plan`, costos, credenciales, permisos y alcance del cambio. Nunca aplicar automáticamente como parte de T01–T12. Docker Compose local debe poder funcionar sin un AWS pagado para las piezas que no requieren S3.
+- Región us-east-1. Una tarea Linux x86_64 de 0.5 vCPU / 2 GiB como punto
+  inicial, pendiente de comprobar arranque y memoria. Entrenamiento y Spark offline.
+- La imagen existente sirve FastAPI y los dos modelos. Descarga el bundle S3
+  verificado al iniciar; caché temporal y predicción en memoria, sin reentrenar.
+- Rol de tarea con lectura del prefijo del modelo; rol de ejecución para ECR,
+  logs y lectura del secreto Atlas en Secrets Manager. No montar perfiles AWS
+  personales ni incluir `.env` en imagen, repositorio o estado Terraform.
+- Demo inicial con IPv4 pública de tarea, subred pública e Internet Gateway;
+  entrada al puerto de la API solo desde la IP del presentador. Sin ALB ni NAT
+  Gateway. La IP cambia al reemplazar la tarea: actualizar la lista Atlas con
+  su salida /32 y comprobar conectividad antes de afirmar disponibilidad.
+  No ampliar Atlas a todo internet. Endpoint estable y HTTPS quedan pendientes;
+  esta configuración inicial no es una publicación general del producto.
+- Atlas sigue externo; no ejecutar MongoDB dentro de Fargate. Next.js se añadirá
+  después y requerirá revisar acceso, TLS y recursos. No se presume alta disponibilidad.
+- **S3 se referencia como bucket existente**, sin recrearlo ni cambiar políticas.
+  Terraform preparará el plan antes de cualquier autorización de apply o gastos.
+
+Presupuesto académico breve: aproximadamente USD 25–30/mes de base 24/7
+(730 horas, una tarea 0.5 vCPU / 2 GiB e IPv4). ECR, logs, Secrets Manager, S3,
+transferencia e impuestos son adicionales según uso. No incluye ALB o NAT.
+Fuentes: [Fargate](https://aws.amazon.com/fargate/pricing/) y
+[IPv4](https://aws.amazon.com/vpc/pricing/). No supone créditos gratuitos.
+
+Propuesta para lectura: [PDF](../reports/Propuesta_Despliegue_AWS.pdf) y
+[Word editable](../reports/Propuesta_Despliegue_AWS.docx). No se han desplegado
+estos componentes. La automatización CI/CD corresponde a una tarea posterior.
 
 ## Criterios transversales de calidad
 
