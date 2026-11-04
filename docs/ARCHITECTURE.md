@@ -1205,3 +1205,18 @@ conflictos/error vuelven a consultar y no anuncian éxito. Botones bloqueados al
 guardar. La distancia es Haversine de referencia, no navegación ni GPS en vivo.
 Si la base no contiene asignaciones, muestra un estado vacío real.
 El selector es una perspectiva de demo, no autenticación por repartidor.
+
+
+### T51 — Operaciones
+
+GET `/operations/orders?limit=100` reúne OrderRecord y CashRecord opcional por
+pedido (límite 1–100); sólo CashNotFound se convierte en null. Errores de
+persistencia permanecen errores, no registros vacíos. No es un snapshot
+transaccional entre pedidos y efectivo. Next `/api/operations` consulta esa ruta
+y reenvía previsualizaciones a POST `/orders/{id}/quotes`, sin credenciales en
+el navegador ni cálculos monetarios duplicados en JavaScript. La interfaz
+separa efectivo persistido de desglose estimado, permite margen negativo y no
+mezcla monedas ni cuenta efectivo como ingreso adicional. Requiere configuración
+de políticas/predictor existente; no introduce importes predeterminados,
+cotizaciones persistidas o escrituras de efectivo. Actualización manual; T52–T54
+siguen pendientes. No se despliega esta ampliación en AWS.

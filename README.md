@@ -4,8 +4,8 @@ Proyecto académico de entregas simuladas con FastAPI, MongoDB y modelos de
 Machine Learning entrenados con datos reales de Meituan. La demo actual permite
 recorrer un pedido hasta la entrega del efectivo y consultar **duración estimada
 y riesgo de retraso**. Next.js ofrece el chat de comida y los paneles locales de
-Negocio/Repartidor conectados a la API; el registro final desde Cliente,
-Operaciones y la sincronización completa siguen pendientes. La infraestructura AWS ya está
+Negocio, Repartidor y Operaciones conectados a la API; el registro final desde
+Cliente y la sincronización completa siguen pendientes. La infraestructura AWS ya está
 creada; la API cloud ya fue verificada con modelos desde S3 y persistencia Atlas.
 
 **Reporte para lectura y entrega:** [PDF](reports/Reporte_Tecnico_Asistente_Delivery.pdf) · [Word editable](reports/Reporte_Tecnico_Asistente_Delivery.docx).
@@ -75,8 +75,11 @@ El panel consulta hasta 100 pedidos del negocio elegido; aún no hay actualizaci
 en tiempo real. Repartidor consulta sus asignaciones, paradas y estados actuales,
 registra recogidas/entregas en orden y finaliza la ruta cuando todos los pedidos
 están entregados. No crea asignaciones ni simula GPS en vivo. Sin asignaciones
-existentes muestra el estado vacío, sin fabricar rutas. Operaciones mantiene su
-vista de muestra.
+existentes muestra el estado vacío, sin fabricar rutas. Operaciones consulta pedidos y efectivo guardados y permite previsualizar tarifa,
+pago al repartidor, costos y margen mediante la política del backend. El cálculo
+requiere política de precios y vehículos, predictor disponible y costos/carga
+explícitos. No guarda cotizaciones ni mueve efectivo; sin configuración muestra
+el bloqueo. Los registros ausentes no se representan como importes cero.
 
 Comprobación de tipos y compilación de producción:
 

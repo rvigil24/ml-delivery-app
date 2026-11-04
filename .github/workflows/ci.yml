@@ -53,7 +53,7 @@ jobs:
           uv pip install --system --require-hashes -r "$RUNNER_TEMP/requirements.txt"
           uv pip install --system --no-deps .
       - name: Dominio, contrato HTTP y arranque cloud
-        run: python -m pytest backend/tests/test_domain.py backend/tests/test_api.py backend/tests/test_food_catalog.py backend/tests/test_business_orders.py backend/tests/test_courier_routes_api.py backend/tests/test_cloud_start.py -q
+        run: python -m pytest backend/tests/test_domain.py backend/tests/test_api.py backend/tests/test_food_catalog.py backend/tests/test_business_orders.py backend/tests/test_courier_routes_api.py backend/tests/test_operations_api.py backend/tests/test_cloud_start.py -q
 
   terraform:
     runs-on: ubuntu-24.04
