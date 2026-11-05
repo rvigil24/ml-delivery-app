@@ -58,3 +58,6 @@ dist/
 .DS_Store
 .idea/
 .vscode/
+
+# Metadatos locales de publicación
+.vercel/

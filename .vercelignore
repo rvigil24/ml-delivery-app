@@ -1,0 +1,14 @@
+# Sólo fuentes del frontend y ejemplos públicos compartidos.
+**
+!frontend
+!frontend/**
+!examples
+!examples/*.json
+frontend/node_modules
+frontend/.next
+frontend/.next-production
+frontend/.env*
+frontend/.vercel/**
+frontend/next-env.d.ts
+frontend/tests/
+frontend/*.tsbuildinfo

@@ -34,11 +34,11 @@ resource "aws_security_group" "api" {
   vpc_id      = aws_vpc.demo.id
 
   ingress {
-    description = "Demo HTTP restringida"
+    description = var.public_api_access ? "Demo HTTP publica para frontend" : "Demo HTTP restringida"
     protocol    = "tcp"
     from_port   = 8000
     to_port     = 8000
-    cidr_blocks = [var.presenter_cidr]
+    cidr_blocks = var.public_api_access ? ["0.0.0.0/0"] : [var.presenter_cidr]
   }
   egress {
     description = "ECR, S3, logs, secretos y DNS de Atlas"

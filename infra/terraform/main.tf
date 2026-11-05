@@ -51,6 +51,7 @@ resource "aws_ecs_task_definition" "api" {
       { name = "S3_BUCKET", value = data.aws_s3_bucket.resources.bucket },
       { name = "S3_ENDPOINT_URL", value = "https://s3.us-east-1.amazonaws.com" },
       { name = "MONGODB_DATABASE", value = var.mongodb_database },
+      { name = "DELIVERY_DEMO_ENABLED", value = var.demo_enabled ? "1" : "0" },
       { name = "DELIVERY_CLOUD_START_TIMEOUT_SECONDS", value = tostring(var.start_timeout_seconds) },
       { name = "DELIVERY_MODEL_V2_MANIFEST_KEY", value = "models/delivery-duration/meituan-eta-risk-v2/manifest.json" },
       { name = "DELIVERY_MODEL_V2_MANIFEST_SHA256", value = "0381a68fb7a7634823217d85718ce0efa5dad04fe3bf4f4b36358fa189d5e102" },
