@@ -215,3 +215,19 @@ ensayo de carga. Revisión activa :5 con imagen 17d4a75 y espera 0. Esta evidenc
 no incluye la demo automática de efectivo en AWS (continúa deshabilitada).
 Swagger actual: http://3.231.221.94:8000/docs, accesible desde la /32 permitida.
 No redesplegar por actualizar documentos: reemplazar la tarea puede cambiar IP.
+
+
+## Frontend Vercel y API pública de demo
+
+Frontend verificado: https://delivery-economico.vercel.app. API actual:
+http://3.239.180.88:8000/docs, revisión9, imagen f5ede18. El despliegue autorizado
+activó `public_api_access=true` y `demo_enabled=true` en las variables privadas;
+los valores predeterminados del módulo siguen siendo false. No se crearon
+servidores adicionales ni se modificó S3. El SG permite HTTP8000 desde Internet;
+esta API de demostración no tiene autenticación.
+
+Ante otro reemplazo, permitir la IP nueva en Atlas, actualizar DELIVERY_API_URL
+en Vercel y publicar nuevamente. El servicio conserva una tarea; el pipeline
+administra su revisión activa y Terraform conserva la definición base. ECS estable
+no sustituye verificar HTTP, modelos y persistencia. La última comprobación pública
+cubrió pedido y grupo con efectivo usando modelos S3 y Atlas.
