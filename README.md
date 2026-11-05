@@ -9,8 +9,8 @@ cliente ya se guarda en Atlas y los estados se consultan automáticamente. La in
 creada; la API cloud ya fue verificada con modelos desde S3 y persistencia Atlas.
 
 **Frontend publicado:** [delivery-economico.vercel.app](https://delivery-economico.vercel.app).
-La integración pública con la API de AWS está pendiente de autorizar su actualización
-y acceso de red; el flujo local con Atlas sigue disponible.
+Conectado a la API en AWS con modelos desde S3 y persistencia Atlas. Se verificaron
+el pedido de comida y la demo agrupada desde la URL pública.
 
 **Reporte para lectura y entrega:** [PDF](reports/Reporte_Tecnico_Asistente_Delivery.pdf) · [Word editable](reports/Reporte_Tecnico_Asistente_Delivery.docx).
 
@@ -25,8 +25,8 @@ y acceso de red; el flujo local con Atlas sigue disponible.
 **Arquitectura para exposición:** [PNG 4K](reports/Arquitectura_Despliegue_AWS.png) · [SVG editable](reports/Arquitectura_Despliegue_AWS.svg).
 
 Configuración de infraestructura y arranque cloud: [Terraform](infra/terraform/README.md).
-API actual: [Swagger en AWS](http://3.239.189.63:8000/docs). Acceso restringido a
-la IP configurada del presentador; la IPv4 cambia si se reemplaza la tarea.
+API actual: [Swagger en AWS](http://3.239.180.88:8000/docs). API de demostración pública sin autenticación, con acceso autorizado para Vercel.
+La IPv4 cambia si se reemplaza la tarea.
 
 CI verifica tipos/build del frontend, pruebas básicas, Terraform y build Docker
 en cada PR. El [despliegue AWS](infra/terraform/README.md) es manual y requiere
@@ -111,7 +111,7 @@ Desarrollo usa `.next/`; la compilación y el servidor de producción usan
 `.next-production/`, para que un build no rompa las rutas del servidor dev activo.
 `next-env.d.ts` se genera automáticamente y no se versiona.
 
-Detener con `Ctrl+C`. La interfaz local aún no se ha desplegado en AWS.
+Detener con `Ctrl+C`. La interfaz se publica en Vercel; la API se ejecuta en AWS.
 
 ## Demo final desde Operaciones
 
@@ -142,7 +142,7 @@ python scripts/demo_delivery.py --url http://127.0.0.1:8001 --grouped
 
 Los recibos predeterminados se guardan en `data/reports/presentation/` como
 `demo_result.json` y `demo_grouped_result.json`. La [guía PDF de exposición](reports/Guia_Exposicion_y_Demo.pdf)
-contiene el recorrido actualizado. Los controles nuevos no se desplegaron en AWS.
+contiene el recorrido actualizado. Los controles de demo ya se verificaron desde Vercel contra la API de AWS.
 
 ## Datos simulados para exposición
 
@@ -414,3 +414,18 @@ Activarlos/aplicarlos requiere autorización explícita. El acceso público es p
 esta demo sin autenticación; no convertirlo en configuración de producción real.
 Al reemplazar Fargate cambia la IP: autorizarla en Atlas, actualizar la variable
 de Vercel y volver a desplegar. S3 y MongoDB no se trasladan a Vercel.
+
+
+### Publicación verificada
+
+- Frontend: https://delivery-economico.vercel.app
+- API/Swagger: http://3.239.180.88:8000/docs
+- Fargate: revisión9 de `delivery-demo-api`, imagen del commit `f5ede18`.
+- Vercel usa `DELIVERY_API_URL=http://3.239.180.88:8000` en Production y Preview.
+- Acceso público HTTP8000 y escenarios de demo habilitados por autorización explícita.
+
+Comprobación desde un navegador sin sesión: menú, predicción con source=s3,
+pedido persistido y visible en los paneles; dos entregas agrupadas, efectivo
+registrado y repartidor liberado. La API conserva datos simulados para exposición.
+El frontend usa HTTPS; el tramo servidor Vercel→API usa HTTP. No hay autenticación
+ni garantía de IP estable en esta configuración de demo.
