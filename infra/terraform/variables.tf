@@ -45,3 +45,16 @@ variable "mongodb_database" {
     error_message = "Indicar un nombre de base válido."
   }
 }
+
+
+variable "public_api_access" {
+  description = "Permitir HTTP público para el proxy Vercel de la demo; requiere autorización explícita."
+  type        = bool
+  default     = false
+}
+
+variable "demo_enabled" {
+  description = "Habilitar los escenarios simulados completos en la API desplegada."
+  type        = bool
+  default     = false
+}

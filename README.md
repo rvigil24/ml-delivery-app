@@ -8,6 +8,10 @@ Cliente, Negocio, Repartidor y Operaciones conectados a la API. El pedido del
 cliente ya se guarda en Atlas y los estados se consultan automáticamente. La infraestructura AWS ya está
 creada; la API cloud ya fue verificada con modelos desde S3 y persistencia Atlas.
 
+**Frontend publicado:** [delivery-economico.vercel.app](https://delivery-economico.vercel.app).
+La integración pública con la API de AWS está pendiente de autorizar su actualización
+y acceso de red; el flujo local con Atlas sigue disponible.
+
 **Reporte para lectura y entrega:** [PDF](reports/Reporte_Tecnico_Asistente_Delivery.pdf) · [Word editable](reports/Reporte_Tecnico_Asistente_Delivery.docx).
 
 **Evidencias para la entrega:** [Anexo PDF](reports/Anexo_Evidencias_Asistente_Delivery.pdf) · [Word editable](reports/Anexo_Evidencias_Asistente_Delivery.docx) · [Paquete completo ZIP](reports/Entrega_Asistente_Delivery.zip).
@@ -383,3 +387,30 @@ Datos, pesos, recibos de demo y ZIP de fuentes se guardan en directorios ignorad
 bundles y snapshots privados bajo `models/`, `docs/` y metadatos bajo `datasets/`;
 los CSV Meituan permanecen locales conforme a las condiciones documentadas.
 El modelo no entrena durante el arranque o la inferencia.
+
+
+## Publicar frontend en Vercel
+
+Proyecto: `delivery-economico`. Configurar Root Directory `frontend`, Node24 y
+permitir archivos fuente externos al directorio raíz: los ejemplos compartidos
+viven en `examples/`. `frontend/vercel.json` define compilación y salida;
+`.vercelignore` limita la subida al frontend y los JSON públicos, sin credenciales,
+datasets, pesos o reportes. No subir `.env` ni `.vercel/`.
+
+Desde la raíz del repositorio, conectar la cuenta y el proyecto:
+
+```bash
+npx vercel login
+npx vercel link --project delivery-economico
+npx vercel deploy --prod
+```
+
+Configurar `DELIVERY_API_URL` como variable sólo del servidor en Vercel con la
+URL HTTP de la tarea Fargate vigente (puerto8000). El navegador consume los
+proxies de Next.js sobre HTTPS. La API necesita una imagen actualizada y acceso
+de red desde Vercel; una regla AWS limitada a la IP del presentador no lo permite.
+Terraform prepara `public_api_access` y `demo_enabled`, ambos false por defecto.
+Activarlos/aplicarlos requiere autorización explícita. El acceso público es para
+esta demo sin autenticación; no convertirlo en configuración de producción real.
+Al reemplazar Fargate cambia la IP: autorizarla en Atlas, actualizar la variable
+de Vercel y volver a desplegar. S3 y MongoDB no se trasladan a Vercel.
